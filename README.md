@@ -1,7 +1,7 @@
 Modular VFD Clock Firmware
 --------------------------
 
-![Akafugu Modular VFD Clock](/akafugu/VFD-Modular-Clock/blob/master/vfd.jpg)
+![Akafugu Modular VFD Clock](/akafugu/VFD-Modular-Clock/raw/master/vfd.jpg)
 
 Firmware for the [Akafugu Modular VFD Clock](http://www.akafugu.jp/posts/products/vfd-modular-clock/)
 
