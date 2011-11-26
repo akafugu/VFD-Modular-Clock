@@ -37,6 +37,9 @@ uint8_t multiplex_counter = 0;
 // global for controlling if dots should be shown when showing time
 extern uint8_t g_show_dots;
 
+// global: will be set to tru if the detected shield can show decimal points
+extern uint8_t g_has_dots;
+
 // variables for controlling display blink
 uint8_t blink;
 uint16_t blink_counter = 0;
@@ -67,10 +70,12 @@ void detect_shield(void)
 	if (sig == 2) {
 		shield = SHIELD_IV6;
 		digits = 6;
+		g_has_dots = true;
 	}
 	else { // fallback to IV17 for no signature
 		shield = SHIELD_IV17;
 		digits = 4;
+		g_has_dots = false;
 	}
 }
 

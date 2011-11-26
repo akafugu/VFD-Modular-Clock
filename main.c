@@ -57,6 +57,7 @@ uint8_t g_show_dots = true;
 uint8_t g_brightness = 80;
 
 // Other globals
+uint8_t g_has_dots = false; // can current shield show dot (decimal points)
 uint8_t g_alarming = false; // alarm is going off
 struct tm* t = NULL; // for holding RTC values
 
@@ -369,10 +370,14 @@ void main(void)
 
 			if (buttons.b2_keyup) {
 				clock_state++;
-				if (clock_state == STATE_MENU_LAST) clock_state = STATE_MENU_BRIGHTNESS;
 				
 				// show temperature setting only when running on a DS3231
 				if (clock_state == STATE_MENU_TEMP && !rtc_is_ds3231()) clock_state++;
+
+				// don't show dots settings for shields that have no dots
+				if (clock_state == STATE_MENU_DOTS && !g_has_dots) clock_state++;
+
+				if (clock_state == STATE_MENU_LAST) clock_state = STATE_MENU_BRIGHTNESS;
 				
 				switch (clock_state) {
 					case STATE_MENU_BRIGHTNESS:
