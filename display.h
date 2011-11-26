@@ -67,11 +67,14 @@
 #define SIGNATURE_BIT_1 PD4
 #define SIGNATURE_BIT_2 PD5
 
+struct tm;
+
 void display_init(uint8_t brightness);
 int get_digits(void);
 void detect_shield(void);
 
 void set_time(uint8_t hour, uint8_t min, uint8_t sec);
+void set_time_ex(struct tm* t, bool _24h_clock, bool show_extra_info);
 void set_temp(int8_t t, uint8_t f);
 void set_number(uint16_t num);
 void set_char_at(char c, uint8_t offset);

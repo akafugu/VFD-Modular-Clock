@@ -97,7 +97,7 @@ void initialize(void)
 	twi_init_master();
 	
 	rtc_init();
-	//rtc_set_time_s(17, 6, 0);
+	//rtc_set_time_s(13, 6, 0);
 
 	display_init(g_brightness);
 }
@@ -114,15 +114,7 @@ void read_rtc(bool show_extra_info)
 	}
 	else {
 		t = rtc_get_time();
-
-		if (show_extra_info /*&& get_digits() == 4*/) {
-			if (t->am) set_string("AM");
-			else set_string("PM");
-		}
-		else if (g_24h_clock)
-			set_time(t->hour, t->min, t->sec);
-		else
-			set_time(t->twelveHour, t->min, t->sec);
+		set_time_ex(t, g_24h_clock, show_extra_info);
 	}
 
 	counter++;

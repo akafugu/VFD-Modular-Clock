@@ -177,12 +177,16 @@ struct tm* rtc_get_time(void)
 	_tm.wday = bcd2dec(rtc[3]); // returns 1-7
 	
 	if (_tm.hour == 0) {
-		_tm.twelveHour = 0;
+		_tm.twelveHour = 12;
 		_tm.am = 1;
 	}
 	else if (_tm.hour < 12) {
 		_tm.twelveHour = _tm.hour;
 		_tm.am = 1;
+	}
+	else if (_tm.hour == 12) {
+		_tm.twelveHour = 12;
+		_tm.am = 0;
 	}
 	else {
 		_tm.twelveHour = _tm.hour - 12;

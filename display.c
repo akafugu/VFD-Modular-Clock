@@ -16,6 +16,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "display.h"
+#include "rtc.h"
 
 void write_vfd_iv6(uint8_t digit, uint8_t segments);
 void write_vfd_iv17(uint8_t digit, uint16_t segments);
@@ -37,7 +38,7 @@ uint8_t multiplex_counter = 0;
 // global for controlling if dots should be shown when showing time
 extern uint8_t g_show_dots;
 
-// global: will be set to tru if the detected shield can show decimal points
+// global: will be set to true if the detected shield can show decimal points
 extern uint8_t g_has_dots;
 
 // variables for controlling display blink
@@ -45,7 +46,6 @@ uint8_t blink;
 uint16_t blink_counter = 0;
 uint8_t display_on = 1;
 
-// fixme: IV-17 shield does not have dots connected, add alternative LED dot or connect it with transistor
 // dots [bit 0~5]
 uint8_t dots = 0;
 
@@ -262,6 +262,85 @@ void set_number(uint16_t num)
 	data[0] = num % 10;
 }
 
+// shows time as hours:min/seconds/am/pm on four digit displays,
+//and hours:min:sec / hours:minutes:am/pm on 6 or more digit displays
+void set_time_ex(struct tm* t, bool _24h_clock, bool show_extra_info)
+{
+	dots = 0;
+
+	uint8_t hour = _24h_clock ? t->hour : t->twelveHour;
+
+	// show seconds and am/pm
+	if (show_extra_info) {
+		if (digits == 6) { // show hour:min:am/pm
+			if (g_show_dots) {
+				sbi(dots, 1);
+				sbi(dots, 3);
+			}
+
+			data[5] = 'M';
+
+			if (t->am)
+				data[4] = 'A';
+			else
+				data[4] = 'P';
+
+			data[3] = t->min % 10;
+			t->min /= 10;
+			data[2] = t->min % 10;
+
+			data[1] = hour % 10;
+			hour /= 10;
+			data[0] = hour % 10;
+		}
+		else { // show sec or am/pm
+			if (_24h_clock) {
+				data[2] = t->sec % 10;
+				t->sec /= 10;
+				data[1] = t->sec % 10;
+				data[3] = data[0] = ' ';
+			}
+			else {
+				data[1] = t->sec % 10;
+				t->sec /= 10;
+				data[0] = t->sec % 10;
+				data[3] = 'M';
+
+				if (t->am)
+					data[2] = 'A';
+				else
+					data[2] = 'P';
+			}
+		}
+	}
+	else {
+		if (digits == 6) {
+			if (g_show_dots) {
+				sbi(dots, 1);
+				sbi(dots, 3);
+			}
+
+			data[5] = t->sec % 10;
+			t->sec /= 10;
+			data[4] = t->sec % 10;
+		}
+		else if (g_show_dots) {
+			if (t->sec % 2) sbi(dots, 1);
+			else            cbi(dots, 1);
+		}
+
+		data[3] = t->min % 10;
+		t->min /= 10;
+		data[2] = t->min % 10;
+
+		data[1] = hour % 10;
+		hour /= 10;
+		data[0] = hour % 10;
+	}
+}
+
+// shows time as hours:min on four digit displays, and hours:min:sec
+// on 6 or more digit displays
 void set_time(uint8_t hour, uint8_t min, uint8_t sec)
 {
 	dots = 0;
