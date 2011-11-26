@@ -54,7 +54,7 @@ uint8_t EEMEM b_brightness = 80;
 uint8_t g_24h_clock = true;
 uint8_t g_show_temp = false;
 uint8_t g_show_dots = true;
-uint8_t g_brightness = 80;
+uint8_t g_brightness = 5;
 
 // Other globals
 uint8_t g_has_dots = false; // can current shield show dot (decimal points)
@@ -326,10 +326,10 @@ void main(void)
 			switch (clock_state) {
 				case STATE_MENU_BRIGHTNESS:
 					if (buttons.b1_keyup) {
-						g_brightness += 10;
+						g_brightness++;
 						buttons.b1_keyup = false;
 					
-						if (g_brightness > 250) g_brightness = 0;
+						if (g_brightness > 10) g_brightness = 1;
 					
 						eeprom_update_byte(&b_brightness, g_brightness);
 					

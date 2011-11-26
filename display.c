@@ -108,12 +108,14 @@ void display_init(uint8_t brightness)
 	TIMSK0 |= (1<<TOIE0); // Enable Overflow Interrupt Enable
 	TCNT0 = 0; // Initialize counter
 	
-	set_brightness(255);
+	set_brightness(brightness);
 }
 
-uint16_t brightness = 60;	// Read from EEPROM on startup
-
+// brightness value: 1 (low) - 10 (high)
 void set_brightness(uint8_t brightness) {
+	if (brightness > 10) brightness = 10;
+	brightness = (10 - brightness) * 25; // translate to PWM value
+
 	// Brightness is set by setting the PWM duty cycle for the blank
 	// pin of the VFD driver.
 	// 255 = min brightness, 0 = max brightness 
