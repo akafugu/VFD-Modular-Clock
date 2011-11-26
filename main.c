@@ -403,7 +403,6 @@ void main(void)
 			}
 		}
 		else {
-			//fixme: this should be rewritten when more modes are added
 			read_rtc(clock_mode == MODE_AMPM ? true : false);
 		}
 		

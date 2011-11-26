@@ -108,7 +108,7 @@ void display_init(uint8_t brightness)
 	TIMSK0 |= (1<<TOIE0); // Enable Overflow Interrupt Enable
 	TCNT0 = 0; // Initialize counter
 	
-	set_brightness(brightness);
+	set_brightness(255);
 }
 
 uint16_t brightness = 60;	// Read from EEPROM on startup
