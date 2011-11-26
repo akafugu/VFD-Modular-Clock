@@ -49,12 +49,14 @@ uint8_t EEMEM b_24h_clock = true;
 uint8_t EEMEM b_show_temp = false;
 uint8_t EEMEM b_show_dots = true;
 uint8_t EEMEM b_brightness = 80;
+uint8_t EEMEM b_volume = 0;
 
 // Cached settings
 uint8_t g_24h_clock = true;
 uint8_t g_show_temp = false;
 uint8_t g_show_dots = true;
 uint8_t g_brightness = 5;
+uint8_t g_volume = 0;
 
 // Other globals
 uint8_t g_has_dots = false; // can current shield show dot (decimal points)
@@ -67,6 +69,7 @@ void initialize(void)
 	g_24h_clock  = eeprom_read_byte(&b_24h_clock);
 	g_show_temp  = eeprom_read_byte(&b_show_temp);
 	g_brightness = eeprom_read_byte(&b_brightness);
+	g_volume     = eeprom_read_byte(&b_volume);
 
 	PIEZO_DDR |= _BV(PIEZO_LOW_BIT);
 	PIEZO_DDR |= _BV(PIEZO_HIGH_BIT);
@@ -97,7 +100,8 @@ void initialize(void)
 	twi_init_master();
 	
 	rtc_init();
-	//rtc_set_time_s(13, 6, 0);
+	rtc_set_time_s(16, 59, 50);
+	rtc_set_alarm_s(17,0,0);
 
 	display_init(g_brightness);
 }
@@ -132,6 +136,7 @@ typedef enum {
 	// menu
 	STATE_MENU_BRIGHTNESS,
 	STATE_MENU_24H,
+	STATE_MENU_VOL,
 	STATE_MENU_TEMP,
 	STATE_MENU_DOTS,
 	STATE_MENU_LAST,
@@ -338,6 +343,17 @@ void main(void)
 						buttons.b1_keyup = false;
 					}
 					break;
+				case STATE_MENU_VOL:
+					if (buttons.b1_keyup) {
+						g_volume = !g_volume;
+						eeprom_update_byte(&b_volume, g_volume);
+						
+						set_string(g_volume ? " hi" : " lo");
+						piezo_init();
+						beep(1000, 1);
+						buttons.b1_keyup = false;
+					}
+					break;
 				case STATE_MENU_TEMP:
 					if (buttons.b1_keyup) {
 						g_show_temp = !g_show_temp;
@@ -377,6 +393,9 @@ void main(void)
 							set_string("BRIT");
 						else
 							set_string("BRITE");
+						break;
+					case STATE_MENU_VOL:
+						set_string("VOL");
 						break;
 					case STATE_MENU_24H:
 						set_string("24H");

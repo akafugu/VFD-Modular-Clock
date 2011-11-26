@@ -72,7 +72,7 @@ void detect_shield(void)
 		digits = 6;
 		g_has_dots = true;
 	}
-	else { // fallback to IV17 for no signature
+	else { // fallback to IV17 for no signature (sig = 7)
 		shield = SHIELD_IV17;
 		digits = 4;
 		g_has_dots = false;
@@ -261,6 +261,8 @@ void set_number(uint16_t num)
 	num /= 10;
 	data[0] = num % 10;
 }
+
+extern uint8_t g_volume;
 
 // shows time as hours:min/seconds/am/pm on four digit displays,
 //and hours:min:sec / hours:minutes:am/pm on 6 or more digit displays

@@ -18,6 +18,8 @@
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 
+extern uint8_t g_volume;
+
 // pizeo code from: https://github.com/adafruit/Ice-Tube-Clock
 void piezo_init(void) {
 	PEZ_PORT &= ~_BV(PEZ1) & ~_BV(PEZ2);
@@ -25,11 +27,7 @@ void piezo_init(void) {
 	TCCR1A = _BV(COM1B1) | _BV(COM1B0) | _BV(WGM11);
 	TCCR1B = _BV(WGM13) | _BV(WGM12);
 
-	// high volume
-	// fixme: set as eeprom byte
-	uint8_t volume = 0;
-	
-	if (volume)
+	if (g_volume) // high volume
 		TCCR1A |= _BV(COM1A1);
 
   // start at 4khz:  250 * 8 multiplier * 4000 = 8mhz
