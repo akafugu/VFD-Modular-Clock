@@ -100,6 +100,8 @@ void initialize(void)
 	twi_init_master();
 	
 	rtc_init();
+	rtc_set_ds1307();
+
 	//rtc_set_time_s(16, 59, 50);
 	//rtc_set_alarm_s(17,0,0);
 
