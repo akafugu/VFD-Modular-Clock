@@ -17,6 +17,7 @@
 #include <avr/interrupt.h>
 #include "display.h"
 #include "rtc.h"
+#include "flw.h"
 
 void write_vfd_iv6(uint8_t digit, uint8_t segments);
 void write_vfd_iv17(uint8_t digit, uint16_t segments);
@@ -374,7 +375,10 @@ uint8_t print_strn(char* str, uint8_t offset, uint8_t n)
 	return offset;
 }
 
-extern uint8_t g_volume;
+unsigned long g_offset = 0;
+char g_flw[6];
+
+uint8_t prev_sec = 0;
 
 // set dots based on mode and seconds
 void print_dots(uint8_t mode, uint8_t seconds)
@@ -406,6 +410,11 @@ void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
 	uint8_t hour = _24h_clock ? t->hour : t->twelveHour;
 
 	print_dots(mode, t->sec);
+
+	if (prev_sec != t->sec) {
+		g_offset = get_word(g_offset, g_flw);
+		prev_sec = t->sec;
+	}
 
 	if (mode == 0) { // normal display mode
 		if (digits == 8) { // " HH.MM.SS "
@@ -447,9 +456,13 @@ void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
 		}
 		else { // HH.MM
 			if (_24h_clock) {
+				/*
 				offset = print_ch(' ', offset);
 				offset = print_digits(t->sec, offset);
 				offset = print_ch(' ', offset);
+				*/
+
+				set_string(g_flw);
 			}
 			else {
 				if (t->am)
