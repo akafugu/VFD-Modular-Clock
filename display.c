@@ -17,6 +17,7 @@
 #include <avr/interrupt.h>
 #include "display.h"
 #include "rtc.h"
+#include "flw.h"
 
 void write_vfd_iv6(uint8_t digit, uint8_t segments);
 void write_vfd_iv17(uint8_t digit, uint16_t segments);
@@ -262,7 +263,10 @@ void set_number(uint16_t num)
 	data[0] = num % 10;
 }
 
-extern uint8_t g_volume;
+unsigned long g_offset = 0;
+char g_flw[6];
+
+uint8_t prev_sec = 0;
 
 // shows time as hours:min/seconds/am/pm on four digit displays,
 //and hours:min:sec / hours:minutes:am/pm on 6 or more digit displays
@@ -271,6 +275,11 @@ void set_time_ex(struct tm* t, bool _24h_clock, bool show_extra_info)
 	dots = 0;
 
 	uint8_t hour = _24h_clock ? t->hour : t->twelveHour;
+
+	if (prev_sec != t->sec) {
+		g_offset = get_word(g_offset, g_flw);
+		prev_sec = t->sec;
+	}
 
 	// show seconds and am/pm
 	if (show_extra_info) {
@@ -297,10 +306,18 @@ void set_time_ex(struct tm* t, bool _24h_clock, bool show_extra_info)
 		}
 		else { // show sec or am/pm
 			if (_24h_clock) {
+				/*
+				if (has_eeprom()) set_string("OK");
+				else set_string("NG");
+				*/
+				set_string(g_flw);
+
+				/*
 				data[2] = t->sec % 10;
 				t->sec /= 10;
 				data[1] = t->sec % 10;
 				data[3] = data[0] = ' ';
+				*/
 			}
 			else {
 				data[1] = t->sec % 10;
