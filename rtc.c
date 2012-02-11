@@ -114,6 +114,7 @@ static bool s_is_ds3231 = false;
 
 void rtc_init(void)
 {
+	/*
 	// Attempt autodetection:
 	// 1) Read and save temperature register
 	// 2) Write a value to temperature register
@@ -136,6 +137,9 @@ void rtc_init(void)
 	else {
 		s_is_ds3231 = true;
 	}
+	*/
+
+	s_is_ds1307 = true;
 }
 
 // Autodetection

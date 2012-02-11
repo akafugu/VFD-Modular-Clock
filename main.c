@@ -48,7 +48,7 @@
 uint8_t EEMEM b_24h_clock = true;
 uint8_t EEMEM b_show_temp = false;
 uint8_t EEMEM b_show_dots = true;
-uint8_t EEMEM b_brightness = 80;
+uint8_t EEMEM b_brightness = 8;
 uint8_t EEMEM b_volume = 0;
 
 // Cached settings
@@ -61,6 +61,7 @@ uint8_t g_volume = 0;
 // Other globals
 uint8_t g_has_dots = false; // can current shield show dot (decimal points)
 uint8_t g_alarming = false; // alarm is going off
+uint8_t g_alarm_switch;
 struct tm* t = NULL; // for holding RTC values
 
 void initialize(void)
@@ -106,6 +107,21 @@ void initialize(void)
 	//rtc_set_alarm_s(17,0,0);
 
 	display_init(g_brightness);
+
+	g_alarm_switch = get_alarm_switch();
+
+	// set up interrupt for alarm switch
+	PCICR |= (1 << PCIE2);
+	PCMSK2 |= (1 << PCINT18);
+}
+
+// Alarm switch changed interrupt
+ISR( PCINT2_vect )
+{
+	if ( (SWITCH_PIN & _BV(SWITCH_BIT)) == 0)
+		g_alarm_switch = false;
+	else
+		g_alarm_switch = true;
 }
 
 void read_rtc(bool show_extra_info)
@@ -116,11 +132,11 @@ void read_rtc(bool show_extra_info)
 		int8_t t;
 		uint8_t f;
 		ds3231_get_temp_int(&t, &f);
-		set_temp(t, f);
+		show_temp(t, f);
 	}
 	else {
 		t = rtc_get_time();
-		set_time_ex(t, g_24h_clock, show_extra_info);
+		show_time(t, g_24h_clock, show_extra_info);
 	}
 
 	counter++;
@@ -162,7 +178,6 @@ void main(void) __attribute__ ((noreturn));
 void main(void)
 {
 	initialize();
-	detect_shield();
 
 	/*
 	// test: write alphabet
@@ -190,10 +205,7 @@ void main(void)
 	uint16_t button_released_timer = 0;
 	uint16_t button_speed = 25;
 	
-	if (get_digits() == 6)
-		set_string("------");
-	else
-		set_string("----");
+	set_string("--------");
 
 	piezo_init();
 	beep(500, 1);
@@ -206,7 +218,7 @@ void main(void)
 		// When alarming:
 		// any button press cancels alarm
 		if (g_alarming) {
-			read_rtc(clock_mode == MODE_AMPM ? true : false);
+			read_rtc(clock_mode);
 
 			// fixme: if keydown is detected here, wait for keyup and clear state
 			// this prevents going into the menu when disabling the alarm
@@ -223,25 +235,15 @@ void main(void)
 		//  * If the ALARM BUTTON SWITCH is on the LEFT, go into set time mode
 		//  * If the ALARM BUTTON SWITCH is on the RIGHT, go into set alarm mode
 		else if (clock_state == STATE_CLOCK && buttons.both_held) {
-			if (get_alarm_switch()) {
+			if (g_alarm_switch) {
 				clock_state = STATE_SET_ALARM;
-			
-				if (get_digits() == 6)
-					set_string("Alarm");
-				else
-					set_string("Alrm");
-
+				show_set_alarm();
 				rtc_get_alarm_s(&hour, &min, &sec);
 				time_to_set = hour*60 + min;
 			}
 			else {
 				clock_state = STATE_SET_CLOCK;
-			
-				if (get_digits() == 6)
-					set_string(" time ");
-				else
-					set_string("Time");
-				
+				show_set_time();				
 				rtc_get_time_s(&hour, &min, &sec);
 				time_to_set = hour*60 + min;
 			}
@@ -294,15 +296,12 @@ void main(void)
 			if (time_to_set  >= 1440) time_to_set = 0;
 			if (time_to_set  < 0) time_to_set = 1439;
 
-			set_time(time_to_set / 60, time_to_set % 60, 0);
+			show_time_setting(time_to_set / 60, time_to_set % 60, 0);
 		}
 		// Left button enters menu
 		else if (clock_state == STATE_CLOCK && buttons.b2_keyup) {
 			clock_state = STATE_MENU_BRIGHTNESS;
-			if (get_digits() == 4)
-				set_string("BRIT");
-			else
-				set_string("BRITE");
+			show_setting_int("BRIT", "BRITE", g_brightness, false);
 			buttons.b2_keyup = 0; // clear state
 		}
 		// Right button toggles display mode
@@ -332,7 +331,7 @@ void main(void)
 					
 						eeprom_update_byte(&b_brightness, g_brightness);
 					
-						set_number(g_brightness); // make scale appear as 0-100
+						show_setting_int("BRIT", "BRITE", g_brightness, true);
 						set_brightness(g_brightness);
 					}
 					break;
@@ -341,7 +340,7 @@ void main(void)
 						g_24h_clock = !g_24h_clock;
 						eeprom_update_byte(&b_24h_clock, g_24h_clock);
 						
-						set_string(g_24h_clock ? " on" : " off");
+						show_setting_string("24H", "24H", g_24h_clock ? " on" : " off", true);
 						buttons.b1_keyup = false;
 					}
 					break;
@@ -350,7 +349,7 @@ void main(void)
 						g_volume = !g_volume;
 						eeprom_update_byte(&b_volume, g_volume);
 						
-						set_string(g_volume ? " hi" : " lo");
+						show_setting_string("VOL", "VOL", g_volume ? " hi" : " lo", true);
 						piezo_init();
 						beep(1000, 1);
 						buttons.b1_keyup = false;
@@ -361,7 +360,7 @@ void main(void)
 						g_show_temp = !g_show_temp;
 						eeprom_update_byte(&b_show_temp, g_show_temp);
 						
-						set_string(g_show_temp ? " on" : " off");
+						show_setting_string("TEMP", "TEMP", g_show_temp ? " on" : " off", true);
 						buttons.b1_keyup = false;
 					}
 					break;
@@ -370,7 +369,7 @@ void main(void)
 						g_show_dots = !g_show_dots;
 						eeprom_update_byte(&b_show_dots, g_show_dots);
 						
-						set_string(g_show_dots ? " on" : " off");
+						show_setting_string("DOTS", "DOTS", g_show_dots ? " on" : " off", true);
 						buttons.b1_keyup = false;
 					}
 					break;
@@ -391,22 +390,19 @@ void main(void)
 				
 				switch (clock_state) {
 					case STATE_MENU_BRIGHTNESS:
-						if (get_digits() == 4)
-							set_string("BRIT");
-						else
-							set_string("BRITE");
+						show_setting_int("BRIT", "BRITE", g_brightness, false);
 						break;
 					case STATE_MENU_VOL:
-						set_string("VOL");
+						show_setting_string("VOL", "VOL", g_volume ? " hi" : " lo", false);
 						break;
 					case STATE_MENU_24H:
-						set_string("24H");
+						show_setting_string("24H", "24H", g_24h_clock ? " on" : " off", false);
 						break;
 					case STATE_MENU_DOTS:
-						set_string("DOTS");
+						show_setting_string("DOTS", "DOTS", g_show_dots ? " on" : " off", false);
 						break;
 					case STATE_MENU_TEMP:
-						set_string("TEMP");
+						show_setting_string("TEMP", "TEMP", g_show_temp ? " on" : " off", false);
 						break;
 					default:
 						break; // do nothing
@@ -416,11 +412,11 @@ void main(void)
 			}
 		}
 		else {
-			read_rtc(clock_mode == MODE_AMPM ? true : false);
+			read_rtc(clock_mode);
 		}
 		
 		// fixme: alarm should not be checked when setting time or alarm
-		if (rtc_check_alarm() && get_alarm_switch())
+		if (g_alarm_switch && rtc_check_alarm())
 			g_alarming = true;
 
 		_delay_ms(10);

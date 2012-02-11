@@ -73,12 +73,19 @@ void display_init(uint8_t brightness);
 int get_digits(void);
 void detect_shield(void);
 
-void set_time(uint8_t hour, uint8_t min, uint8_t sec);
-void set_time_ex(struct tm* t, bool _24h_clock, bool show_extra_info);
-void set_temp(int8_t t, uint8_t f);
-void set_number(uint16_t num);
-void set_char_at(char c, uint8_t offset);
+// functions for showing current time and temperature
+void show_time(struct tm* t, bool _24h_clock, uint8_t mode);
+void show_time_setting(uint8_t hour, uint8_t min, uint8_t sec);
+void show_temp(int8_t t, uint8_t f);
+
+// functions for showing settings
+void show_setting_string(char* short_str, char* long_str, char* value, bool show_setting);
+void show_setting_int(char* short_str, char* long_str, int value, bool show_setting);
+void show_set_time(void);
+void show_set_alarm(void);
+
 void set_string(char* str);
+void set_char_at(char c, uint8_t offset);
 
 void set_brightness(uint8_t brightness);
 
@@ -86,8 +93,9 @@ void set_blink(bool on);
 
 enum shield_t {
 	SHIELD_NONE = 0,
-	SHIELD_IV17,
 	SHIELD_IV6,
+	SHIELD_IV17,
+	SHIELD_IV18,
 };
 
 #endif // DISPLAY_H_
