@@ -18,4 +18,4 @@ Firmware
 
 The VFD Modular Clock is based on the ATMega328P microcontroller. The firmware is written for the avr-gcc compiler and covers all basic clock functionality such as setting time and alarm, brightness and 24h/12h time.
 
-The clock comes pre-installed with firmware: To update it you will need to solder a 2x3 male header to the ISP port on the board and then use an ISP programmer and avrdude. see [here](http://next.akafugu.jp/posts/resources/avr-gcc/) for more instructions.
+The clock comes pre-installed with firmware: To update it you will need to solder a 2x3 male header to the ISP port on the board and then use an ISP programmer and avrdude. see [here](http://www.akafugu.jp/posts/resources/avr-gcc/) for more instructions.
