@@ -81,11 +81,20 @@ void detect_shield(void)
 		digits = 6;
 		g_has_dots = true;
 	}
+	else if (sig == 3) { // IV-22 shield
+		shield = SHIELD_IV22;
+		digits = 4;
+		g_has_dots = true;
+	}
 	else { // IV-18 shield
 		shield = SHIELD_IV18;
 		digits = 8;
 		g_has_dots = true;
 	}
+
+	shield = SHIELD_IV22;
+	digits = 4;
+	g_has_dots = true;
 }
 
 void display_init(uint8_t brightness)
@@ -260,6 +269,34 @@ void display_multiplex_iv18(void)
 	if (multiplex_counter == 9) multiplex_counter = 0;
 }
 
+// display multiplexing routine for IV6 shield: run once every 5us
+void display_multiplex_iv22(void)
+{
+	if (multiplex_counter == 0) {
+		clear_display();
+		write_vfd_iv6(0, calculate_segments_7(display_on ? data[0] : ' '));
+	}
+	else if (multiplex_counter == 1) {
+		clear_display();
+		write_vfd_iv6(1, calculate_segments_7(display_on ? data[1] : ' '));
+	}
+	else if (multiplex_counter == 2) {
+		clear_display();
+		write_vfd_iv6(2, calculate_segments_7(display_on ? data[2] : ' '));
+	}
+	else if (multiplex_counter == 3) {
+		clear_display();
+		write_vfd_iv6(3, calculate_segments_7(display_on ? data[3] : ' '));
+	}
+	else {
+		clear_display();
+	}
+
+	multiplex_counter++;
+
+	if (multiplex_counter == 4) multiplex_counter = 0;
+}
+
 void display_multiplex(void)
 {
 	if (shield == SHIELD_IV6)
@@ -268,6 +305,8 @@ void display_multiplex(void)
 		display_multiplex_iv17();
 	else if (shield == SHIELD_IV18)
 		display_multiplex_iv18();
+	else if (shield == SHIELD_IV22)
+		display_multiplex_iv22();
 }
 
 void button_timer(void);
@@ -345,7 +384,7 @@ void print_dots(uint8_t mode, uint8_t seconds)
 			sbi(dots, 1);
 			sbi(dots, 3);
 		}
-		else if (digits == 4 && seconds % 2) {
+		else if (digits == 4 && seconds % 2 && mode == 0) {
 			sbi(dots, 1);
 		}
 	}
