@@ -91,10 +91,6 @@ void detect_shield(void)
 		digits = 8;
 		g_has_dots = true;
 	}
-
-	shield = SHIELD_IV22;
-	digits = 4;
-	g_has_dots = true;
 }
 
 void display_init(uint8_t brightness)
