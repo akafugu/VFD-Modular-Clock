@@ -62,7 +62,6 @@ int get_digits(void)
 }
 
 // detect which shield is connected
-// fixme: Temporary code: Change for final pinout
 void detect_shield(void)
 {
 	// read shield bits
@@ -81,7 +80,7 @@ void detect_shield(void)
 		digits = 6;
 		g_has_dots = true;
 	}
-	else if (sig == 3) { // IV-22 shield
+	else if (sig == 6) { // IV-22 shield
 		shield = SHIELD_IV22;
 		digits = 4;
 		g_has_dots = true;
@@ -118,7 +117,6 @@ void display_init(uint8_t brightness)
 
 	// Inititalize timer for multiplexing
 	TCCR0B = (1<<CS01); // Set Prescaler to clk/8 : 1 click = 1us. CS01=1
-	//TCCR0B |= (1<<CS00); 
 	TIMSK0 |= (1<<TOIE0); // Enable Overflow Interrupt Enable
 	TCNT0 = 0; // Initialize counter
 	
@@ -137,10 +135,8 @@ void set_brightness(uint8_t brightness) {
 
 	// fast PWM, fastest clock, set OC0A (blank) on match
 	TCCR0A = _BV(WGM00) | _BV(WGM01);  
-	TCCR0B = _BV(CS00);
  
 	TCCR0A |= _BV(COM0A1);
-	//sei();
 }
 
 void set_blink(bool on)
@@ -313,27 +309,23 @@ uint16_t button_counter = 0;
 ISR(TIMER0_OVF_vect)
 {
 	// control blinking: on time is slightly longer than off time
-	if (blink && display_on && ++blink_counter >= 0x4fff) {
+	if (blink && display_on && ++blink_counter >= 0x900) {
 		display_on = false;
 		blink_counter = 0;
 	}
-	else if (blink && !display_on && ++blink_counter >= 0x4300) {
+	else if (blink && !display_on && ++blink_counter >= 0x750) {
 		display_on = true;
 		blink_counter = 0;
 	}
 	
 	// button polling
-	if (++button_counter == 301) {
+	if (++button_counter == 71) {
 		button_timer();
 		button_counter = 0;
 	}
 	
 	// display multiplex
-	// a value of 40 should multiplex at about 100 Hz
-	// 60 gives aprox 65 Hz
-	// 80 gives aprox 50 Hz
-	// 100 gives aprox 40 Hz
-	if (++interrupt_counter == 20) {
+	if (++interrupt_counter == 9) {
 		display_multiplex();
 		interrupt_counter = 0;
 	}

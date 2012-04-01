@@ -412,7 +412,10 @@ void main(void)
 			}
 		}
 		else {
-			read_rtc(clock_mode);
+			// read RTC only aprox every 15ms
+			static uint16_t cnt = 0;
+			if (cnt++ % 15 == 0)
+				read_rtc(clock_mode);
 		}
 		
 		// fixme: alarm should not be checked when setting time or alarm
