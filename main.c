@@ -19,6 +19,7 @@
 #include <avr/eeprom.h>
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "display.h"
 #include "button.h"
@@ -63,6 +64,8 @@ uint8_t g_has_dots = false; // can current shield show dot (decimal points)
 uint8_t g_alarming = false; // alarm is going off
 uint8_t g_alarm_switch;
 struct tm* t = NULL; // for holding RTC values
+
+extern enum shield_t shield;
 
 void initialize(void)
 {
@@ -136,6 +139,7 @@ void read_rtc(bool show_extra_info)
 	}
 	else {
 		t = rtc_get_time();
+		if (t == NULL) return;
 		show_time(t, g_24h_clock, show_extra_info);
 	}
 
@@ -331,7 +335,10 @@ void main(void)
 					
 						eeprom_update_byte(&b_brightness, g_brightness);
 					
-						show_setting_int("BRIT", "BRITE", g_brightness, true);
+						if (shield == SHIELD_IV17)
+							show_setting_string("BRIT", "BRITE", (g_brightness % 2 == 0) ? "  lo" : "  hi", true);
+						else
+							show_setting_int("BRIT", "BRITE", g_brightness, true);
 						set_brightness(g_brightness);
 					}
 					break;

@@ -74,6 +74,7 @@
 #define FALSE 0
 
 #include "rtc.h"
+#include <stdlib.h>
 
 #define RTC_ADDR 0x68 // I2C address
 #define CH_BIT 7 // clock halt bit
@@ -166,7 +167,7 @@ struct tm* rtc_get_time(void)
 		rtc[i] = twi_receive();
 	}
 	
-	twi_end_transmission();
+	if (twi_end_transmission() != 0) return NULL;
 
 	// Clear clock halt bit from read data
 	// This starts the clock for a DS1307, and has no effect for a DS3231

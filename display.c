@@ -44,6 +44,7 @@ uint8_t multiplex_counter = 0;
 extern uint8_t g_show_dots;
 extern uint8_t g_has_dots;
 extern uint8_t g_alarm_switch;
+extern uint8_t g_brightness;
 
 // variables for controlling display blink
 uint8_t blink;
@@ -125,6 +126,12 @@ void display_init(uint8_t brightness)
 
 // brightness value: 1 (low) - 10 (high)
 void set_brightness(uint8_t brightness) {
+	// workaround: IV17 shield not compatible with PWM dimming method
+	// using simple software dimming instead
+	if (shield == SHIELD_IV17) {
+		return;
+	}
+
 	if (brightness > 10) brightness = 10;
 	brightness = (10 - brightness) * 25; // translate to PWM value
 
@@ -170,7 +177,10 @@ void display_multiplex_iv17(void)
 
 	multiplex_counter++;
 
-	if (multiplex_counter == 4) multiplex_counter = 0;
+	// high brightness
+	if (multiplex_counter == 4 && g_brightness % 2 == 1) multiplex_counter = 0;
+	// low brightness
+	if (multiplex_counter == 8) multiplex_counter = 0;
 }
 
 // display multiplexing routine for IV6 shield: run once every 5us
