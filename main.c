@@ -308,7 +308,7 @@ void main(void)
 		else if (clock_state == STATE_CLOCK && buttons.b1_keyup) {
 			clock_mode++;
 			if (clock_mode == MODE_LAST) clock_mode = MODE_NORMAL;
-			buttons.b2_keyup = 0; // clear state
+			buttons.b1_keyup = 0; // clear state
 		}
 		else if (clock_state >= STATE_MENU_BRIGHTNESS) {
 			if (buttons.none_held)
