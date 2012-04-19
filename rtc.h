@@ -69,7 +69,7 @@ void rtc_set_ds3231(void);
 // Gets the time: Supports both 24-hour and 12-hour mode
 struct tm* rtc_get_time(void);
 // Gets the time: 24-hour mode only
-void rtc_get_time_s(uint8_t* hour, uint8_t* min, uint8_t* sec);
+bool rtc_get_time_s(uint8_t* hour, uint8_t* min, uint8_t* sec);
 // Sets the time: Supports both 24-hour and 12-hour mode
 void rtc_set_time(struct tm* tm_);
 // Sets the time: Supports 12-hour mode only

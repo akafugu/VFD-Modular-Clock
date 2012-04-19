@@ -201,7 +201,7 @@ struct tm* rtc_get_time(void)
 	return &_tm;
 }
 
-void rtc_get_time_s(uint8_t* hour, uint8_t* min, uint8_t* sec)
+bool rtc_get_time_s(uint8_t* hour, uint8_t* min, uint8_t* sec)
 {
 	uint8_t rtc[9];
 
@@ -217,11 +217,14 @@ void rtc_get_time_s(uint8_t* hour, uint8_t* min, uint8_t* sec)
 		rtc[i] = twi_receive();
 	}
 	
-	twi_end_transmission();
+	if (twi_end_transmission() != 0) return false;
+
 	
 	if (sec)  *sec =  bcd2dec(rtc[0]);
 	if (min)  *min =  bcd2dec(rtc[1]);
 	if (hour) *hour = bcd2dec(rtc[2]);
+
+	return true;
 }
 
 // fixme: support 12-hour mode for setting time
