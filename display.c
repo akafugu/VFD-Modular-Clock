@@ -117,9 +117,9 @@ void display_init(uint8_t brightness)
 	detect_shield();
 
 	// Inititalize timer for multiplexing
-	TCCR2B |= (1<<CS21); // Set Prescaler to clk/8 : 1 click = 1us. CS21=1
-	TIMSK2 |= (1<<TOIE2); // Enable Overflow Interrupt Enable
-	TCNT2 = 0; // Initialize counter
+	TCCR0B |= (1<<CS01); // Set Prescaler to clk/8 : 1 click = 1us. CS21=1
+	TIMSK0 |= (1<<TOIE0); // Enable Overflow Interrupt Enable
+	TCNT0 = 0; // Initialize counter
 	
 	set_brightness(brightness);
 }
@@ -316,7 +316,7 @@ uint8_t interrupt_counter = 0;
 uint16_t button_counter = 0;
 
 // 1 click = 1us. Overflow every 255 us
-ISR(TIMER2_OVF_vect)
+ISR(TIMER0_OVF_vect)
 {
 	// control blinking: on time is slightly longer than off time
 	if (blink && display_on && ++blink_counter >= 0x900) {
@@ -337,6 +337,12 @@ ISR(TIMER2_OVF_vect)
 	// display multiplex
 	if (++interrupt_counter == 9) {
 		display_multiplex();
+		interrupt_counter = 0;
+	}
+
+	// display multiplex (IV-18 shield)
+	if (shield == SHIELD_IV18 && ++interrupt_counter == 7) {
+		display_multiplex_iv18();
 		interrupt_counter = 0;
 	}
 }
