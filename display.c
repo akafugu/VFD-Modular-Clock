@@ -46,6 +46,7 @@ extern uint8_t g_show_dots;
 extern uint8_t g_has_dots;
 extern uint8_t g_alarm_switch;
 extern uint8_t g_brightness;
+extern uint8_t g_has_eeprom;
 
 // variables for controlling display blink
 uint8_t blink;
@@ -411,7 +412,7 @@ void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
 
 	print_dots(mode, t->sec);
 
-	if (prev_sec != t->sec) {
+	if (g_has_eeprom && prev_sec != t->sec) {
 		g_offset = get_word(g_offset, g_flw);
 		prev_sec = t->sec;
 	}
@@ -454,15 +455,11 @@ void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
 			else
 				offset = print_ch(' ', offset); 
 		}
-		else { // HH.MM
+		else { // " SS "
 			if (_24h_clock) {
-				/*
 				offset = print_ch(' ', offset);
 				offset = print_digits(t->sec, offset);
 				offset = print_ch(' ', offset);
-				*/
-
-				set_string(g_flw);
 			}
 			else {
 				if (t->am)
@@ -474,6 +471,9 @@ void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
 				offset = print_digits(t->sec, offset);
 			}
 		}
+	}
+	else if (mode == 2) { // flw mode
+		set_string(g_flw);
 	}
 }
 

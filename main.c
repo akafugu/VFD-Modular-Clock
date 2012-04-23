@@ -26,6 +26,8 @@
 
 #include "twi.h"
 #include "rtc.h"
+#include "flw.h"
+#include "piezo.h"
 
 // Second indicator LED (optional second indicator on shield)
 #define LED_BIT PD7
@@ -51,6 +53,7 @@ uint8_t EEMEM b_show_temp = false;
 uint8_t EEMEM b_show_dots = true;
 uint8_t EEMEM b_brightness = 8;
 uint8_t EEMEM b_volume = 0;
+uint8_t EEMEM b_flw_enabled = false;
 
 // Cached settings
 uint8_t g_24h_clock = true;
@@ -58,9 +61,11 @@ uint8_t g_show_temp = false;
 uint8_t g_show_dots = true;
 uint8_t g_brightness = 5;
 uint8_t g_volume = 0;
+uint8_t g_flw_enabled = false;
 
 // Other globals
 uint8_t g_has_dots = false; // can current shield show dot (decimal points)
+uint8_t g_has_eeprom = false; // set to true if there is a four letter word EEPROM attached
 uint8_t g_alarming = false; // alarm is going off
 uint8_t g_alarm_switch;
 struct tm* t = NULL; // for holding RTC values
@@ -70,10 +75,11 @@ extern enum shield_t shield;
 void initialize(void)
 {
 	// read eeprom
-	g_24h_clock  = eeprom_read_byte(&b_24h_clock);
-	g_show_temp  = eeprom_read_byte(&b_show_temp);
-	g_brightness = eeprom_read_byte(&b_brightness);
-	g_volume     = eeprom_read_byte(&b_volume);
+	g_24h_clock   = eeprom_read_byte(&b_24h_clock);
+	g_show_temp   = eeprom_read_byte(&b_show_temp);
+	g_brightness  = eeprom_read_byte(&b_brightness);
+	g_volume      = eeprom_read_byte(&b_volume);
+	g_flw_enabled = eeprom_read_byte(&b_flw_enabled);
 
 	PIEZO_DDR |= _BV(PIEZO_LOW_BIT);
 	PIEZO_DDR |= _BV(PIEZO_HIGH_BIT);
@@ -112,6 +118,10 @@ void initialize(void)
 	display_init(g_brightness);
 
 	g_alarm_switch = get_alarm_switch();
+	g_has_eeprom = has_eeprom();
+
+	if (!g_has_eeprom)
+		g_flw_enabled = false;
 
 	// set up interrupt for alarm switch
 	PCICR |= (1 << PCIE2);
@@ -125,26 +135,6 @@ ISR( PCINT2_vect )
 		g_alarm_switch = false;
 	else
 		g_alarm_switch = true;
-}
-
-void read_rtc(bool show_extra_info)
-{
-	static uint16_t counter = 0;
-	
-	if(g_show_temp && rtc_is_ds3231() && counter > 125) {
-		int8_t t;
-		uint8_t f;
-		ds3231_get_temp_int(&t, &f);
-		show_temp(t, f);
-	}
-	else {
-		t = rtc_get_time();
-		if (t == NULL) return;
-		show_time(t, g_24h_clock, show_extra_info);
-	}
-
-	counter++;
-	if (counter == 250) counter = 0;
 }
 
 struct BUTTON_STATE buttons;
@@ -161,6 +151,7 @@ typedef enum {
 	STATE_MENU_VOL,
 	STATE_MENU_TEMP,
 	STATE_MENU_DOTS,
+	STATE_MENU_FLW,
 	STATE_MENU_LAST,
 } state_t;
 
@@ -170,12 +161,31 @@ state_t clock_state = STATE_CLOCK;
 typedef enum {
 	MODE_NORMAL = 0, // normal mode: show time/seconds
 	MODE_AMPM, // shows time AM/PM
+	MODE_FLW,  // shows four letter words
 	MODE_LAST,
 } display_mode_t;
 
 display_mode_t clock_mode = MODE_NORMAL;
 
-#include "piezo.h"
+void read_rtc(display_mode_t mode)
+{
+	static uint16_t counter = 0;
+	
+	if(g_show_temp && rtc_is_ds3231() && counter > 125) {
+		int8_t t;
+		uint8_t f;
+		ds3231_get_temp_int(&t, &f);
+		show_temp(t, f);
+	}
+	else {
+		t = rtc_get_time();
+		if (t == NULL) return;
+		show_time(t, g_24h_clock, mode);
+	}
+
+	counter++;
+	if (counter == 250) counter = 0;
+}
 
 void main(void) __attribute__ ((noreturn));
 
@@ -311,6 +321,8 @@ void main(void)
 		// Right button toggles display mode
 		else if (clock_state == STATE_CLOCK && buttons.b1_keyup) {
 			clock_mode++;
+			if (clock_mode == MODE_FLW && !g_has_eeprom) clock_mode++;
+			if (clock_mode == MODE_FLW && !g_flw_enabled) clock_mode++;
 			if (clock_mode == MODE_LAST) clock_mode = MODE_NORMAL;
 			buttons.b1_keyup = 0; // clear state
 		}
@@ -380,6 +392,15 @@ void main(void)
 						buttons.b1_keyup = false;
 					}
 					break;
+			    case STATE_MENU_FLW:
+					if (buttons.b1_keyup) {
+						g_flw_enabled = !g_flw_enabled;
+						eeprom_update_byte(&b_flw_enabled, g_flw_enabled);
+						
+						show_setting_string("FLW", "FLW", g_flw_enabled ? " on" : " off", true);
+						buttons.b1_keyup = false;
+					}
+					break;
 				default:
 					break; // do nothing
 			}
@@ -393,6 +414,9 @@ void main(void)
 				// don't show dots settings for shields that have no dots
 				if (clock_state == STATE_MENU_DOTS && !g_has_dots) clock_state++;
 
+				// don't show FLW settings when there is no EEPROM with database
+				if (clock_state == STATE_MENU_FLW && !g_has_eeprom) clock_state++;
+
 				if (clock_state == STATE_MENU_LAST) clock_state = STATE_MENU_BRIGHTNESS;
 				
 				switch (clock_state) {
@@ -405,11 +429,14 @@ void main(void)
 					case STATE_MENU_24H:
 						show_setting_string("24H", "24H", g_24h_clock ? " on" : " off", false);
 						break;
+					case STATE_MENU_TEMP:
+						show_setting_string("TEMP", "TEMP", g_show_temp ? " on" : " off", false);
+						break;
 					case STATE_MENU_DOTS:
 						show_setting_string("DOTS", "DOTS", g_show_dots ? " on" : " off", false);
 						break;
-					case STATE_MENU_TEMP:
-						show_setting_string("TEMP", "TEMP", g_show_temp ? " on" : " off", false);
+    			    case STATE_MENU_FLW:
+						show_setting_string("FLW", "FLW", g_show_temp ? " on" : " off", false);
 						break;
 					default:
 						break; // do nothing
