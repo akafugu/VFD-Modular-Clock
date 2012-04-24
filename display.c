@@ -413,23 +413,6 @@ void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
 	dots = 0;
 	print_dots(mode, t->sec);
 
-	if (g_has_eeprom && prev_sec != t->sec) {
-		g_offset = get_word(g_offset, g_flw);
-		prev_sec = t->sec;
-		
-		if (digits == 8) {
-			print_offset++;
-			if (print_offset == 5) print_offset = 0;
-		}
-		else if (digits == 6) {
-			print_offset++;
-			if (print_offset == 3) print_offset = 0;
-		}
-		else {
-			print_offset = 0;
-		}
-	}
-
 	if (mode == 0) { // normal display mode
 		if (digits == 8) { // " HH.MM.SS "
 			if (!_24h_clock && !t->am)
@@ -485,7 +468,22 @@ void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
 			}
 		}
 	}
-	else if (mode == 2) { // flw mode
+	else if (mode == 2 && g_has_eeprom && prev_sec != t->sec) {
+		g_offset = get_word(g_offset, g_flw);
+		prev_sec = t->sec;
+		
+		if (digits == 8) {
+			print_offset++;
+			if (print_offset == 5) print_offset = 0;
+		}
+		else if (digits == 6) {
+			print_offset++;
+			if (print_offset == 3) print_offset = 0;
+		}
+		else {
+			print_offset = 0;
+		}
+		
 		data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
 		print_strn(g_flw, print_offset, 4);
 	}
