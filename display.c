@@ -376,8 +376,9 @@ uint8_t print_strn(char* str, uint8_t offset, uint8_t n)
 	return offset;
 }
 
-unsigned long g_offset = 0;
-char g_flw[6];
+unsigned long g_offset = 0; // offset for where to search for next word in eeprom
+char g_flw[6]; // contains actual four letter word
+extern uint8_t g_flw_print_offset; // offset for where to start printing four letter words
 
 uint8_t prev_sec = 0;
 
@@ -405,16 +406,28 @@ void print_dots(uint8_t mode, uint8_t seconds)
 // 8 digits: hour:min:sec / hour-min-sec
 void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
 {
-	dots = 0;
-
+	static uint8_t print_offset = 0;
 	uint8_t offset = 0;
 	uint8_t hour = _24h_clock ? t->hour : t->twelveHour;
-
+	
+	dots = 0;
 	print_dots(mode, t->sec);
 
 	if (g_has_eeprom && prev_sec != t->sec) {
 		g_offset = get_word(g_offset, g_flw);
 		prev_sec = t->sec;
+		
+		if (digits == 8) {
+			print_offset++;
+			if (print_offset == 5) print_offset = 0;
+		}
+		else if (digits == 6) {
+			print_offset++;
+			if (print_offset == 3) print_offset = 0;
+		}
+		else {
+			print_offset = 0;
+		}
 	}
 
 	if (mode == 0) { // normal display mode
@@ -473,7 +486,8 @@ void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
 		}
 	}
 	else if (mode == 2) { // flw mode
-		set_string(g_flw);
+		data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
+		print_strn(g_flw, print_offset, 4);
 	}
 }
 
