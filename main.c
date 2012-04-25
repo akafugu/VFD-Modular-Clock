@@ -268,7 +268,7 @@ void main(void)
 			if (buttons.none_held) {
 				set_blink(true);
 				button_released_timer++;
-				button_speed = 25;
+				button_speed = 50;
 			}
 			else {
 				set_blink(false);
@@ -292,9 +292,9 @@ void main(void)
 			}
 			
 			// Increase / Decrease time counter
-			if (buttons.b1_repeat) time_to_set+=(button_speed/25);
+			if (buttons.b1_repeat) time_to_set+=(button_speed/100);
 			if (buttons.b1_keyup)  time_to_set++;
-			if (buttons.b2_repeat) time_to_set-=(button_speed/25);
+			if (buttons.b2_repeat) time_to_set-=(button_speed/100);
 			if (buttons.b2_keyup)  time_to_set--;
 
 			if (time_to_set  >= 1440) time_to_set = 0;
