@@ -21,6 +21,7 @@
 
 #include "twi.h"
 
+void seed_random(uint32_t seed);
 bool has_eeprom(void);
 unsigned long get_word(unsigned long offset, char* word);
 

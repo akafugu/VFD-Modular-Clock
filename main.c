@@ -122,6 +122,11 @@ void initialize(void)
 
 	if (!g_has_eeprom)
 		g_flw_enabled = false;
+	
+	t = rtc_get_time();
+	
+	if (t && g_has_eeprom)
+		seed_random(t->hour * 10000 + t->min + 100 + t->sec);
 
 	// set up interrupt for alarm switch
 	PCICR |= (1 << PCIE2);

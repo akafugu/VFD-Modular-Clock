@@ -36,6 +36,11 @@ char current_word[6];
 // random number seed
 volatile uint32_t lfsr = 0xbeefcacc;
 
+void seed_random(uint32_t seed)
+{
+	lfsr = seed;
+}
+
 uint32_t rand(void)
 {
 	// http://en.wikipedia.org/wiki/Linear_feedback_shift_register
