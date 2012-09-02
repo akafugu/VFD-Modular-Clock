@@ -110,7 +110,7 @@ void rtc_write_byte(uint8_t b, uint8_t offset)
 	twi_end_transmission();
 }
 
-static bool s_is_ds1307 = false;
+static bool s_is_ds1307 = true;  // wm
 static bool s_is_ds3231 = false;
 
 void rtc_init(void)
