@@ -43,11 +43,11 @@ void beep(uint16_t freq, uint8_t times) {
    
   while (times--) {
     TCCR1B |= _BV(CS11); // turn it on!
-    // beeps are 200ms long on
+    // beeps are 75ms long on
     _delay_ms(75);
     TCCR1B &= ~_BV(CS11); // turn it off!
     PEZ_PORT &= ~_BV(PEZ1) & ~_BV(PEZ2);
-    // beeps are 200ms long off
+    // beeps are 75ms long off
     _delay_ms(75);
   }
   // turn speaker off
