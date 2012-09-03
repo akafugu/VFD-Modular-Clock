@@ -91,7 +91,7 @@ void detect_shield(void)
 			mpx_count = 8;
 			g_has_dots = true;
 			break;
-		case(3):  // IV-18 shield  ???
+		case(7):  // IV-18 shield (note: save value as no shield - all bits on)
 			shield = SHIELD_IV18;
 			digits = 8;
 			mpx_count = 7; 
