@@ -246,20 +246,31 @@ void main(void)
 	uint16_t button_released_timer = 0;
 	uint16_t button_speed = 25;
 	
-	set_string("--------");
+	switch (shield) {
+		case(SHIELD_IV6):
+			set_string("IV-6");
+			break;
+		case(SHIELD_IV17):
+			set_string("IV17");
+			break;
+		case(SHIELD_IV18):
+			set_string("IV18");
+			break;
+		case(SHIELD_IV22):
+			set_string("IV22");
+			break;
+		default:
+			break;
+	}
 
 	piezo_init();
 	beep(500, 1);
 	beep(1000, 1);
-//	beep(500, 1);
+	beep(500, 1);
 
-	if (shield == SHIELD_NONE) {	
-		_delay_ms(200);
-		beep(200, 3);
-		}
-	else
-		beep(500, 1);
-
+	_delay_ms(500);
+	set_string("--------");
+	
 	while (1) {
 		get_button_state(&buttons);
 		
