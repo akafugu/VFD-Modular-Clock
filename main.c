@@ -268,7 +268,7 @@ void main(void)
 			if (buttons.none_held) {
 				set_blink(true);
 				button_released_timer++;
-				button_speed = 50;
+				button_speed = 1;
 			}
 			else {
 				set_blink(false);

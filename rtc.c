@@ -99,7 +99,9 @@ uint8_t rtc_read_byte(uint8_t offset)
 	twi_end_transmission();
 
 	twi_request_from(RTC_ADDR, 1);
-	return twi_receive();
+	if (twi_available())
+		return twi_receive();
+	return 0;
 }
 
 void rtc_write_byte(uint8_t b, uint8_t offset)
@@ -164,7 +166,10 @@ struct tm* rtc_get_time(void)
 	twi_request_from(RTC_ADDR, 7);
 	
 	for(uint8_t i=0; i<7; i++) {
-		rtc[i] = twi_receive();
+		if (twi_available())
+			rtc[i] = twi_receive();
+		else
+			break;
 	}
 	
 	if (twi_end_transmission() != 0) return NULL;
@@ -214,7 +219,10 @@ bool rtc_get_time_s(uint8_t* hour, uint8_t* min, uint8_t* sec)
 	twi_request_from(RTC_ADDR, 7);
 	
 	for(uint8_t i=0; i<7; i++) {
-		rtc[i] = twi_receive();
+		if (twi_available())
+			rtc[i] = twi_receive();
+		else
+			break;
 	}
 	
 	if (twi_end_transmission() != 0) return false;
@@ -306,7 +314,7 @@ void ds3231_get_temp_int(int8_t* i, uint8_t* f)
 
 	twi_request_from(RTC_ADDR, 2);
 
-	if (twi_available()) {
+	if (twi_available() >= 2) {
 		msb = twi_receive(); // integer part (in twos complement)
 		lsb = twi_receive(); // fraction part
     	
@@ -330,7 +338,9 @@ void rtc_force_temp_conversion(uint8_t block)
 	twi_end_transmission();
 
 	twi_request_from(RTC_ADDR, 1);
-	uint8_t ctrl = twi_receive();
+	uint8_t ctrl = 0;
+	if (twi_available())
+		ctrl = twi_receive();
 
 	ctrl |= 0b00100000; // Set CONV bit
 
@@ -348,8 +358,9 @@ void rtc_force_temp_conversion(uint8_t block)
 		twi_begin_transmission(RTC_ADDR);
 		twi_send_byte(0x0E);
 		twi_end_transmission();
+		if (twi_available())
 		twi_request_from(RTC_ADDR, 1);
-	} while ((twi_receive() & 0b00100000) != 0);
+	} while (twi_available() && (twi_receive() & 0b00100000) != 0);
 }
 
 
@@ -379,7 +390,9 @@ uint8_t rtc_get_sram_byte(uint8_t offset)
 	twi_end_transmission();
 
 	twi_request_from(RTC_ADDR, 1);
-	return twi_receive();
+	if (twi_available())
+		return twi_receive();
+	return 0;
 }
 
 void rtc_set_sram_byte(uint8_t b, uint8_t offset)
@@ -399,7 +412,9 @@ void rtc_SQW_enable(bool enable)
 		
 		// read control
    		twi_request_from(RTC_ADDR, 1);
-		uint8_t control = twi_receive();
+		uint8_t control = 0;
+		if (twi_available())
+			control = twi_receive();
 
 		if (enable)
 			control |=  0b00010000; // set SQWE to 1
@@ -420,7 +435,9 @@ void rtc_SQW_enable(bool enable)
 		
 		// read control
    		twi_request_from(RTC_ADDR, 1);
-		uint8_t control = twi_receive();
+		uint8_t control = 0;
+		if (twi_available())
+			control = twi_receive();
 
 		if (enable) {
 			control |=  0b01000000; // set BBSQW to 1
@@ -447,7 +464,9 @@ void rtc_SQW_set_freq(enum RTC_SQW_FREQ freq)
 		
 		// read control (uses bits 0 and 1)
    		twi_request_from(RTC_ADDR, 1);
-		uint8_t control = twi_receive();
+		uint8_t control = 0;
+		if (twi_available())
+			control = twi_receive();
 
 		control &= ~0b00000011; // Set to 0
 		control |= freq; // Set freq bitmask
@@ -466,7 +485,9 @@ void rtc_SQW_set_freq(enum RTC_SQW_FREQ freq)
 		
 		// read control (uses bits 3 and 4)
    		twi_request_from(RTC_ADDR, 1);
-		uint8_t control = twi_receive();
+		uint8_t control = 0;
+		if (twi_available())
+			control = twi_receive();
 
 		control &= ~0b00011000; // Set to 0
 		control |= (freq << 4); // Set freq bitmask
@@ -489,7 +510,9 @@ void rtc_osc32kHz_enable(bool enable)
 
 	// read status
 	twi_request_from(RTC_ADDR, 1);
-	uint8_t status = twi_receive();
+	uint8_t status = 0;
+	if (twi_available())
+		status = twi_receive();
 
 	if (enable)
 		status |= 0b00001000; // set to 1
