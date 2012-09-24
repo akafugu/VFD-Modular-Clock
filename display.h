@@ -83,6 +83,7 @@ void show_setting_string(char* short_str, char* long_str, char* value, bool show
 void show_setting_int(char* short_str, char* long_str, int value, bool show_setting);
 void show_set_time(void);
 void show_set_alarm(void);
+void show_alarm_text(void);
 
 void set_string(char* str);
 void set_char_at(char c, uint8_t offset);

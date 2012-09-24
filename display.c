@@ -1,4 +1,4 @@
-/*
+ /*
  * VFD Modular Clock
  * (C) 2011 Akafugu Corporation
  *
@@ -36,6 +36,7 @@ uint8_t calculate_segments_7(uint8_t character);
 
 enum shield_t shield = SHIELD_NONE;
 uint8_t digits = 6;
+uint8_t mpx_count = 8;  // wm
 volatile char data[8]; // Digit data
 uint8_t us_counter = 0; // microsecond counter
 uint8_t multiplex_counter = 0;
@@ -71,25 +72,34 @@ void detect_shield(void)
 		 ((SIGNATURE_PIN & _BV(SIGNATURE_BIT_1)) ? 0b10  : 0) |
 		 ((SIGNATURE_PIN & _BV(SIGNATURE_BIT_2)) ? 0b100 : 0 ));
 
-	if (sig == 1) { // IV-17 shield
-		shield = SHIELD_IV17;
-		digits = 4;
-		g_has_dots = false;
-	}
-	else if (sig == 2) { // IV-6 shield
-		shield = SHIELD_IV6;
-		digits = 6;
-		g_has_dots = true;
-	}
-	else if (sig == 6) { // IV-22 shield
-		shield = SHIELD_IV22;
-		digits = 4;
-		g_has_dots = true;
-	}
-	else { // IV-18 shield
-		shield = SHIELD_IV18;
-		digits = 8;
-		g_has_dots = true;
+	switch (sig) {
+		case(1):  // IV-17 shield
+			shield = SHIELD_IV17;
+			digits = 4;
+			mpx_count = 4;
+			g_has_dots = false;
+			break;
+		case(2):  // IV-6 shield
+			shield = SHIELD_IV6;
+			digits = 6;
+			mpx_count = 8;
+			g_has_dots = true;
+			break;
+		case(6):  // IV-22 shield
+			shield = SHIELD_IV22;
+			digits = 4;
+			mpx_count = 8;
+			g_has_dots = true;
+			break;
+		case(7):  // IV-18 shield (note: save value as no shield - all bits on)
+			shield = SHIELD_IV18;
+			digits = 8;
+			mpx_count = 7; 
+			g_has_dots = true;
+			break;
+		default:
+			shield = SHIELD_NONE;
+			break;
 	}
 }
 
@@ -152,178 +162,154 @@ void set_blink(bool on)
 	if (!blink) display_on = 1;
 }
 
-// display multiplexing routine for 4 digits: run once every 5us
+// display multiplexing routine for 4 digits: run once every 1 ms
 void display_multiplex_iv17(void)
 {
-	if (multiplex_counter == 0) {
-		clear_display();
-		write_vfd_iv17(0, calculate_segments_16(display_on ? data[0] : ' '));
+	clear_display();
+	switch (multiplex_counter) {
+		case 0:
+			write_vfd_iv17(0, calculate_segments_16(display_on ? data[0] : ' '));
+			break;
+		case 1:
+			write_vfd_iv17(1, calculate_segments_16(display_on ? data[1] : ' '));
+			break;
+		case 2:
+			write_vfd_iv17(2, calculate_segments_16(display_on ? data[2] : ' '));
+			break;
+		case 3:
+			write_vfd_iv17(3, calculate_segments_16(display_on ? data[3] : ' '));
+			break;
 	}
-	else if (multiplex_counter == 1) {
-		clear_display();
-		write_vfd_iv17(1, calculate_segments_16(display_on ? data[1] : ' '));
-	}
-	else if (multiplex_counter == 2) {
-		clear_display();
-		write_vfd_iv17(2, calculate_segments_16(display_on ? data[2] : ' '));
-	}
-	else if (multiplex_counter == 3) {
-		clear_display();
-		write_vfd_iv17(3, calculate_segments_16(display_on ? data[3] : ' '));
-	}
-	else {
-		clear_display();
-	}
-
 	multiplex_counter++;
-
-	// high brightness
-	if (multiplex_counter == 4 && g_brightness % 2 == 1) multiplex_counter = 0;
-	// low brightness
-	if (multiplex_counter == 8) multiplex_counter = 0;
+	// g_brightness == 1 thru 10
+	if (multiplex_counter == (4 + (18 - (g_brightness-1)*2))) multiplex_counter = 0;
 }
 
-// display multiplexing routine for IV6 shield: run once every 5us
+// display multiplexing routine for IV6 shield: run once every 2ms
 void display_multiplex_iv6(void)
 {
-	if (multiplex_counter == 0) {
-		clear_display();
-		write_vfd_iv6(0, calculate_segments_7(display_on ? data[0] : ' '));
+	clear_display();
+	switch (multiplex_counter) {
+		case 0:
+			write_vfd_iv6(0, calculate_segments_7(display_on ? data[0] : ' '));
+			break;
+		case 1:
+			write_vfd_iv6(1, calculate_segments_7(display_on ? data[1] : ' '));
+			break;
+		case 2:
+			write_vfd_iv6(2, calculate_segments_7(display_on ? data[2] : ' '));
+			break;
+		case 3:
+			write_vfd_iv6(3, calculate_segments_7(display_on ? data[3] : ' '));
+			break;
+		case 4:
+			write_vfd_iv6(4, calculate_segments_7(display_on ? data[4] : ' '));
+			break;
+		case 5:
+			write_vfd_iv6(5, calculate_segments_7(display_on ? data[5] : ' '));
+			break;
 	}
-	else if (multiplex_counter == 1) {
-		clear_display();
-		write_vfd_iv6(1, calculate_segments_7(display_on ? data[1] : ' '));
-	}
-	else if (multiplex_counter == 2) {
-		clear_display();
-		write_vfd_iv6(2, calculate_segments_7(display_on ? data[2] : ' '));
-	}
-	else if (multiplex_counter == 3) {
-		clear_display();
-		write_vfd_iv6(3, calculate_segments_7(display_on ? data[3] : ' '));
-	}
-	else if (multiplex_counter == 4) {
-		clear_display();
-		write_vfd_iv6(4, calculate_segments_7(display_on ? data[4] : ' '));
-	}
-	else if (multiplex_counter == 5) {
-		clear_display();
-		write_vfd_iv6(5, calculate_segments_7(display_on ? data[5] : ' '));
-	}
-	else {
-		clear_display();
-	}
-	
 	multiplex_counter++;
-	
 	if (multiplex_counter == 6) multiplex_counter = 0;
 }
 
-// display multiplexing routine for IV6 shield: run once every 5us
+// display multiplexing routine for IV6 shield: run once every 2ms
 void display_multiplex_iv18(void)
 {
-	if (multiplex_counter == 0) {
-		clear_display();
-		write_vfd_iv18(0, calculate_segments_7(display_on ? data[7] : ' '));
+	clear_display();
+	switch (multiplex_counter) {
+		case 0:
+			write_vfd_iv18(0, calculate_segments_7(display_on ? data[7] : ' '));
+			break;
+		case 1:
+			write_vfd_iv18(1, calculate_segments_7(display_on ? data[6] : ' '));
+			break;
+		case 2:
+			write_vfd_iv18(2, calculate_segments_7(display_on ? data[5] : ' '));
+			break;
+		case 3:
+			write_vfd_iv18(3, calculate_segments_7(display_on ? data[4] : ' '));
+			break;
+		case 4:
+			write_vfd_iv18(4, calculate_segments_7(display_on ? data[3] : ' '));
+			break;
+		case 5:
+			write_vfd_iv18(5, calculate_segments_7(display_on ? data[2] : ' '));
+			break;
+		case 6:
+			write_vfd_iv18(6, calculate_segments_7(display_on ? data[1] : ' '));
+			break;
+		case 7:
+			write_vfd_iv18(7, calculate_segments_7(display_on ? data[0] : ' '));
+			break;
+		case 8:  // show alarm switch status
+			if (g_alarm_switch)
+				write_vfd_iv18(8, (1<<7));
+			else
+				write_vfd_iv18(8, 0);
+			break;
 	}
-	else if (multiplex_counter == 1) {
-		clear_display();
-		write_vfd_iv18(1, calculate_segments_7(display_on ? data[6] : ' '));
-	}
-	else if (multiplex_counter == 2) {
-		clear_display();
-		write_vfd_iv18(2, calculate_segments_7(display_on ? data[5] : ' '));
-	}
-	else if (multiplex_counter == 3) {
-		clear_display();
-		write_vfd_iv18(3, calculate_segments_7(display_on ? data[4] : ' '));
-	}
-	else if (multiplex_counter == 4) {
-		clear_display();
-		write_vfd_iv18(4, calculate_segments_7(display_on ? data[3] : ' '));
-	}
-	else if (multiplex_counter == 5) {
-		clear_display();
-		write_vfd_iv18(5, calculate_segments_7(display_on ? data[2] : ' '));
-	}
-	else if (multiplex_counter == 6) {
-		clear_display();
-		write_vfd_iv18(6, calculate_segments_7(display_on ? data[1] : ' '));
-	}
-	else if (multiplex_counter == 7) {
-		clear_display();
-		write_vfd_iv18(7, calculate_segments_7(display_on ? data[0] : ' '));
-	}
-	else if (multiplex_counter == 8) {
-		clear_display();
-
-		if (g_alarm_switch)
-			write_vfd_iv18(8, (1<<7));
-		else
-			write_vfd_iv18(8, 0);
-	}
-	else {
-		clear_display();
-	}
-	
 	multiplex_counter++;
-	
 	if (multiplex_counter == 9) multiplex_counter = 0;
 }
 
-// display multiplexing routine for IV6 shield: run once every 5us
+// display multiplexing routine for IV6 shield: run once every 2ms
 void display_multiplex_iv22(void)
 {
-	if (multiplex_counter == 0) {
-		clear_display();
-		write_vfd_iv6(0, calculate_segments_7(display_on ? data[0] : ' '));
+	clear_display();
+	switch (multiplex_counter) {
+		case 0:
+			write_vfd_iv22(0, calculate_segments_7(display_on ? data[0] : ' '));
+			break;
+		case 1:
+			write_vfd_iv22(1, calculate_segments_7(display_on ? data[1] : ' '));
+			break;
+		case 2:
+			write_vfd_iv22(2, calculate_segments_7(display_on ? data[2] : ' '));
+			break;
+		case 3:
+			write_vfd_iv22(3, calculate_segments_7(display_on ? data[3] : ' '));
+			break;
 	}
-	else if (multiplex_counter == 1) {
-		clear_display();
-		write_vfd_iv6(1, calculate_segments_7(display_on ? data[1] : ' '));
-	}
-	else if (multiplex_counter == 2) {
-		clear_display();
-		write_vfd_iv6(2, calculate_segments_7(display_on ? data[2] : ' '));
-	}
-	else if (multiplex_counter == 3) {
-		clear_display();
-		write_vfd_iv6(3, calculate_segments_7(display_on ? data[3] : ' '));
-	}
-	else {
-		clear_display();
-	}
-
 	multiplex_counter++;
-
 	if (multiplex_counter == 4) multiplex_counter = 0;
 }
 
 void display_multiplex(void)
 {
-	if (shield == SHIELD_IV6)
-		display_multiplex_iv6();
-	else if (shield == SHIELD_IV17)
-		display_multiplex_iv17();
-	else if (shield == SHIELD_IV18)
-		display_multiplex_iv18();
-	else if (shield == SHIELD_IV22)
-		display_multiplex_iv22();
+	switch (shield) {
+		case SHIELD_IV6:
+			display_multiplex_iv6();
+			break;
+		case SHIELD_IV17:
+			display_multiplex_iv17();
+			break;
+		case SHIELD_IV18:
+			display_multiplex_iv18();
+			break;
+		case SHIELD_IV22:
+			display_multiplex_iv22();
+			break;
+		default:
+			break;
+	}
 }
 
 void button_timer(void);
 uint8_t interrupt_counter = 0;
 uint16_t button_counter = 0;
 
-// 1 click = 1us. Overflow every 255 us
+// 1 click = 1us. Overflow every 256 us
+// (3906.25 times a second)
+ 
 ISR(TIMER0_OVF_vect)
 {
 	// control blinking: on time is slightly longer than off time
-	if (blink && display_on && ++blink_counter >= 0x900) {
+	if (blink && display_on && ++blink_counter >= 0x900) {  // on time 0.5898 seconds
 		display_on = false;
 		blink_counter = 0;
 	}
-	else if (blink && !display_on && ++blink_counter >= 0x750) {
+	else if (blink && !display_on && ++blink_counter >= 0x750) {  // off time 0.4792 seconds
 		display_on = true;
 		blink_counter = 0;
 	}
@@ -334,17 +320,19 @@ ISR(TIMER0_OVF_vect)
 		button_counter = 0;
 	}
 	
-	// display multiplex
-	if (++interrupt_counter == 9) {
-		display_multiplex();
+	// display multiplex - 
+//	if (++interrupt_counter == 9) {  // wm
+	if (++interrupt_counter == mpx_count) {  // every 0.002048 seconds, 0.001024 for iv-17
+		display_multiplex();  
 		interrupt_counter = 0;
 	}
 
-	// display multiplex (IV-18 shield)
-	if (shield == SHIELD_IV18 && ++interrupt_counter == 7) {
-		display_multiplex_iv18();
-		interrupt_counter = 0;
-	}
+// IV-18 done twice??? See display_multiplex()
+//	// display multiplex (IV-18 shield)  
+//	if (shield == SHIELD_IV18 && ++interrupt_counter == 7) {
+//		display_multiplex_iv18();
+//		interrupt_counter = 0;
+//	}
 }
 
 // utility functions
@@ -360,6 +348,18 @@ uint8_t print_ch(char ch, uint8_t offset)
 {
 	data[offset++] = ch;
 	return offset;
+}
+
+uint8_t print_hour(uint8_t num, uint8_t offset, bool _24h_clock)
+{
+	data[offset+1] = num % 10;  // units
+	//num /= 10;
+	uint8_t h2 = num / 10 % 10;  // tens
+	data[offset] = h2;
+	if (!_24h_clock && (h2 == 0)) {
+		data[offset] = ' ';  // blank leading zero
+	}
+	return offset+2;
 }
 
 uint8_t print_strn(char* str, uint8_t offset, uint8_t n)
@@ -413,18 +413,18 @@ void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
 				offset = print_ch('P', offset);
 			else
 				offset = print_ch(' ', offset); 
-			offset = print_digits(hour, offset);
+			offset = print_hour(hour, offset, _24h_clock);  // wm
 			offset = print_digits(t->min, offset);
 			offset = print_digits(t->sec, offset);
 			offset = print_ch(' ', offset);
 		}
 		else if (digits == 6) { // "HH.MM.SS"
-			offset = print_digits(hour, offset);
+			offset = print_hour(hour, offset, _24h_clock);  // wm
 			offset = print_digits(t->min, offset);
 			offset = print_digits(t->sec, offset);			
 		}
 		else { // HH.MM
-			offset = print_digits(hour, offset);
+			offset = print_hour(hour, offset, _24h_clock);  // wm
 			offset = print_digits(t->min, offset);
 		}
 	}
@@ -595,6 +595,44 @@ void show_set_alarm(void)
 		set_string("Alarm");
 	else
 		set_string("Alrm");
+}
+
+void show_alarm_text(void)
+{
+	if (get_digits() == 8)
+		set_string("Alarm   ");
+	else if (get_digits() == 6)
+		set_string("Alarm");
+	else
+		set_string("Alrm");
+}
+
+void show_alarm_time(uint8_t hour, uint8_t min, uint8_t sec)
+{
+	if (get_digits() == 8) {
+		dots = 1<<2;
+		uint8_t offset = 4;
+
+		data[0] = 'A';
+		data[1] = 'l';
+		data[2] = 'r';
+		data[3] = ' ';
+		offset = print_digits(hour, offset);
+		offset = print_digits(min, offset);		
+	}
+	else {
+		show_time_setting(hour, min, 0);
+	}
+}
+
+void show_alarm_off(void)
+{
+	if (get_digits() == 8) {
+		set_string("Alrm off");
+	}
+	else {
+		set_string(" off");
+	}
 }
 
 // Write 8 bits to HV5812 driver

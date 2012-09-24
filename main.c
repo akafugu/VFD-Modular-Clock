@@ -13,6 +13,24 @@
  *
  */
 
+/* Updates by William B Phelps
+ *
+ * 02sep12 - post to Github
+ *
+ * 28aug12 - clean up display multiplex code
+ *
+ * 27aug12 - 10 step brightness for IV-17
+ *
+ * 26aug12 - display "off" after "alarm" if alarm switch off
+ *
+ * 25aug12 - change Menu timeout to ~2 seconds
+ * show Alarm time when Alarm switch is set to enable the alarm
+ * get time from RTC every 200 ms instead of every 150 ms
+ * blank hour leading zero if not 24 hr display mode
+ * minor typos & cleanup
+ *
+ */
+ 
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -63,6 +81,7 @@ uint8_t g_volume = 0;
 uint8_t g_has_dots = false; // can current shield show dot (decimal points)
 uint8_t g_alarming = false; // alarm is going off
 uint8_t g_alarm_switch;
+uint8_t g_show_special_cnt = 0;  // display something special ("time", "alarm", etc)
 struct tm* t = NULL; // for holding RTC values
 
 extern enum shield_t shield;
@@ -118,41 +137,12 @@ void initialize(void)
 	PCMSK2 |= (1 << PCINT18);
 }
 
-// Alarm switch changed interrupt
-ISR( PCINT2_vect )
-{
-	if ( (SWITCH_PIN & _BV(SWITCH_BIT)) == 0)
-		g_alarm_switch = false;
-	else
-		g_alarm_switch = true;
-}
-
-void read_rtc(bool show_extra_info)
-{
-	static uint16_t counter = 0;
-	
-	if(g_show_temp && rtc_is_ds3231() && counter > 125) {
-		int8_t t;
-		uint8_t f;
-		ds3231_get_temp_int(&t, &f);
-		show_temp(t, f);
-	}
-	else {
-		t = rtc_get_time();
-		if (t == NULL) return;
-		show_time(t, g_24h_clock, show_extra_info);
-	}
-
-	counter++;
-	if (counter == 250) counter = 0;
-}
-
 struct BUTTON_STATE buttons;
 
 // menu states
 typedef enum {
 	// basic states
-	STATE_CLOCK = 0,
+	STATE_CLOCK = 0,  // show clock time
 	STATE_SET_CLOCK,
 	STATE_SET_ALARM,
 	// menu
@@ -162,18 +152,69 @@ typedef enum {
 	STATE_MENU_TEMP,
 	STATE_MENU_DOTS,
 	STATE_MENU_LAST,
-} state_t;
+} menu_state_t;
 
-state_t clock_state = STATE_CLOCK;
+menu_state_t menu_state = STATE_CLOCK;
 
 // display modes
 typedef enum {
 	MODE_NORMAL = 0, // normal mode: show time/seconds
 	MODE_AMPM, // shows time AM/PM
-	MODE_LAST,
+	MODE_LAST,  // end of display modes for right button pushes
+	MODE_ALARM_TEXT,  // show "alarm" (wm)
+	MODE_ALARM_TIME,  // show alarm time (wm)
 } display_mode_t;
 
 display_mode_t clock_mode = MODE_NORMAL;
+
+// Alarm switch changed interrupt
+ISR( PCINT2_vect )
+{
+	if ( (SWITCH_PIN & _BV(SWITCH_BIT)) == 0)
+		g_alarm_switch = false;
+	else {
+		g_alarm_switch = true;
+		}
+	g_show_special_cnt = 100;  // show alarm text for 1 second
+
+	if (get_digits() == 8)
+		clock_mode = MODE_ALARM_TIME;
+	else
+		clock_mode = MODE_ALARM_TEXT;
+}
+
+void read_rtc(display_mode_t mode)  // (wm)  runs approx every 100 ms
+{
+	static uint16_t counter = 0;
+	uint8_t hour = 0, min = 0, sec = 0;
+	
+	if (mode == MODE_ALARM_TEXT) {
+		show_alarm_text();
+	}
+	else if (mode == MODE_ALARM_TIME) {
+		if (g_alarm_switch) {
+			rtc_get_alarm_s(&hour, &min, &sec);
+			show_alarm_time(hour, min, 0);
+		}
+		else {
+			show_alarm_off();
+		}
+	}
+	else if(g_show_temp && rtc_is_ds3231() && counter > 125) {
+		int8_t t;
+		uint8_t f;
+		ds3231_get_temp_int(&t, &f);
+		show_temp(t, f);
+	}
+	else {
+		t = rtc_get_time();
+		if (t == NULL) return;
+		show_time(t, g_24h_clock, mode);  // (wm)
+	}
+
+	counter++;
+	if (counter == 250) counter = 0;
+}
 
 #include "piezo.h"
 
@@ -209,20 +250,38 @@ void main(void)
 	uint16_t button_released_timer = 0;
 	uint16_t button_speed = 25;
 	
-	set_string("--------");
+	switch (shield) {
+		case(SHIELD_IV6):
+			set_string("IV-6");
+			break;
+		case(SHIELD_IV17):
+			set_string("IV17");
+			break;
+		case(SHIELD_IV18):
+			set_string("IV18");
+			break;
+		case(SHIELD_IV22):
+			set_string("IV22");
+			break;
+		default:
+			break;
+	}
 
 	piezo_init();
 	beep(500, 1);
 	beep(1000, 1);
 	beep(500, 1);
 
+	_delay_ms(500);
+	set_string("--------");
+	
 	while (1) {
 		get_button_state(&buttons);
 		
 		// When alarming:
 		// any button press cancels alarm
 		if (g_alarming) {
-			read_rtc(clock_mode);
+			read_rtc(clock_mode);  // read and display time (??)
 
 			// fixme: if keydown is detected here, wait for keyup and clear state
 			// this prevents going into the menu when disabling the alarm
@@ -238,16 +297,16 @@ void main(void)
 		// If both buttons are held:
 		//  * If the ALARM BUTTON SWITCH is on the LEFT, go into set time mode
 		//  * If the ALARM BUTTON SWITCH is on the RIGHT, go into set alarm mode
-		else if (clock_state == STATE_CLOCK && buttons.both_held) {
+		else if (menu_state == STATE_CLOCK && buttons.both_held) {
 			if (g_alarm_switch) {
-				clock_state = STATE_SET_ALARM;
+				menu_state = STATE_SET_ALARM;
 				show_set_alarm();
 				rtc_get_alarm_s(&hour, &min, &sec);
 				time_to_set = hour*60 + min;
 			}
 			else {
-				clock_state = STATE_SET_CLOCK;
-				show_set_time();				
+				menu_state = STATE_SET_CLOCK;
+				show_set_time();		
 				rtc_get_time_s(&hour, &min, &sec);
 				time_to_set = hour*60 + min;
 			}
@@ -263,7 +322,7 @@ void main(void)
 			}
 		}
 		// Set time or alarm
-		else if (clock_state == STATE_SET_CLOCK || clock_state == STATE_SET_ALARM) {
+		else if (menu_state == STATE_SET_CLOCK || menu_state == STATE_SET_ALARM) {
 			// Check if we should exit STATE_SET_CLOCK or STATE_SET_ALARM
 			if (buttons.none_held) {
 				set_blink(true);
@@ -283,12 +342,12 @@ void main(void)
 				button_speed = 1;
 				
 				// fixme: should be different in 12h mode
-				if (clock_state == STATE_SET_CLOCK)
+				if (menu_state == STATE_SET_CLOCK)
 					rtc_set_time_s(time_to_set / 60, time_to_set % 60, 0);
 				else
 					rtc_set_alarm_s(time_to_set / 60, time_to_set % 60, 0);
 
-				clock_state = STATE_CLOCK;
+				menu_state = STATE_CLOCK;
 			}
 			
 			// Increase / Decrease time counter
@@ -303,29 +362,32 @@ void main(void)
 			show_time_setting(time_to_set / 60, time_to_set % 60, 0);
 		}
 		// Left button enters menu
-		else if (clock_state == STATE_CLOCK && buttons.b2_keyup) {
-			clock_state = STATE_MENU_BRIGHTNESS;
+		else if (menu_state == STATE_CLOCK && buttons.b2_keyup) {
+			menu_state = STATE_MENU_BRIGHTNESS;
 			show_setting_int("BRIT", "BRITE", g_brightness, false);
 			buttons.b2_keyup = 0; // clear state
 		}
 		// Right button toggles display mode
-		else if (clock_state == STATE_CLOCK && buttons.b1_keyup) {
+		else if (menu_state == STATE_CLOCK && buttons.b1_keyup) {
 			clock_mode++;
+//			if (clock_mode == MODE_ALARM_TEXT)  g_show_special_cnt = 100;  // show alarm text for 1 second
+//			if (clock_mode == MODE_ALARM_TIME)  g_show_special_cnt = 100;  // show alarm time for 1 second
 			if (clock_mode == MODE_LAST) clock_mode = MODE_NORMAL;
 			buttons.b1_keyup = 0; // clear state
 		}
-		else if (clock_state >= STATE_MENU_BRIGHTNESS) {
+		else if (menu_state >= STATE_MENU_BRIGHTNESS) {
 			if (buttons.none_held)
 				button_released_timer++;
 			else
 				button_released_timer = 0;
 			
-			if (button_released_timer >= 80) {
+//			if (button_released_timer >= 80) {
+			if (button_released_timer >= 200) {  // 2 seconds (wm)
 				button_released_timer = 0;
-				clock_state = STATE_CLOCK;
+				menu_state = STATE_CLOCK;
 			}
 			
-			switch (clock_state) {
+			switch (menu_state) {
 				case STATE_MENU_BRIGHTNESS:
 					if (buttons.b1_keyup) {
 						g_brightness++;
@@ -335,10 +397,10 @@ void main(void)
 					
 						eeprom_update_byte(&b_brightness, g_brightness);
 					
-						if (shield == SHIELD_IV17)
-							show_setting_string("BRIT", "BRITE", (g_brightness % 2 == 0) ? "  lo" : "  hi", true);
-						else
-							show_setting_int("BRIT", "BRITE", g_brightness, true);
+//						if (shield == SHIELD_IV17)  // wm ???
+//							show_setting_string("BRIT", "BRITE", (g_brightness % 2 == 0) ? "  lo" : "  hi", true);
+//						else
+						show_setting_int("BRIT", "BRITE", g_brightness, true);
 						set_brightness(g_brightness);
 					}
 					break;
@@ -385,17 +447,17 @@ void main(void)
 			}
 
 			if (buttons.b2_keyup) {
-				clock_state++;
+				menu_state++;
 				
 				// show temperature setting only when running on a DS3231
-				if (clock_state == STATE_MENU_TEMP && !rtc_is_ds3231()) clock_state++;
+				if (menu_state == STATE_MENU_TEMP && !rtc_is_ds3231()) menu_state++;
 
 				// don't show dots settings for shields that have no dots
-				if (clock_state == STATE_MENU_DOTS && !g_has_dots) clock_state++;
+				if (menu_state == STATE_MENU_DOTS && !g_has_dots) menu_state++;
 
-				if (clock_state == STATE_MENU_LAST) clock_state = STATE_MENU_BRIGHTNESS;
+				if (menu_state == STATE_MENU_LAST) menu_state = STATE_MENU_BRIGHTNESS;
 				
-				switch (clock_state) {
+				switch (menu_state) {
 					case STATE_MENU_BRIGHTNESS:
 						show_setting_int("BRIT", "BRITE", g_brightness, false);
 						break;
@@ -419,16 +481,33 @@ void main(void)
 			}
 		}
 		else {
-			// read RTC only aprox every 15ms
+			if (g_show_special_cnt>0) {
+				g_show_special_cnt--;
+				if (g_show_special_cnt == 0)
+					switch (clock_mode) {
+						case MODE_ALARM_TEXT:
+							clock_mode = MODE_ALARM_TIME;
+							g_show_special_cnt = 100;
+							break;
+						case MODE_ALARM_TIME:
+							clock_mode = MODE_NORMAL;
+							break;
+						default:
+							clock_mode = MODE_NORMAL;
+					}
+			}
+			// read RTC approx every 200ms  (wm)
 			static uint16_t cnt = 0;
-			if (cnt++ % 15 == 0)
-				read_rtc(clock_mode);
+			if (cnt++ > 19) {
+				read_rtc(clock_mode);  // read RTC and display time
+				cnt = 0;
+				}
 		}
 		
 		// fixme: alarm should not be checked when setting time or alarm
 		if (g_alarm_switch && rtc_check_alarm())
 			g_alarming = true;
 
-		_delay_ms(10);
+		_delay_ms(7);  // roughly 10 ms per loop
 	}
 }
