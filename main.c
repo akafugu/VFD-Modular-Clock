@@ -176,7 +176,11 @@ ISR( PCINT2_vect )
 		g_alarm_switch = true;
 		}
 	g_show_special_cnt = 100;  // show alarm text for 1 second
-	clock_mode = MODE_ALARM_TEXT;
+
+	if (get_digits() == 8)
+		clock_mode = MODE_ALARM_TIME;
+	else
+		clock_mode = MODE_ALARM_TEXT;
 }
 
 void read_rtc(display_mode_t mode)  // (wm)  runs approx every 100 ms
@@ -190,10 +194,10 @@ void read_rtc(display_mode_t mode)  // (wm)  runs approx every 100 ms
 	else if (mode == MODE_ALARM_TIME) {
 		if (g_alarm_switch) {
 			rtc_get_alarm_s(&hour, &min, &sec);
-			show_time_setting(hour, min, 0);
+			show_alarm_time(hour, min, 0);
 		}
 		else {
-			set_string(" off");
+			show_alarm_off();
 		}
 	}
 	else if(g_show_temp && rtc_is_ds3231() && counter > 125) {

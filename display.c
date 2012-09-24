@@ -607,6 +607,34 @@ void show_alarm_text(void)
 		set_string("Alrm");
 }
 
+void show_alarm_time(uint8_t hour, uint8_t min, uint8_t sec)
+{
+	if (get_digits() == 8) {
+		dots = 1<<2;
+		uint8_t offset = 4;
+
+		data[0] = 'A';
+		data[1] = 'l';
+		data[2] = 'r';
+		data[3] = ' ';
+		offset = print_digits(hour, offset);
+		offset = print_digits(min, offset);		
+	}
+	else {
+		show_time_setting(hour, min, 0);
+	}
+}
+
+void show_alarm_off(void)
+{
+	if (get_digits() == 8) {
+		set_string("Alrm off");
+	}
+	else {
+		set_string(" off");
+	}
+}
+
 // Write 8 bits to HV5812 driver
 void write_vfd_8bit(uint8_t data)
 {
