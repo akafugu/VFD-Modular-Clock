@@ -18,11 +18,12 @@
 
 #include <stdbool.h>
 #include <avr/io.h>
+#include "Time.h"
 #include "twi.h"
 
 #define DS1307_SLAVE_ADDR 0b11010000
 
-/** Time structure
+/** Time structure - removed in lieu of using Arduino Time.h structures
  * 
  * Both 24-hour and 12-hour time is stored, and is always updated when rtc_get_time is called.
  * 
@@ -38,22 +39,19 @@
  * and translation has to be done manually (you can call rtc_24h_to_12h to perform the calculation)
  *
  */
-struct tm {
-	int sec;      // 0 to 59
-	int min;      // 0 to 59
-	int hour;     // 0 to 23
-	int mday;     // 1 to 31
-	int mon;      // 1 to 12
-	int year;     // year-99
-	int wday;     // 1-7
+// struct tm {
+	// int sec;      // 0 to 59
+	// int min;      // 0 to 59
+	// int hour;     // 0 to 23
+	// int mday;     // 1 to 31
+	// int mon;      // 1 to 12
+	// int year;     // year-99
+	// int wday;     // 1-7
 
-    // 12-hour clock data
-    bool am; // true for AM, false for PM
-    int twelveHour; // 12 hour clock time
-};
-
-// statically allocated 
-extern struct tm _tm;
+// //  // 12-hour clock data 
+// //  int twelveHour; // 12 hour clock time
+// //  bool am; // true for AM, false for PM
+// };
 
 // Initialize the RTC and autodetect type (DS1307 or DS3231)
 void rtc_init(void);
@@ -67,13 +65,17 @@ void rtc_set_ds3231(void);
 
 // Get/set time
 // Gets the time: Supports both 24-hour and 12-hour mode
-struct tm* rtc_get_time(void);
+TimeElements* rtc_get_time(void);
 // Gets the time: 24-hour mode only
 bool rtc_get_time_s(uint8_t* hour, uint8_t* min, uint8_t* sec);
+// Gets the time and returns time_t value
+time_t rtc_get_time_t(void);
 // Sets the time: Supports both 24-hour and 12-hour mode
-void rtc_set_time(struct tm* tm_);
+void rtc_set_time(TimeElements* te);
 // Sets the time: Supports 12-hour mode only
 void rtc_set_time_s(uint8_t hour, uint8_t min, uint8_t sec);
+// Sets the time from time_t value
+void rtc_set_time_t(time_t tSet);
 
 // start/stop clock running (DS1307 only)
 void rtc_run_clock(bool run);
@@ -98,9 +100,9 @@ void rtc_osc32kHz_enable(bool enable);
 
 // Alarm functionality
 void rtc_reset_alarm(void);
-void rtc_set_alarm(struct tm* tm_);
+void rtc_set_alarm(TimeElements* te);
 void rtc_set_alarm_s(uint8_t hour, uint8_t min, uint8_t sec);
-struct tm* rtc_get_alarm(void);
+TimeElements* rtc_get_alarm(void);
 void rtc_get_alarm_s(uint8_t* hour, uint8_t* min, uint8_t* sec);
 bool rtc_check_alarm(void);  
 

@@ -26,11 +26,12 @@ SRCS = main.c \
 	display.c \
 	font-16seg.c \
 	font-7seg.c \
+	gps.c \
 	twi.c \
 	twi-lowlevel.c \
 	rtc.c \
-	piezo.c
-
+	piezo.c \
+	Time.c
 # Default values
 FEATURE_SET_TIME ?= YES
 FEATURE_CHARACTERS ?= YES
@@ -94,6 +95,8 @@ CFLAGS += -g -O$(OPT) \
 LDFLAGS = -Wl-Map=$(TARGET).map,--cref
 
 all: $(TARGET).elf size
+
+hex: $(TARGET).hex $(TARGET).eep
 
 size: $(TARGET).elf
 	$(SILENT) $(SIZE) -C --mcu=$(MCU) $(TARGET).elf 
@@ -170,6 +173,8 @@ ifneq ($(AVRDUDE_PROGRAMMER), )
 flash: $(TARGET).hex $(TARGET).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:$(TARGET).hex -U eeprom:w:$(TARGET).eep
 
+program: flash
+
 fuse:
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FUSE) 
 
@@ -185,6 +190,8 @@ else
 FLASH_MSG="You need to set AVRDUDE_PROGRAMMER/AVRDUDE_PORT/AVRDUDE_SPEED in ~/user.mk"
 flash:
 	@echo $(FLASH_MSG)
+
+program: flash
 
 fuse:
 	@echo $(FLASH_MSG)

@@ -18,6 +18,8 @@
 
 #include <stdbool.h>
 #include <avr/io.h>
+#include "Time.h"
+#include "rtc.h"  
 
 // HV5812 Data In
 #define DATA_BIT PB3
@@ -67,16 +69,19 @@
 #define SIGNATURE_BIT_1 PD4
 #define SIGNATURE_BIT_2 PD5
 
-struct tm;
+//struct tm;
+uint8_t interrupt_counter;
+uint8_t scroll_ctr;
 
 void display_init(uint8_t brightness);
 int get_digits(void);
 void detect_shield(void);
 
-// functions for showing current time and temperature
-void show_time(struct tm* t, bool _24h_clock, uint8_t mode);
+// functions for showing current time, date, and temperature
+void show_time(tmElements_t* te, bool _24h_clock, uint8_t mode);
 void show_time_setting(uint8_t hour, uint8_t min, uint8_t sec);
 void show_temp(int8_t t, uint8_t f);
+void show_date(tmElements_t* te, uint8_t region);
 
 // functions for showing settings
 void show_setting_string(char* short_str, char* long_str, char* value, bool show_setting);
@@ -84,6 +89,8 @@ void show_setting_int(char* short_str, char* long_str, int value, bool show_sett
 void show_set_time(void);
 void show_set_alarm(void);
 void show_alarm_text(void);
+void show_alarm_time(uint8_t hour, uint8_t min, uint8_t sec);
+void show_alarm_off(void);
 
 void set_string(char* str);
 void set_char_at(char c, uint8_t offset);

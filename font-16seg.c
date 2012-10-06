@@ -286,6 +286,9 @@ uint16_t calculate_segments_16(uint8_t character)
 		case '>':
 			segments = (1<<H)|(1<<M);
 			break;
+		case '/':
+			segments = (1<<J)|(1<<M);
+			break;
 		case '*':
 		default:
 			segments = (1<<H)|(1<<I)|(1<<J)|(1<<K)|(1<<L)|(1<<M)|(1<<G1)|(1<<G2);

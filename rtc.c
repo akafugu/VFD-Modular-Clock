@@ -80,7 +80,8 @@
 #define CH_BIT 7 // clock halt bit
 
 // statically allocated structure for time value
-struct tm _tm;
+//struct tm _tm;
+TimeElements _te;  // 25sep12/wbp
 
 uint8_t dec2bcd(uint8_t d)
 {
@@ -99,9 +100,7 @@ uint8_t rtc_read_byte(uint8_t offset)
 	twi_end_transmission();
 
 	twi_request_from(RTC_ADDR, 1);
-	if (twi_available())
-		return twi_receive();
-	return 0;
+	return twi_receive();
 }
 
 void rtc_write_byte(uint8_t b, uint8_t offset)
@@ -153,7 +152,7 @@ bool rtc_is_ds3231(void) { return s_is_ds3231; }
 void rtc_set_ds1307(void) { s_is_ds1307 = true;   s_is_ds3231 = false; }
 void rtc_set_ds3231(void) { s_is_ds1307 = false;  s_is_ds3231 = true;  }
 
-struct tm* rtc_get_time(void)
+TimeElements* rtc_get_time(void)
 {
 	uint8_t rtc[9];
 
@@ -166,10 +165,7 @@ struct tm* rtc_get_time(void)
 	twi_request_from(RTC_ADDR, 7);
 	
 	for(uint8_t i=0; i<7; i++) {
-		if (twi_available())
-			rtc[i] = twi_receive();
-		else
-			break;
+		rtc[i] = twi_receive();
 	}
 	
 	if (twi_end_transmission() != 0) return NULL;
@@ -178,32 +174,32 @@ struct tm* rtc_get_time(void)
 	// This starts the clock for a DS1307, and has no effect for a DS3231
 	rtc[0] &= ~(_BV(CH_BIT)); // clear bit
 
-	_tm.sec  = bcd2dec(rtc[0]);
-	_tm.min  = bcd2dec(rtc[1]);
-	_tm.hour = bcd2dec(rtc[2]);
-	_tm.mday = bcd2dec(rtc[4]);
-	_tm.mon  = bcd2dec(rtc[5]); // returns 1-12
-	_tm.year = bcd2dec(rtc[6]); // year 0-99
-	_tm.wday = bcd2dec(rtc[3]); // returns 1-7
+	_te.Second  = bcd2dec(rtc[0]);
+	_te.Minute  = bcd2dec(rtc[1]);
+	_te.Hour = bcd2dec(rtc[2]);
+	_te.Wday = bcd2dec(rtc[3]); // DOW 1-7
+	_te.Day = bcd2dec(rtc[4]);  // day 1-31
+	_te.Month  = bcd2dec(rtc[5]); // month 1-12
+	_te.Year = bcd2dec(rtc[6]); // year 0-99
 	
-	if (_tm.hour == 0) {
-		_tm.twelveHour = 12;
-		_tm.am = 1;
-	}
-	else if (_tm.hour < 12) {
-		_tm.twelveHour = _tm.hour;
-		_tm.am = 1;
-	}
-	else if (_tm.hour == 12) {
-		_tm.twelveHour = 12;
-		_tm.am = 0;
-	}
-	else {
-		_tm.twelveHour = _tm.hour - 12;
-		_tm.am = 0;
-	}
+	// if (_tm.hour == 0) {
+		// _tm.twelveHour = 12;
+		// _tm.am = true;
+	// }
+	// else if (_tm.hour < 12) {
+		// _tm.twelveHour = _tm.hour;
+		// _tm.am = true;
+	// }
+	// else if (_tm.hour == 12) {
+		// _tm.twelveHour = 12;
+		// _tm.am = false;
+	// }
+	// else {
+		// _tm.twelveHour = _tm.hour - 12;
+		// _tm.am = false;
+	// }
 	
-	return &_tm;
+	return &_te;
 }
 
 bool rtc_get_time_s(uint8_t* hour, uint8_t* min, uint8_t* sec)
@@ -219,15 +215,11 @@ bool rtc_get_time_s(uint8_t* hour, uint8_t* min, uint8_t* sec)
 	twi_request_from(RTC_ADDR, 7);
 	
 	for(uint8_t i=0; i<7; i++) {
-		if (twi_available())
-			rtc[i] = twi_receive();
-		else
-			break;
+		rtc[i] = twi_receive();
 	}
 	
 	if (twi_end_transmission() != 0) return false;
 
-	
 	if (sec)  *sec =  bcd2dec(rtc[0]);
 	if (min)  *min =  bcd2dec(rtc[1]);
 	if (hour) *hour = bcd2dec(rtc[2]);
@@ -235,20 +227,56 @@ bool rtc_get_time_s(uint8_t* hour, uint8_t* min, uint8_t* sec)
 	return true;
 }
 
+time_t rtc_get_time_t(void)
+{
+	uint8_t rtc[9];
+	TimeElements te;
+	time_t tNow;
+
+	// read 7 bytes starting from register 0
+	// sec, min, hour, day-of-week, date, month, year
+	twi_begin_transmission(RTC_ADDR);
+	twi_send_byte(0x0);
+	twi_end_transmission();
+	
+	twi_request_from(RTC_ADDR, 7);
+	
+	for(uint8_t i=0; i<7; i++) {
+		rtc[i] = twi_receive();
+	}
+	
+	if (twi_end_transmission() != 0) return 0;
+
+	// Clear clock halt bit from read data
+	// This starts the clock for a DS1307, and has no effect for a DS3231
+	rtc[0] &= ~(_BV(CH_BIT)); // clear bit
+
+	te.Second  = bcd2dec(rtc[0]);
+	te.Minute  = bcd2dec(rtc[1]);
+	te.Hour = bcd2dec(rtc[2]);
+	te.Wday = bcd2dec(rtc[3]); // DOW 1-7
+	te.Day = bcd2dec(rtc[4]);  // day 1-31
+	te.Month  = bcd2dec(rtc[5]); // month 1-12
+	te.Year = bcd2dec(rtc[6]); // year 0-99
+	te.Year = y2kYearToTm(te.Year);  // convert yy year to (yyyy-1970) (add 30)
+	tNow = makeTime(&te);  // convert to time_t
+	return tNow;
+}
+
 // fixme: support 12-hour mode for setting time
-void rtc_set_time(struct tm* tm_)
+void rtc_set_time(TimeElements* te)
 {
 	twi_begin_transmission(RTC_ADDR);
 	twi_send_byte(0x0);
 
 	// clock halt bit is 7th bit of seconds: this is always cleared to start the clock
-	twi_send_byte(dec2bcd(tm_->sec)); // seconds
-	twi_send_byte(dec2bcd(tm_->min)); // minutes
-	twi_send_byte(dec2bcd(tm_->hour)); // hours
-	twi_send_byte(dec2bcd(tm_->wday)); // day of week
-	twi_send_byte(dec2bcd(tm_->mday)); // day
-	twi_send_byte(dec2bcd(tm_->mon)); // month
-	twi_send_byte(dec2bcd(tm_->year)); // year
+	twi_send_byte(dec2bcd(te->Second)); // seconds
+	twi_send_byte(dec2bcd(te->Minute)); // minutes
+	twi_send_byte(dec2bcd(te->Hour)); // hours
+	twi_send_byte(dec2bcd(te->Wday)); // day of week  ???
+	twi_send_byte(dec2bcd(te->Day)); // day
+	twi_send_byte(dec2bcd(te->Month)); // month
+	twi_send_byte(dec2bcd(te->Year)); // year
 	
 	twi_end_transmission();
 }
@@ -262,6 +290,27 @@ void rtc_set_time_s(uint8_t hour, uint8_t min, uint8_t sec)
 	twi_send_byte(dec2bcd(sec)); // seconds
 	twi_send_byte(dec2bcd(min)); // minutes
 	twi_send_byte(dec2bcd(hour)); // hours
+	
+	twi_end_transmission();
+}
+
+void rtc_set_time_t(time_t tSet)
+{
+	TimeElements te;
+	breakTime(tSet, &te);  // break time back into components for RTC
+	te.Year = tmYearToY2k(te.Year);  // remove 1970 offset
+	
+	twi_begin_transmission(RTC_ADDR);
+	twi_send_byte(0x0);
+
+	// clock halt bit is 7th bit of seconds: this is always cleared to start the clock
+	twi_send_byte(dec2bcd(te.Second)); // seconds
+	twi_send_byte(dec2bcd(te.Minute)); // minutes
+	twi_send_byte(dec2bcd(te.Hour)); // hours
+	twi_send_byte(dec2bcd(te.Wday)); // day of week  ???
+	twi_send_byte(dec2bcd(te.Day)); // day
+	twi_send_byte(dec2bcd(te.Month)); // month
+	twi_send_byte(dec2bcd(te.Year)); // year
 	
 	twi_end_transmission();
 }
@@ -314,7 +363,7 @@ void ds3231_get_temp_int(int8_t* i, uint8_t* f)
 
 	twi_request_from(RTC_ADDR, 2);
 
-	if (twi_available() >= 2) {
+	if (twi_available()) {
 		msb = twi_receive(); // integer part (in twos complement)
 		lsb = twi_receive(); // fraction part
     	
@@ -338,9 +387,7 @@ void rtc_force_temp_conversion(uint8_t block)
 	twi_end_transmission();
 
 	twi_request_from(RTC_ADDR, 1);
-	uint8_t ctrl = 0;
-	if (twi_available())
-		ctrl = twi_receive();
+	uint8_t ctrl = twi_receive();
 
 	ctrl |= 0b00100000; // Set CONV bit
 
@@ -358,9 +405,8 @@ void rtc_force_temp_conversion(uint8_t block)
 		twi_begin_transmission(RTC_ADDR);
 		twi_send_byte(0x0E);
 		twi_end_transmission();
-		if (twi_available())
 		twi_request_from(RTC_ADDR, 1);
-	} while (twi_available() && (twi_receive() & 0b00100000) != 0);
+	} while ((twi_receive() & 0b00100000) != 0);
 }
 
 
@@ -390,9 +436,7 @@ uint8_t rtc_get_sram_byte(uint8_t offset)
 	twi_end_transmission();
 
 	twi_request_from(RTC_ADDR, 1);
-	if (twi_available())
-		return twi_receive();
-	return 0;
+	return twi_receive();
 }
 
 void rtc_set_sram_byte(uint8_t b, uint8_t offset)
@@ -412,9 +456,7 @@ void rtc_SQW_enable(bool enable)
 		
 		// read control
    		twi_request_from(RTC_ADDR, 1);
-		uint8_t control = 0;
-		if (twi_available())
-			control = twi_receive();
+		uint8_t control = twi_receive();
 
 		if (enable)
 			control |=  0b00010000; // set SQWE to 1
@@ -435,9 +477,7 @@ void rtc_SQW_enable(bool enable)
 		
 		// read control
    		twi_request_from(RTC_ADDR, 1);
-		uint8_t control = 0;
-		if (twi_available())
-			control = twi_receive();
+		uint8_t control = twi_receive();
 
 		if (enable) {
 			control |=  0b01000000; // set BBSQW to 1
@@ -464,9 +504,7 @@ void rtc_SQW_set_freq(enum RTC_SQW_FREQ freq)
 		
 		// read control (uses bits 0 and 1)
    		twi_request_from(RTC_ADDR, 1);
-		uint8_t control = 0;
-		if (twi_available())
-			control = twi_receive();
+		uint8_t control = twi_receive();
 
 		control &= ~0b00000011; // Set to 0
 		control |= freq; // Set freq bitmask
@@ -485,9 +523,7 @@ void rtc_SQW_set_freq(enum RTC_SQW_FREQ freq)
 		
 		// read control (uses bits 3 and 4)
    		twi_request_from(RTC_ADDR, 1);
-		uint8_t control = 0;
-		if (twi_available())
-			control = twi_receive();
+		uint8_t control = twi_receive();
 
 		control &= ~0b00011000; // Set to 0
 		control |= (freq << 4); // Set freq bitmask
@@ -510,9 +546,7 @@ void rtc_osc32kHz_enable(bool enable)
 
 	// read status
 	twi_request_from(RTC_ADDR, 1);
-	uint8_t status = 0;
-	if (twi_available())
-		status = twi_receive();
+	uint8_t status = twi_receive();
 
 	if (enable)
 		status |= 0b00001000; // set to 1
@@ -576,10 +610,10 @@ void rtc_set_alarm_s(uint8_t hour, uint8_t min, uint8_t sec)
 	}
 }
 
-void rtc_set_alarm(struct tm* tm_)
+void rtc_set_alarm(TimeElements* te)
 {
-	if (!tm_) return;
-	rtc_set_alarm_s(tm_->hour, tm_->min, tm_->sec);
+	if (!te) return;
+	rtc_set_alarm_s(te->Hour, te->Minute, te->Second);
 }
 
 void rtc_get_alarm_s(uint8_t* hour, uint8_t* min, uint8_t* sec)
@@ -596,15 +630,15 @@ void rtc_get_alarm_s(uint8_t* hour, uint8_t* min, uint8_t* sec)
 	}
 }
 
-struct tm* rtc_get_alarm(void)
+TimeElements* rtc_get_alarm(void)
 {
 	uint8_t hour, min, sec;
 
 	rtc_get_alarm_s(&hour, &min, &sec);
-	_tm.hour = hour;
-	_tm.min = min;
-	_tm.sec = sec;
-	return &_tm;
+	_te.Hour = hour;
+	_te.Minute = min;
+	_te.Second = sec;
+	return &_te;
 }
 
 bool rtc_check_alarm(void)

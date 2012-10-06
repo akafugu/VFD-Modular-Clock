@@ -15,6 +15,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <string.h>
 #include "display.h"
 #include "rtc.h"
 
@@ -50,7 +51,7 @@ extern uint8_t g_brightness;
 // variables for controlling display blink
 uint8_t blink;
 uint16_t blink_counter = 0;
-uint8_t display_on = 1;
+uint8_t display_on = true;
 
 // dots [bit 0~5]
 uint8_t dots = 0;
@@ -159,7 +160,8 @@ void set_brightness(uint8_t brightness) {
 void set_blink(bool on)
 {
 	blink = on;
-	if (!blink) display_on = 1;
+	if (blink) display_on = false;
+	else display_on = true;
 }
 
 // display multiplexing routine for 4 digits: run once every 1 ms
@@ -296,7 +298,7 @@ void display_multiplex(void)
 }
 
 void button_timer(void);
-uint8_t interrupt_counter = 0;
+//uint8_t interrupt_counter = 0;  // moved to display.h
 uint16_t button_counter = 0;
 
 // 1 click = 1us. Overflow every 256 us
@@ -336,8 +338,12 @@ ISR(TIMER0_OVF_vect)
 }
 
 // utility functions
-uint8_t print_digits(uint8_t num, uint8_t offset)
+uint8_t print_digits(int8_t num, uint8_t offset)
 {
+	if (num < 0) {
+		data[offset-1] = '-';  // note assumption that offset is always positive!
+		num = -num;
+	}
 	data[offset+1] = num % 10;
 	num /= 10;
 	data[offset] = num % 10;
@@ -398,49 +404,64 @@ void print_dots(uint8_t mode, uint8_t seconds)
 // 4 digits: hour:min / sec
 // 6 digits: hour:min:sec / hour-min
 // 8 digits: hour:min:sec / hour-min-sec
-void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
+void show_time(tmElements_t* te, bool _24h_clock, uint8_t mode)
 {
 	dots = 0;
 
 	uint8_t offset = 0;
-	uint8_t hour = _24h_clock ? t->hour : t->twelveHour;
-
-	print_dots(mode, t->sec);
+//	uint8_t hour = _24h_clock ? t->hour : t->twelveHour;
+	uint8_t hour = te->Hour;
+	bool pm = false;
+	
+	if (!_24h_clock) {
+		if (hour == 0) {
+			hour = 12;  // 12 midnight is 12 am
+		}
+		else if (hour == 12) {
+			pm = true;  // 12 noon is 12 pm
+		}
+		else if (hour > 12) {
+			pm = true;
+			hour = hour - 12;
+		}
+	}	
+	
+	print_dots(mode, te->Second);
 
 	if (mode == 0) { // normal display mode
 		if (digits == 8) { // " HH.MM.SS "
-			if (!_24h_clock && !t->am)
+			if (!_24h_clock && pm)
 				offset = print_ch('P', offset);
 			else
 				offset = print_ch(' ', offset); 
 			offset = print_hour(hour, offset, _24h_clock);  // wm
-			offset = print_digits(t->min, offset);
-			offset = print_digits(t->sec, offset);
+			offset = print_digits(te->Minute, offset);
+			offset = print_digits(te->Second, offset);
 			offset = print_ch(' ', offset);
 		}
 		else if (digits == 6) { // "HH.MM.SS"
 			offset = print_hour(hour, offset, _24h_clock);  // wm
-			offset = print_digits(t->min, offset);
-			offset = print_digits(t->sec, offset);			
+			offset = print_digits(te->Minute, offset);
+			offset = print_digits(te->Second, offset);			
 		}
 		else { // HH.MM
 			offset = print_hour(hour, offset, _24h_clock);  // wm
-			offset = print_digits(t->min, offset);
+			offset = print_digits(te->Minute, offset);
 		}
 	}
 	else if (mode == 1) { // extra display mode
 		if (digits == 8) { // "HH-MM-SS"
 			offset = print_digits(hour, offset);
 			offset = print_ch('-', offset);
-			offset = print_digits(t->min, offset);
+			offset = print_digits(te->Minute, offset);
 			offset = print_ch('-', offset);
-			offset = print_digits(t->sec, offset);
+			offset = print_digits(te->Second, offset);
 		}
 		else if (digits == 6) { // " HH-MM"
 			offset = print_digits(hour, offset);
 			offset = print_ch('-', offset);
-			offset = print_digits(t->min, offset);
-			if (!_24h_clock && !t->am)
+			offset = print_digits(te->Minute, offset);
+			if (!_24h_clock && pm)
 				offset = print_ch('P', offset);
 			else
 				offset = print_ch(' ', offset); 
@@ -448,17 +469,17 @@ void show_time(struct tm* t, bool _24h_clock, uint8_t mode)
 		else { // HH.MM
 			if (_24h_clock) {
 				offset = print_ch(' ', offset);
-				offset = print_digits(t->sec, offset);
+				offset = print_digits(te->Second, offset);
 				offset = print_ch(' ', offset);
 			}
 			else {
-				if (t->am)
-					offset = print_ch('A', offset);
-				else
+				if (pm)
 					offset = print_ch('P', offset);
+				else
+					offset = print_ch('A', offset);
 
 				offset = print_ch('M', offset);
-				offset = print_digits(t->sec, offset);
+				offset = print_digits(te->Second, offset);
 			}
 		}
 	}
@@ -557,6 +578,37 @@ void show_setting_string(char* short_str, char* long_str, char* value, bool show
 	}
 }
 
+// scroll the date - needs work for other displays...
+void show_date(tmElements_t *te_, uint8_t region)
+{
+//	data[0] = data[1] = data[2] = data[3] = ' ';
+	char d[14];
+	d[0] = d[1] = ' ';
+	d[4] = d[7] = '/';
+	if (region == 0) {
+		d[2] = te_->Day / 10;
+		d[3] = te_->Day % 10;
+		d[5] = te_->Month / 10;
+		d[6] = te_->Month % 10;
+	}
+	else {
+		d[2] = te_->Month / 10;
+		d[3] = te_->Month % 10;
+		d[5] = te_->Day / 10;
+		d[6] = te_->Day % 10;
+	}
+	d[8] = '2';
+	d[9] = '0';
+	d[10] = te_->Year / 10;
+	d[11] = te_->Year % 10;
+	d[12] = ' ';
+	d[13] = ' ';
+	for (uint8_t i = 0; i < 4; i++) {
+		data[i] = d[(scroll_ctr/2+i)%14];
+	}
+	scroll_ctr++;  // increment scroll counter
+}
+
 void show_setting_int(char* short_str, char* long_str, int value, bool show_setting)
 {
 	data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
@@ -634,7 +686,6 @@ void show_alarm_off(void)
 		set_string(" off");
 	}
 }
-
 // Write 8 bits to HV5812 driver
 void write_vfd_8bit(uint8_t data)
 {
