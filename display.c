@@ -15,6 +15,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
 #include <string.h>
 #include "display.h"
 #include "rtc.h"
@@ -51,7 +52,7 @@ extern uint8_t g_brightness;
 // variables for controlling display blink
 uint8_t blink;
 uint16_t blink_counter = 0;
-uint8_t display_on = true;
+volatile uint8_t display_on = true;
 
 // dots [bit 0~5]
 uint8_t dots = 0;
@@ -157,11 +158,17 @@ void set_brightness(uint8_t brightness) {
 	TCCR0A |= _BV(COM0A1);
 }
 
-void set_blink(bool on)
+void set_blink(bool OnOff)
 {
-	blink = on;
-	if (blink) display_on = false;
-	else display_on = true;
+	blink = OnOff;
+	if (!blink) display_on = true;
+}
+
+void flash_display(uint16_t ms)  // this does not work but why???
+{
+	display_on = false;
+	_delay_ms(ms);
+	display_on = true;
 }
 
 // display multiplexing routine for 4 digits: run once every 1 ms
@@ -307,13 +314,19 @@ uint16_t button_counter = 0;
 ISR(TIMER0_OVF_vect)
 {
 	// control blinking: on time is slightly longer than off time
-	if (blink && display_on && ++blink_counter >= 0x900) {  // on time 0.5898 seconds
-		display_on = false;
-		blink_counter = 0;
-	}
-	else if (blink && !display_on && ++blink_counter >= 0x750) {  // off time 0.4792 seconds
-		display_on = true;
-		blink_counter = 0;
+	if (blink) {
+		if (display_on) {
+			if (++blink_counter >= 0x900) {  // on time 0.5898 seconds
+				display_on = false;
+				blink_counter = 0;
+			}
+		}
+		else {  // !display_on
+			if (++blink_counter >= 0x750) {  // off time 0.4792 seconds
+				display_on = true;
+				blink_counter = 0;
+			}
+		}
 	}
 	
 	// button polling

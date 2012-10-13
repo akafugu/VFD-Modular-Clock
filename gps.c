@@ -161,19 +161,17 @@ void parseGPSdata() {
 
 				if ((tm.Second == 0) || ((tNow - tGPSupdate)>=60)) {  // update RTC once/minute or if it's been 60 seconds
 					//beep(1000, 1);  // debugging
-					set_blink(true);
 					tGPSupdate = tNow;
 					tNow = tNow + (g_TZ_hour + g_DST_offset) * SECS_PER_HOUR;  // add time zone hour offset & DST offset
 					if (g_TZ_hour < 0)  // add or subtract time zone minute offset
 						tNow = tNow - g_TZ_minutes * SECS_PER_HOUR;
 					else
 						tNow = tNow + g_TZ_minutes * SECS_PER_HOUR;
-	//				breakTime(tNow, &tm);  // break time back into components for RTC
-	//				tm.Year = tmYearToY2k(tm.Year);  // remove 1970 offset (subtract 30)
-	//				rtc_set_time(&tm);  // RTC is set to local time
 					rtc_set_time_t(tNow);  // set RTC from adjusted GPS time & date
-					_delay_ms(100);  // pause long enough to make blink visible
-					set_blink(false);
+//					set_display(false);
+//					_delay_ms(100);
+//					set_display(true);  // flash the display for 200 ms to show GPS update
+					flash_display(200);
 				}
 
 			} // if fix status is A

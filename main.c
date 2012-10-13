@@ -14,6 +14,9 @@
  */
 
 /* Updates by William B Phelps
+ * 12oct12 fix blank display when setting time (blink)
+ * return to AMPM after AutoDate display
+ *
  * 05oct12 clean up GPS mods for commit
  * add get/set time in time_t to RTC
  * slight blink when RTC updated from GPS to show signal reception
@@ -229,6 +232,7 @@ typedef enum {
 } display_mode_t;
 
 display_mode_t clock_mode = MODE_NORMAL;
+display_mode_t save_mode = MODE_NORMAL;  // for restoring mode after autodate display
 
 // Alarm switch changed interrupt
 ISR( PCINT2_vect )
@@ -276,6 +280,7 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 		te = rtc_get_time();
 		if (te == NULL) return;
 		if ( g_autodate && (te->Second == 54) ) {
+			save_mode = clock_mode;  // save current mode
 			clock_mode = MODE_DATE;  // display date at second 54
 			g_show_special_cnt = 550;  // show date for 5.5 seconds
 			scroll_ctr = 0;  // reset scroll position
@@ -405,7 +410,7 @@ void main(void)
 			if (buttons.none_held) {
 				set_blink(true);
 				button_released_timer++;
-				button_speed = 1;  // why did I have 50 here???
+				button_speed = 1;
 			}
 			else {
 				set_blink(false);
@@ -467,6 +472,7 @@ void main(void)
 			if (button_released_timer >= 200) {  // 2 seconds (wm)
 				button_released_timer = 0;
 				menu_state = STATE_CLOCK;
+//				flash_display(100);  // flash briefly
 			}
 			
 			if (buttons.b1_keyup) {
@@ -628,7 +634,7 @@ void main(void)
 							clock_mode = MODE_NORMAL;
 							break;
 						case MODE_DATE:
-							clock_mode = MODE_NORMAL;
+							clock_mode = save_mode;  // 11oct12/wbp
 							break;
 						default:
 							clock_mode = MODE_NORMAL;

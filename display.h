@@ -97,7 +97,8 @@ void set_char_at(char c, uint8_t offset);
 
 void set_brightness(uint8_t brightness);
 
-void set_blink(bool on);
+void set_blink(bool onOff);
+void flash_display(uint16_t ms);  // 11oct12/wbp
 
 enum shield_t {
 	SHIELD_NONE = 0,
