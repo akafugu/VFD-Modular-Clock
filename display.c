@@ -591,6 +591,7 @@ void show_setting_string(char* short_str, char* long_str, char* value, bool show
 	}
 }
 
+#ifdef FEATURE_AUTO_DATE
 // scroll the date - needs work for other displays...
 void show_date(tmElements_t *te_, uint8_t region)
 {
@@ -621,6 +622,7 @@ void show_date(tmElements_t *te_, uint8_t region)
 	}
 	scroll_ctr++;  // increment scroll counter
 }
+#endif
 
 void show_setting_int(char* short_str, char* long_str, int value, bool show_setting)
 {
@@ -699,6 +701,37 @@ void show_alarm_off(void)
 		set_string(" off");
 	}
 }
+
+#ifdef FEATURE_SET_DATE
+void show_set_year(void)
+{
+	if (get_digits() == 8)
+		set_string("Set Year");
+	else if (get_digits() == 6)
+		set_string(" Year ");
+	else
+		set_string("Year");
+}
+void show_set_month(void)
+{
+	if (get_digits() == 8)
+		set_string("Set Mnth");
+	else if (get_digits() == 6)
+		set_string(" Month");
+	else
+		set_string("Mnth");
+}
+void show_set_day(void)
+{
+	if (get_digits() == 8)
+		set_string("Set Day ");
+	else if (get_digits() == 6)
+		set_string(" Day  ");
+	else
+		set_string("Day ");
+}
+#endif
+
 // Write 8 bits to HV5812 driver
 void write_vfd_8bit(uint8_t data)
 {

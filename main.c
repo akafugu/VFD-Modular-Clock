@@ -14,6 +14,10 @@
  */
 
 /* Updates by William B Phelps
+ * 22oct12 add DATE to menu, add FEATURE_SET_DATE and FEATURE_AUTO_DATE
+ * added to menu: YEAR, MONTH, DAY
+ *
+ *
  * 12oct12 fix blank display when setting time (blink)
  * return to AMPM after AutoDate display
  *
@@ -51,6 +55,12 @@
  * minor typos & cleanup
  *
  */
+
+// defines moved to makefile
+//#define FEATURE_SDATE  // add (set) DATE to menu
+//#define FEATURE_ADATE  // automatic date display 
+//#define FEATURE_WmGPS  // GPS support
+//#define FEATURE_WmDST  // AUto DST support
  
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -67,8 +77,6 @@
 #include "rtc.h"
 #include "piezo.h"
 
-#define FEATURE_WmGPS  // GPS support
-//#define FEATURE_WmDST  // AUto DST support
 #ifdef FEATURE_WmGPS
 #include "gps.h"
 #endif
@@ -103,7 +111,11 @@ uint8_t EEMEM b_TZ_hour = -8 + 12;
 uint8_t EEMEM b_TZ_minutes = 0;
 uint8_t EEMEM b_DST = false;
 uint8_t EEMEM b_DST_offset = 0;
+#endif
+#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DATE
 uint8_t EEMEM b_Region = 0;  // default European date format yyyy/mm/dd
+#endif
+#ifdef FEATURE_AUTO_DATE
 uint8_t EEMEM b_AutoDate = false;
 #endif
 
@@ -113,9 +125,18 @@ uint8_t g_show_temp = false;
 uint8_t g_show_dots = true;
 uint8_t g_brightness = 5;
 uint8_t g_volume = 0;
-#ifdef FEATURE_WmGPS
+#ifdef FEATURE_SET_DATE
+uint8_t g_dateyear = 12;
+uint8_t g_datemonth = 1;
+uint8_t g_dateday = 1;
+#endif
+#ifdef FEATURE_WmGPS 
 uint8_t g_gps_enabled = 0;
+#endif
+#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DATE
 uint8_t g_region = 0;
+#endif
+#ifdef FEATURE_AUTO_DATE
 uint8_t g_autodate = false;
 #endif
 
@@ -142,7 +163,11 @@ void initialize(void)
 	g_TZ_minutes = eeprom_read_byte(&b_TZ_minutes);
 	g_DST = eeprom_read_byte(&b_DST);
 	g_DST_offset = eeprom_read_byte(&b_DST_offset);
+#endif
+#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DATE
 	g_region = eeprom_read_byte(&b_Region);
+#endif
+#ifdef FEATURE_AUTO_DATE
 	g_autodate = eeprom_read_byte(&b_AutoDate);
 #endif
 
@@ -188,9 +213,10 @@ void initialize(void)
 	PCICR |= (1 << PCIE2);
 	PCMSK2 |= (1 << PCINT18);
 	
-  // setup uart
-//  uart_init(BRRL_192);
+#ifdef FEATURE_WmGPS
+  // setup uart for GPS
 	gps_init(g_gps_enabled);
+#endif
 }
 
 struct BUTTON_STATE buttons;
@@ -203,10 +229,17 @@ typedef enum {
 	STATE_SET_ALARM,
 	// menu
 	STATE_MENU_BRIGHTNESS,
+#ifdef FEATURE_SET_DATE
+	STATE_MENU_SETYEAR,
+	STATE_MENU_SETMONTH,
+	STATE_MENU_SETDAY,
+#endif
 	STATE_MENU_24H,
 	STATE_MENU_VOL,
+#ifdef FEATURE_AUTO_DATE
+	STATE_MENU_AUTODATE,
+#endif
 #ifdef FEATURE_WmGPS
-	STATE_MENU_ADATE,
 	STATE_MENU_DST,
 	STATE_MENU_GPS,
 	STATE_MENU_REGION,
@@ -225,7 +258,9 @@ bool menu_b1_first = false;
 typedef enum {
 	MODE_NORMAL = 0, // normal mode: show time/seconds
 	MODE_AMPM, // shows time AM/PM
+#ifdef FEATURE_AUTO_DATE
 	MODE_DATE, // shows date
+#endif
 	MODE_LAST,  // end of display modes for right button pushes
 	MODE_ALARM_TEXT,  // show "alarm" (wm)
 	MODE_ALARM_TIME,  // show alarm time (wm)
@@ -255,10 +290,13 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 	static uint16_t counter = 0;
 	uint8_t hour = 0, min = 0, sec = 0;
 	
+#ifdef FEATURE_AUTO_DATE
 	if (mode == MODE_DATE) {
 		show_date(te, g_region);  // show date from last rtc_get_time() call
 	}
-	else if (mode == MODE_ALARM_TEXT) {
+	else
+#endif	
+	if (mode == MODE_ALARM_TEXT) {
 		show_alarm_text();
 	}
 	else if (mode == MODE_ALARM_TIME) {
@@ -279,6 +317,12 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 	else {
 		te = rtc_get_time();
 		if (te == NULL) return;
+#ifdef FEATURE_SET_DATE
+		g_dateyear = te->Year;  // save year for Menu
+		g_datemonth = te->Month;  // save month for Menu
+		g_dateday = te->Day;  // save day for Menu
+#endif
+#ifdef FEATURE_AUTO_DATE
 		if ( g_autodate && (te->Second == 54) ) {
 			save_mode = clock_mode;  // save current mode
 			clock_mode = MODE_DATE;  // display date at second 54
@@ -286,12 +330,14 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 			scroll_ctr = 0;  // reset scroll position
 			}
 		else
-			show_time(te, g_24h_clock, mode);  // (wm)
+#endif		
+		show_time(te, g_24h_clock, mode);  // (wm)
 	}
 	counter++;
 	if (counter == 250) counter = 0;
 }
 
+#ifdef FEATURE_WmGPS
 void setDSToffset(int8_t newOffset) {
 	int8_t adjOffset = newOffset - g_DST_offset;  // offset delta
 	time_t tNow = rtc_get_time_t();  // fetch current time from RTC as time_t
@@ -300,6 +346,16 @@ void setDSToffset(int8_t newOffset) {
 	g_DST_offset = newOffset;
 	eeprom_update_byte(&b_DST_offset, g_DST_offset);
 }
+#endif
+
+#ifdef FEATURE_SET_DATE
+void set_date(uint8_t yy, uint8_t mm, uint8_t dd) {
+	te->Year = yy;
+	te->Month = mm;
+	te->Day = dd;
+	rtc_set_time(te);
+}
+#endif
 
 void main(void) __attribute__ ((noreturn));
 
@@ -454,11 +510,12 @@ void main(void)
 		// Right button toggles display mode
 		else if (menu_state == STATE_CLOCK && buttons.b1_keyup) {
 			clock_mode++;
-//			if (clock_mode == MODE_ALARM_TEXT)  g_show_special_cnt = 100;  // show alarm text for 1 second
+#ifdef FEATURE_AUTO_DATE
 			if (clock_mode == MODE_DATE) {
 				g_show_special_cnt = 550;  // show date for 5.5 seconds
 				scroll_ctr = 0;  // reset scroll position
 			}
+#endif			
 			if (clock_mode == MODE_LAST) clock_mode = MODE_NORMAL;
 			buttons.b1_keyup = 0; // clear state
 		}
@@ -481,7 +538,7 @@ void main(void)
 						if (!menu_b1_first)	
 							g_brightness++;
 						if (g_brightness > 10) g_brightness = 1;
-							eeprom_update_byte(&b_brightness, g_brightness);
+						eeprom_update_byte(&b_brightness, g_brightness);
 //						if (shield == SHIELD_IV17)  // wm ???
 //							show_setting_string("BRIT", "BRITE", (g_brightness % 2 == 0) ? "  lo" : "  hi", true);
 //						else
@@ -502,19 +559,44 @@ void main(void)
 						piezo_init();
 						beep(1000, 1);
 						break;
-	#ifdef FEATURE_WmGPS
+#ifdef FEATURE_SET_DATE						
+					case STATE_MENU_SETYEAR:
+						if (!menu_b1_first)
+							g_dateyear++;
+						if (g_dateyear > 29) g_dateyear = 10;  // 20 years...
+						show_setting_int("YEAR", "YEAR ", g_dateyear, true);
+						set_date(g_dateyear, g_datemonth, g_dateday);
+						break;
+					case STATE_MENU_SETMONTH:
+						if (!menu_b1_first)
+							g_datemonth++;
+						if (g_datemonth > 12) g_datemonth = 1;  
+						show_setting_int("MNTH", "MONTH", g_datemonth, true);
+						set_date(g_dateyear, g_datemonth, g_dateday);
+						break;
+					case STATE_MENU_SETDAY:
+						if (!menu_b1_first)
+							g_dateday++;
+						if (g_dateday > 31) g_dateday = 1;  
+						show_setting_int("DAY", "DAY  ", g_dateday, true);
+						set_date(g_dateyear, g_datemonth, g_dateday);
+						break;
+#endif						
+#ifdef FEATURE_AUTO_DATE						
+					case STATE_MENU_AUTODATE:
+						if (!menu_b1_first)	
+							g_autodate = !g_autodate;
+						eeprom_update_byte(&b_AutoDate, g_autodate);
+						show_setting_string("ADTE", "ADATE", g_autodate ? " on " : " off", true);
+						break;
+#endif						
+#ifdef FEATURE_WmGPS
 					case STATE_MENU_GPS:
 						if (!menu_b1_first)	
 							g_gps_enabled = (g_gps_enabled+48)%144;  // 0, 48, 96
 						eeprom_update_byte(&b_gps_enabled, g_gps_enabled);
 						gps_init(g_gps_enabled);  // change baud rate
 						show_setting_string("GPS", "GPS", gps_setting(g_gps_enabled), true);
-						break;
-					case STATE_MENU_ADATE:
-						if (!menu_b1_first)	
-							g_autodate = !g_autodate;
-						eeprom_update_byte(&b_AutoDate, g_autodate);
-						show_setting_string("ADTE", "ADATE", g_autodate ? " on " : " off", true);
 						break;
 					case STATE_MENU_DST:
 						if (!menu_b1_first) {	
@@ -585,12 +667,25 @@ void main(void)
 					case STATE_MENU_VOL:
 						show_setting_string("VOL", "VOL", g_volume ? " hi" : " lo", false);
 						break;
+#ifdef FEATURE_SET_DATE						
+					case STATE_MENU_SETYEAR:
+						show_setting_int("YEAR", "YEAR ", g_dateyear, false);
+						break;
+					case STATE_MENU_SETMONTH:
+						show_setting_int("MNTH", "MONTH", g_datemonth, false);
+						break;
+					case STATE_MENU_SETDAY:
+						show_setting_int("DAY ", "DAY  ", g_dateday, false);
+						break;
+#endif						
+#ifdef FEATURE_AUTO_DATE
+					case STATE_MENU_AUTODATE:
+						show_setting_string("ADTE", "ADATE", g_autodate ? " on " : " off", false);
+						break;
+#endif						
 #ifdef FEATURE_WmGPS
 					case STATE_MENU_GPS:
 						show_setting_string("GPS", "GPS", gps_setting(g_gps_enabled), false);
-						break;
-					case STATE_MENU_ADATE:
-						show_setting_string("ADTE", "ADATE", g_autodate ? " on " : " off", false);
 						break;
 					case STATE_MENU_DST:
 						show_setting_int("DST", "DST", g_DST, false);
@@ -633,9 +728,11 @@ void main(void)
 						case MODE_ALARM_TIME:
 							clock_mode = MODE_NORMAL;
 							break;
+#ifdef FEATURE_AUTO_DATE
 						case MODE_DATE:
 							clock_mode = save_mode;  // 11oct12/wbp
 							break;
+#endif							
 						default:
 							clock_mode = MODE_NORMAL;
 					}
