@@ -221,12 +221,12 @@ void initialize(void)
 	gps_init(g_gps_enabled);
 #endif
 	
-#ifdef FEATURE_AUTO_DATE
-	if (get_digits() > 4) {
-		g_autotime = 54;  // display date at secs = 58;
-		g_autodisp = 550;  // display for 1.5 secs;
-	}
-#endif
+//#ifdef FEATURE_AUTO_DATE
+//	if (get_digits() > 4) {
+//		g_autotime = 54;  // display date at secs = 58;
+//		g_autodisp = 550;  // display for 1.5 secs;
+//	}
+//#endif
 }
 
 struct BUTTON_STATE buttons;
@@ -513,7 +513,8 @@ void main(void)
 		// Left button enters menu
 		else if (menu_state == STATE_CLOCK && buttons.b2_keyup) {
 			menu_state = STATE_MENU_BRIGHTNESS;
-			menu_b1_first = true;  // reset first time flag
+			if (get_digits() == 4)  // only set first time flag for 4 digit displays
+				menu_b1_first = true;  // set first time flag
 			show_setting_int("BRIT", "BRITE", g_brightness, false);
 			buttons.b2_keyup = 0; // clear state
 		}
@@ -660,7 +661,8 @@ void main(void)
 
 			if (buttons.b2_keyup) {
 				menu_state++;
-				menu_b1_first = true;  // reset b1 first time flag
+				if (get_digits() == 4)  // only set first time flag for 4 digit displays
+					menu_b1_first = true;  // reset b1 first time flag
 				
 				// show temperature setting only when running on a DS3231
 				if (menu_state == STATE_MENU_TEMP && !rtc_is_ds3231()) menu_state++;

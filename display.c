@@ -596,7 +596,7 @@ void show_setting_string(char* short_str, char* long_str, char* value, bool show
 void show_date(tmElements_t *te_, uint8_t region)
 {
 	dots = 0;
-	char d[16];
+	char d[18];
 	d[0] = d[1] = ' ';
 	if (shield == SHIELD_IV6)
 		d[4] = d[7] = '/';
@@ -620,17 +620,17 @@ void show_date(tmElements_t *te_, uint8_t region)
 	d[11] = te_->Year % 10;
 	d[12] = ' ';
 	d[13] = ' ';
-	d[14] = d[15] = ' ';
+	d[14] = d[15] = d[16] = d[17] = ' ';
 	switch (digits) {
 	case 8:
 		for (uint8_t i = 0; i < 8; i++) {
-			data[i] = d[(scroll_ctr/2+i)%16];
+			data[i] = d[(scroll_ctr/2+i)%18];
 		}
 		scroll_ctr++;  // increment scroll counter
 		break;
 	case 6:
 		for (uint8_t i = 0; i < 6; i++) {
-			data[i] = d[(scroll_ctr/2+i)%14];
+			data[i] = d[(scroll_ctr/2+i)%16];
 		}
 		scroll_ctr++;  // increment scroll counter
 		break;
