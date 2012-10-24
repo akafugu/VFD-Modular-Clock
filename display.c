@@ -595,10 +595,13 @@ void show_setting_string(char* short_str, char* long_str, char* value, bool show
 // scroll the date - needs work for other displays...
 void show_date(tmElements_t *te_, uint8_t region)
 {
-//	data[0] = data[1] = data[2] = data[3] = ' ';
-	char d[14];
+	dots = 0;
+	char d[16];
 	d[0] = d[1] = ' ';
-	d[4] = d[7] = '/';
+	if (shield == SHIELD_IV6)
+		d[4] = d[7] = '/';
+	else
+		d[4] = d[7] = '-';
 	if (region == 0) {
 		d[2] = te_->Day / 10;
 		d[3] = te_->Day % 10;
@@ -617,10 +620,27 @@ void show_date(tmElements_t *te_, uint8_t region)
 	d[11] = te_->Year % 10;
 	d[12] = ' ';
 	d[13] = ' ';
-	for (uint8_t i = 0; i < 4; i++) {
-		data[i] = d[(scroll_ctr/2+i)%14];
+	d[14] = d[15] = ' ';
+	switch (digits) {
+	case 8:
+		for (uint8_t i = 0; i < 8; i++) {
+			data[i] = d[(scroll_ctr/2+i)%16];
+		}
+		scroll_ctr++;  // increment scroll counter
+		break;
+	case 6:
+		for (uint8_t i = 0; i < 6; i++) {
+			data[i] = d[(scroll_ctr/2+i)%14];
+		}
+		scroll_ctr++;  // increment scroll counter
+		break;
+	case 4:
+		for (uint8_t i = 0; i < 4; i++) {
+			data[i] = d[(scroll_ctr/2+i)%14];
+		}
+		scroll_ctr++;  // increment scroll counter
+		break;
 	}
-	scroll_ctr++;  // increment scroll counter
 }
 #endif
 

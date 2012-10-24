@@ -14,9 +14,10 @@
  */
 
 /* Updates by William B Phelps
+ * 24oct12 fix date display for larger displays
+ *
  * 22oct12 add DATE to menu, add FEATURE_SET_DATE and FEATURE_AUTO_DATE
  * added to menu: YEAR, MONTH, DAY
- *
  *
  * 12oct12 fix blank display when setting time (blink)
  * return to AMPM after AutoDate display
@@ -138,6 +139,8 @@ uint8_t g_region = 0;
 #endif
 #ifdef FEATURE_AUTO_DATE
 uint8_t g_autodate = false;
+uint8_t g_autotime = 54;  // when to display date
+uint16_t g_autodisp = 550;  // how long to display date
 #endif
 
 // Other globals
@@ -216,6 +219,13 @@ void initialize(void)
 #ifdef FEATURE_WmGPS
   // setup uart for GPS
 	gps_init(g_gps_enabled);
+#endif
+	
+#ifdef FEATURE_AUTO_DATE
+	if (get_digits() > 4) {
+		g_autotime = 54;  // display date at secs = 58;
+		g_autodisp = 550;  // display for 1.5 secs;
+	}
 #endif
 }
 
@@ -323,10 +333,10 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 		g_dateday = te->Day;  // save day for Menu
 #endif
 #ifdef FEATURE_AUTO_DATE
-		if ( g_autodate && (te->Second == 54) ) {
+		if (g_autodate && (te->Second == g_autotime) ) { 
 			save_mode = clock_mode;  // save current mode
-			clock_mode = MODE_DATE;  // display date at second 54
-			g_show_special_cnt = 550;  // show date for 5.5 seconds
+			clock_mode = MODE_DATE;  // display date now
+			g_show_special_cnt = g_autodisp;  // show date for g_autodisp ms
 			scroll_ctr = 0;  // reset scroll position
 			}
 		else
@@ -512,7 +522,7 @@ void main(void)
 			clock_mode++;
 #ifdef FEATURE_AUTO_DATE
 			if (clock_mode == MODE_DATE) {
-				g_show_special_cnt = 550;  // show date for 5.5 seconds
+				g_show_special_cnt = g_autodisp;  // show date for g_autodisp ms
 				scroll_ctr = 0;  // reset scroll position
 			}
 #endif			
