@@ -113,10 +113,8 @@ uint8_t EEMEM b_TZ_minutes = 0;
 uint8_t EEMEM b_DST = false;
 uint8_t EEMEM b_DST_offset = 0;
 #endif
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DATE
-uint8_t EEMEM b_Region = 0;  // default European date format yyyy/mm/dd
-#endif
 #ifdef FEATURE_AUTO_DATE
+uint8_t EEMEM b_Region = 0;  // default European date format yyyy/mm/dd
 uint8_t EEMEM b_AutoDate = false;
 #endif
 
