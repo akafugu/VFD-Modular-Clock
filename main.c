@@ -120,10 +120,8 @@ uint8_t EEMEM b_TZ_minutes = 0;
 uint8_t EEMEM b_DST_mode = 0;  // 0: off, 1: on, 2: Auto
 uint8_t EEMEM b_DST_offset = 0;
 #endif
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DATE
-uint8_t EEMEM b_Region = 0;  // default European date format yyyy/mm/dd
-#endif
 #ifdef FEATURE_AUTO_DATE
+uint8_t EEMEM b_Region = 0;  // default European date format yyyy/mm/dd
 uint8_t EEMEM b_AutoDate = false;
 #endif
 
@@ -141,10 +139,8 @@ uint8_t g_dateday = 1;
 #ifdef FEATURE_WmGPS 
 uint8_t g_gps_enabled = 0;
 #endif
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DATE
-uint8_t g_region = 0;
-#endif
 #ifdef FEATURE_AUTO_DATE
+uint8_t g_region = 0;
 uint8_t g_autodate = false;
 uint8_t g_autotime = 54;  // when to display date
 uint16_t g_autodisp = 550;  // how long to display date
@@ -176,10 +172,8 @@ void initialize(void)
 	g_DST_mode = eeprom_read_byte(&b_DST_mode);
 	g_DST_offset = eeprom_read_byte(&b_DST_offset);
 #endif
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DATE
-	g_region = eeprom_read_byte(&b_Region);
-#endif
 #ifdef FEATURE_AUTO_DATE
+	g_region = eeprom_read_byte(&b_Region);
 	g_autodate = eeprom_read_byte(&b_AutoDate);
 #endif
 
@@ -609,6 +603,12 @@ void main(void)
 						eeprom_update_byte(&b_AutoDate, g_autodate);
 						show_setting_string("ADTE", "ADATE", g_autodate ? " on " : " off", true);
 						break;
+					case STATE_MENU_REGION:
+						if (!menu_b1_first)	
+							g_region = (g_region+1)%2;  // 0 = EUR, 1 = USA
+						eeprom_update_byte(&b_Region, g_region);
+						show_setting_string("REGN", "REGION", g_region ? " USA" : " EUR", true);
+						break;
 #endif						
 #ifdef FEATURE_WmGPS
 					case STATE_MENU_GPS:
@@ -625,12 +625,6 @@ void main(void)
 							setDSToffset(g_DST_mode);
 						}
 						show_setting_string("DST", "DST", g_DST_mode ? " on" : " off", true);
-						break;
-					case STATE_MENU_REGION:
-						if (!menu_b1_first)	
-							g_region = (g_region+1)%2;  // 0 = EUR, 1 = USA
-						eeprom_update_byte(&b_Region, g_region);
-						show_setting_string("REGN", "REGION", g_region ? " USA" : " EUR", true);
 						break;
 					case STATE_MENU_ZONE:
 						if (!menu_b1_first)	
@@ -700,6 +694,9 @@ void main(void)
 					case STATE_MENU_AUTODATE:
 						show_setting_string("ADTE", "ADATE", g_autodate ? " on " : " off", false);
 						break;
+					case STATE_MENU_REGION:
+						show_setting_string("REGN", "REGION", g_region ? " USA" : " EUR", false);
+						break;
 #endif						
 #ifdef FEATURE_WmGPS
 					case STATE_MENU_GPS:
@@ -708,9 +705,6 @@ void main(void)
 					case STATE_MENU_DST:
 //						show_setting_int("DST", "DST", g_DST, false);
 						show_setting_string("DST", "DST", dst_setting(g_DST_mode), false);
-						break;
-					case STATE_MENU_REGION:
-						show_setting_string("REGN", "REGION", g_region ? " USA" : " EUR", false);
 						break;
 					case STATE_MENU_ZONE:
 						show_setting_int("TZ-H", "TZ-H", g_TZ_hour, false);
