@@ -26,6 +26,7 @@ SRCS = main.c \
 	display.c \
 	font-16seg.c \
 	font-7seg.c \
+	adst.c \
 	gps.c \
 	twi.c \
 	twi-lowlevel.c \
@@ -42,6 +43,7 @@ FEATURE_LOWERCASE ?= YES
 FEATURE_SET_DATE ?= YES
 FEATURE_AUTO_DATE ?= YES
 FEATURE_WmGPS ?= YES
+FEATURE_AUTO_DST ?= YES
 
 ifeq ($(MCU), attiny4313)
   FEATURE_CHANGE_TWI_ADDRESS ?= YES
@@ -62,6 +64,7 @@ SPECIAL_DEFS += DEMO \
 	FEATURE_SET_DATE \
 	FEATURE_AUTO_DATE \
 	FEATURE_WmGPS \
+	FEATURE_AUTO_DST \
 	BOARD_1_0
 	  
 

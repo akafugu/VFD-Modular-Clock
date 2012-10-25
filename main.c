@@ -14,6 +14,8 @@
  */
 
 /* Updates by William B Phelps
+ * 25oct12 implement Auto DST
+ *
  * 24oct12 fix date display for larger displays
  *
  * 22oct12 add DATE to menu, add FEATURE_SET_DATE and FEATURE_AUTO_DATE
@@ -81,6 +83,9 @@
 #ifdef FEATURE_WmGPS
 #include "gps.h"
 #endif
+#ifdef FEATURE_AUTO_DST
+#include "adst.h"
+#endif
 
 // Second indicator LED (optional second indicator on shield)
 #define LED_BIT PD7
@@ -110,7 +115,9 @@ uint8_t EEMEM b_volume = 0;
 uint8_t EEMEM b_gps_enabled = 0;  // 0, 48, or 96 - default no gps
 uint8_t EEMEM b_TZ_hour = -8 + 12;
 uint8_t EEMEM b_TZ_minutes = 0;
-uint8_t EEMEM b_DST = false;
+#endif
+#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
+uint8_t EEMEM b_DST_mode = 0;  // 0: off, 1: on, 2: Auto
 uint8_t EEMEM b_DST_offset = 0;
 #endif
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DATE
@@ -164,7 +171,9 @@ void initialize(void)
 	g_gps_enabled = eeprom_read_byte(&b_gps_enabled);
 	g_TZ_hour = eeprom_read_byte(&b_TZ_hour) - 12;
 	g_TZ_minutes = eeprom_read_byte(&b_TZ_minutes);
-	g_DST = eeprom_read_byte(&b_DST);
+#endif
+#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
+	g_DST_mode = eeprom_read_byte(&b_DST_mode);
 	g_DST_offset = eeprom_read_byte(&b_DST_offset);
 #endif
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DATE
@@ -611,14 +620,11 @@ void main(void)
 						break;
 					case STATE_MENU_DST:
 						if (!menu_b1_first) {	
-							g_DST = !g_DST;
-							eeprom_update_byte(&b_DST, g_DST);
-							if (g_DST)
-								setDSToffset(1);
-							else
-								setDSToffset(0);
+							g_DST_mode = (g_DST_mode+1)%3;  //  0: off, 1: on, 2: auto
+							eeprom_update_byte(&b_DST_mode, g_DST_mode);
+							setDSToffset(g_DST_mode);
 						}
-						show_setting_string("DST", "DST", g_DST ? " on" : " off", true);
+						show_setting_string("DST", "DST", g_DST_mode ? " on" : " off", true);
 						break;
 					case STATE_MENU_REGION:
 						if (!menu_b1_first)	
@@ -700,7 +706,8 @@ void main(void)
 						show_setting_string("GPS", "GPS", gps_setting(g_gps_enabled), false);
 						break;
 					case STATE_MENU_DST:
-						show_setting_int("DST", "DST", g_DST, false);
+//						show_setting_int("DST", "DST", g_DST, false);
+						show_setting_string("DST", "DST", dst_setting(g_DST_mode), false);
 						break;
 					case STATE_MENU_REGION:
 						show_setting_string("REGN", "REGION", g_region ? " USA" : " EUR", false);
