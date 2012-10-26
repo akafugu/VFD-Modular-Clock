@@ -16,8 +16,21 @@
 #ifndef ADST_H_
 #define ADST_H_
 
+typedef struct  {
+  uint8_t Month; 
+  uint8_t DOTW; 
+  uint8_t Week; 
+  uint8_t Hour;
+} DST_Rule;
+typedef struct  { 
+	DST_Rule Start;
+	DST_Rule End;
+  uint8_t Offset; 
+} DST_Rules;
+
 char* dst_setting(uint8_t dst);
-//void setDSToffset(uint8_t rules[]);
+uint8_t dotw(uint8_t year, uint8_t month, uint8_t day);
+uint8_t getDSToffset(tmElements_t* te, DST_Rules* rules);
 //void save_dstrules(uint8_t mods[]);
 //long DSTseconds(uint8_t month, uint8_t doftw, uint8_t n, uint8_t hour);
 //long YearSeconds(uint8_t yr, uint8_t mo, uint8_t da, uint8_t h, uint8_t m, uint8_t s);

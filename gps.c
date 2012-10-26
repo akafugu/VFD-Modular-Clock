@@ -22,6 +22,9 @@
 #include "rtc.h"
 #include "Time.h"
 
+// globals from main.c
+extern uint8_t g_DST_offset;  // DST offset
+
 // String buffer for processing GPS data:
 char gpsBuffer[GPSBUFFERSIZE];
 //volatile uint8_t gpsEnabled = 0;

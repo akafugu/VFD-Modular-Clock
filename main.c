@@ -80,11 +80,11 @@
 #include "rtc.h"
 #include "piezo.h"
 
-#ifdef FEATURE_WmGPS
-#include "gps.h"
-#endif
 #ifdef FEATURE_AUTO_DST
 #include "adst.h"
+#endif
+#ifdef FEATURE_WmGPS
+#include "gps.h"
 #endif
 
 // Second indicator LED (optional second indicator on shield)
@@ -124,7 +124,6 @@ uint8_t EEMEM b_DST_offset = 0;
 uint8_t EEMEM b_Region = 0;  // default European date format yyyy/mm/dd
 uint8_t EEMEM b_AutoDate = false;
 #endif
-
 // Cached settings
 uint8_t g_24h_clock = true;
 uint8_t g_show_temp = false;
@@ -138,6 +137,20 @@ uint8_t g_dateday = 1;
 #endif
 #ifdef FEATURE_WmGPS 
 uint8_t g_gps_enabled = 0;
+#endif
+#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
+uint8_t g_DST_mode;  // DST off, on, auto?
+uint8_t g_DST_offset;  // DST offset in Hours
+uint8_t g_DST_update = 0;  // DST update flag
+#endif
+#ifdef FEATURE_AUTO_DST
+DST_Rules dst_rules = {{3,1,2,2},{11,1,1,2},1};   // initial values from US DST rules as of 2011
+// DST Rules: Start(month, dotw, week, hour), End(month, dotw, week, hour), Offset
+// DOTW is Day of the Week, 1=Sunday, 7=Saturday
+// N is which occurrence of DOTW
+// Current US Rules:  March, Sunday, 2nd, 2am, November, Sunday, 1st, 2 am, 1 hour
+const DST_Rules dst_rules_lo = {{1,1,1,0},{1,1,1,0},0};  // low limit
+const DST_Rules dst_rules_hi = {{12,7,5,23},{12,7,5,23},1};  // high limit
 #endif
 #ifdef FEATURE_AUTO_DATE
 uint8_t g_region = 0;
@@ -256,7 +269,7 @@ typedef enum {
 	STATE_MENU_DST,
 	STATE_MENU_GPS,
 	STATE_MENU_REGION,
-	STATE_MENU_ZONE,
+	STATE_MENU_ZONEH,
 	STATE_MENU_ZONEM,
 #endif
 	STATE_MENU_TEMP,
@@ -297,7 +310,22 @@ ISR( PCINT2_vect )
 		clock_mode = MODE_ALARM_TEXT;
 }
 
-//uint8_t scroll_ctr = 0;
+#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
+void setDSToffset(int8_t newOffset) {
+	int8_t adjOffset;
+	if (newOffset == 2) {  // Auto DST
+		newOffset = getDSToffset(te, &dst_rules);  // get current DST offset based on DST Rules
+	}
+	adjOffset = newOffset - g_DST_offset;  // offset delta
+	if (adjOffset == 0)  return;  // nothing to do
+	time_t tNow = rtc_get_time_t();  // fetch current time from RTC as time_t
+	tNow += adjOffset * SECS_PER_HOUR;  // add or subtract new DST offset
+	rtc_set_time_t(tNow);  // adjust RTC
+	g_DST_offset = newOffset;
+	eeprom_update_byte(&b_DST_offset, g_DST_offset);
+}
+#endif
+
 void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 {
 	static uint16_t counter = 0;
@@ -335,6 +363,11 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 		g_datemonth = te->Month;  // save month for Menu
 		g_dateday = te->Day;  // save day for Menu
 #endif
+#ifdef FEATURE_AUTO_DST
+		if (te->Second%10 == 0) {  // check DST Offset every 10 seconds
+			setDSToffset(g_DST_mode); 
+		}
+#endif
 #ifdef FEATURE_AUTO_DATE
 		if (g_autodate && (te->Second == g_autotime) ) { 
 			save_mode = clock_mode;  // save current mode
@@ -349,17 +382,6 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 	counter++;
 	if (counter == 250) counter = 0;
 }
-
-#ifdef FEATURE_WmGPS
-void setDSToffset(int8_t newOffset) {
-	int8_t adjOffset = newOffset - g_DST_offset;  // offset delta
-	time_t tNow = rtc_get_time_t();  // fetch current time from RTC as time_t
-	tNow += adjOffset * SECS_PER_HOUR;  // add or subtract new DST offset
-	rtc_set_time_t(tNow);  // adjust RTC
-	g_DST_offset = newOffset;
-	eeprom_update_byte(&b_DST_offset, g_DST_offset);
-}
-#endif
 
 #ifdef FEATURE_SET_DATE
 void set_date(uint8_t yy, uint8_t mm, uint8_t dd) {
@@ -618,15 +640,28 @@ void main(void)
 						gps_init(g_gps_enabled);  // change baud rate
 						show_setting_string("GPS", "GPS", gps_setting(g_gps_enabled), true);
 						break;
+#endif
+#if defined FEATURE_AUTO_DST
 					case STATE_MENU_DST:
 						if (!menu_b1_first) {	
 							g_DST_mode = (g_DST_mode+1)%3;  //  0: off, 1: on, 2: auto
 							eeprom_update_byte(&b_DST_mode, g_DST_mode);
 							setDSToffset(g_DST_mode);
 						}
+						show_setting_string("DST", "DST", dst_setting(g_DST_mode), true);
+						break;
+#elif defined FEATURE_WmGPS
+					case STATE_MENU_DST:
+						if (!menu_b1_first) {	
+							g_DST_mode = (g_DST_mode+1)%2;  //  0: off, 1: on
+							eeprom_update_byte(&b_DST_mode, g_DST_mode);
+							setDSToffset(g_DST_mode);
+						}
 						show_setting_string("DST", "DST", g_DST_mode ? " on" : " off", true);
 						break;
-					case STATE_MENU_ZONE:
+#endif
+#ifdef FEATURE_WmGPS
+					case STATE_MENU_ZONEH:
 						if (!menu_b1_first)	
 							g_TZ_hour++;
 						if (g_TZ_hour > 12) g_TZ_hour = -12;
@@ -639,7 +674,7 @@ void main(void)
 						eeprom_update_byte(&b_TZ_minutes, g_TZ_minutes);
 						show_setting_int("TZ-M", "TZ-M", g_TZ_minutes, true);
 						break;
-	#endif
+#endif
 					case STATE_MENU_TEMP:
 						if (!menu_b1_first)	
 							g_show_temp = !g_show_temp;
@@ -703,10 +738,13 @@ void main(void)
 						show_setting_string("GPS", "GPS", gps_setting(g_gps_enabled), false);
 						break;
 					case STATE_MENU_DST:
-//						show_setting_int("DST", "DST", g_DST, false);
+#ifdef FEATURE_AUTO_DST
 						show_setting_string("DST", "DST", dst_setting(g_DST_mode), false);
+#else
+						show_setting_int("DST", "DST", g_DST, false);
+#endif
 						break;
-					case STATE_MENU_ZONE:
+					case STATE_MENU_ZONEH:
 						show_setting_int("TZ-H", "TZ-H", g_TZ_hour, false);
 						break;
 					case STATE_MENU_ZONEM:

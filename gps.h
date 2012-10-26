@@ -25,8 +25,8 @@ char* gps_setting(uint8_t gps);
 
 int8_t g_TZ_hour;
 uint8_t g_TZ_minutes;
-uint8_t g_DST_mode;  // DST off, on, auto?
-uint8_t g_DST_offset;  // DST offset in hours
+//uint8_t g_DST_mode;  // DST off, on, auto?
+//uint8_t g_DST_offset;  // DST offset in hours
 
 //GPS serial data handling functions:
 uint8_t gpsDataReady(void);
