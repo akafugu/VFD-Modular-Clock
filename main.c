@@ -14,6 +14,10 @@
  */
 
 /* Updates by William B Phelps
+ * 29oct12 "gps_updating" flag, use segment on IV18
+ *
+ * 26oct12 add DST rules to menu
+ *
  * 25oct12 implement Auto DST
  *
  * 24oct12 fix date display for larger displays
@@ -137,6 +141,7 @@ uint8_t g_dateday = 1;
 #endif
 #ifdef FEATURE_WmGPS 
 uint8_t g_gps_enabled = 0;
+uint8_t g_gps_updating = 0;  // for signalling GPS update on some displays
 #endif
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 uint8_t g_DST_mode;  // DST off, on, auto?
@@ -144,6 +149,7 @@ uint8_t g_DST_offset;  // DST offset in Hours
 uint8_t g_DST_update = 0;  // DST update flag
 #endif
 #ifdef FEATURE_AUTO_DST
+//DST_Rules dst_rules = {{10,1,1,2},{4,1,1,2},1};   // DST Rules for parts of OZ including NSW (for JG)
 DST_Rules dst_rules = {{3,1,2,2},{11,1,1,2},1};   // initial values from US DST rules as of 2011
 // DST Rules: Start(month, dotw, week, hour), End(month, dotw, week, hour), Offset
 // DOTW is Day of the Week, 1=Sunday, 7=Saturday
@@ -258,17 +264,23 @@ typedef enum {
 	STATE_MENU_24H,
 	STATE_MENU_VOL,
 #ifdef FEATURE_SET_DATE
+//	STATE_MENU_DATE,
 	STATE_MENU_SETYEAR,
 	STATE_MENU_SETMONTH,
 	STATE_MENU_SETDAY,
 #endif
 #ifdef FEATURE_AUTO_DATE
 	STATE_MENU_AUTODATE,
+	STATE_MENU_REGION,
+#endif
+#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
+	STATE_MENU_DST,
+#endif
+#if defined FEATURE_AUTO_DSTx
+	STATE_MENU_RULES,
 #endif
 #ifdef FEATURE_WmGPS
-	STATE_MENU_DST,
 	STATE_MENU_GPS,
-	STATE_MENU_REGION,
 	STATE_MENU_ZONEH,
 	STATE_MENU_ZONEM,
 #endif
@@ -277,7 +289,26 @@ typedef enum {
 	STATE_MENU_LAST,
 } menu_state_t;
 
+typedef enum {
+	SUB_MENU_OFF = 0,
+	SUB_MENU_DATE_YEAR,
+	SUB_MENU_DATE_MONTH,
+	SUB_MENU_DATE_DAY,
+	SUB_MENU_DATE_EXIT,
+	SUB_MENU_RULE_SMONTH,
+	SUB_MENU_RULE_SDOTW,
+	SUB_MENU_RULE_SWEEK,
+	SUB_MENU_RULE_SHOUR,
+	SUB_MENU_RULE_EMONTH,
+	SUB_MENU_RULE_EDOTW,
+	SUB_MENU_RULE_EWEEK,
+	SUB_MENU_RULE_EHOUR,
+	SUB_MENU_RULE_OFFSET,
+	SUB_MENU_RULE_EXIT,
+} sub_menu_state_t;
+
 menu_state_t menu_state = STATE_CLOCK;
+sub_menu_state_t submenu_state = SUB_MENU_OFF;
 bool menu_b1_first = false;
 
 // display modes
@@ -560,7 +591,6 @@ void main(void)
 				button_released_timer++;
 			else
 				button_released_timer = 0;
-			
 //			if (button_released_timer >= 80) {
 			if (button_released_timer >= 200) {  // 2 seconds (wm)
 				button_released_timer = 0;
@@ -660,6 +690,10 @@ void main(void)
 						show_setting_string("DST", "DST", g_DST_mode ? " on" : " off", true);
 						break;
 #endif
+#if defined FEATURE_AUTO_DSTx
+					case STATE_MENU_RULES:
+						break;
+#endif
 #ifdef FEATURE_WmGPS
 					case STATE_MENU_ZONEH:
 						if (!menu_b1_first)	
@@ -695,10 +729,38 @@ void main(void)
 			}  // if (buttons.b1_keyup) 
 
 			if (buttons.b2_keyup) {
-				menu_state++;
 				if (get_digits() == 4)  // only set first time flag for 4 digit displays
 					menu_b1_first = true;  // reset b1 first time flag
+
+				if (submenu_state>SUB_MENU_OFF) {
+					submenu_state++;
+					switch (submenu_state) {
+						case SUB_MENU_DATE_YEAR:
+							show_setting_int("YEAR", "YEAR ", g_dateyear, false);
+							break;
+						case SUB_MENU_DATE_MONTH:
+							show_setting_int("MNTH", "MONTH", g_datemonth, false);
+							break;
+						case SUB_MENU_DATE_DAY:
+							show_setting_int("DAY ", "DAY  ", g_dateday, false);
+							break;
+						case SUB_MENU_DATE_EXIT:
+							submenu_state = SUB_MENU_OFF;
+							menu_state++;
+							break;
+					}
+					
+				}
+				else {
+				}
+			
+				menu_state++;
 				
+#if defined FEATURE_AUTO_DSTx
+				// show DST Rules only when DST mode is Auto
+				if (menu_state == STATE_MENU_RULES && (g_DST_mode<2)) menu_state++;
+#endif
+
 				// show temperature setting only when running on a DS3231
 				if (menu_state == STATE_MENU_TEMP && !rtc_is_ds3231()) menu_state++;
 
@@ -737,13 +799,17 @@ void main(void)
 					case STATE_MENU_GPS:
 						show_setting_string("GPS", "GPS", gps_setting(g_gps_enabled), false);
 						break;
-					case STATE_MENU_DST:
-#ifdef FEATURE_AUTO_DST
-						show_setting_string("DST", "DST", dst_setting(g_DST_mode), false);
-#else
-						show_setting_int("DST", "DST", g_DST, false);
 #endif
+#if defined FEATURE_AUTO_DST
+					case STATE_MENU_DST:
+						show_setting_string("DST", "DST", dst_setting(g_DST_mode), false);
 						break;
+#elif defined FEATURE_WmGPS
+					case STATE_MENU_DST:
+						show_setting_int("DST", "DST", g_DST, false);
+						break;
+#endif
+#ifdef FEATURE_WmGPS
 					case STATE_MENU_ZONEH:
 						show_setting_int("TZ-H", "TZ-H", g_TZ_hour, false);
 						break;

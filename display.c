@@ -48,6 +48,7 @@ extern uint8_t g_show_dots;
 extern uint8_t g_has_dots;
 extern uint8_t g_alarm_switch;
 extern uint8_t g_brightness;
+extern uint8_t g_gps_updating;
 
 // variables for controlling display blink
 uint8_t blink;
@@ -225,6 +226,7 @@ void display_multiplex_iv6(void)
 // display multiplexing routine for IV6 shield: run once every 2ms
 void display_multiplex_iv18(void)
 {
+	uint8_t seg = 0;
 	clear_display();
 	switch (multiplex_counter) {
 		case 0:
@@ -253,9 +255,13 @@ void display_multiplex_iv18(void)
 			break;
 		case 8:  // show alarm switch status
 			if (g_alarm_switch)
-				write_vfd_iv18(8, (1<<7));
-			else
-				write_vfd_iv18(8, 0);
+//				write_vfd_iv18(8, (1<<7));
+				seg = (1<<7);
+//			else
+//				write_vfd_iv18(8, 0);
+			if (g_gps_updating)
+				seg |= (1<<6);
+			write_vfd_iv18(8, seg);
 			break;
 	}
 	multiplex_counter++;
@@ -400,8 +406,8 @@ void print_dots(uint8_t mode, uint8_t seconds)
 {
 	if (g_show_dots) {
 		if (digits == 8 && mode == 0) {
-			sbi(dots, 3);
-			sbi(dots, 5);
+			sbi(dots, 2);  // 28oct12/wbp
+			sbi(dots, 4);  // 28oct12/wbp
 		}
 		else if (digits == 6 && mode == 0) {
 			sbi(dots, 1);
@@ -443,14 +449,20 @@ void show_time(tmElements_t* te, bool _24h_clock, uint8_t mode)
 
 	if (mode == 0) { // normal display mode
 		if (digits == 8) { // " HH.MM.SS "
-			if (!_24h_clock && pm)
-				offset = print_ch('P', offset);
-			else
-				offset = print_ch(' ', offset); 
+			if (!_24h_clock) { 
+				if (pm)
+					offset = print_ch('P', offset);
+				else
+					offset = print_ch('A', offset);  // 28oct12/wbp 'A' for am
+			}
+			else {
+				offset = print_ch(' ', offset);  // 28oct12/wbp  no am/pm for 24 hour
+			}
+			offset = print_ch(' ', offset);  // 28oct12/wbp shift time to right 1 char
 			offset = print_hour(hour, offset, _24h_clock);  // wm
 			offset = print_digits(te->Minute, offset);
 			offset = print_digits(te->Second, offset);
-			offset = print_ch(' ', offset);
+//			offset = print_ch(' ', offset);
 		}
 		else if (digits == 6) { // "HH.MM.SS"
 			offset = print_hour(hour, offset, _24h_clock);  // wm

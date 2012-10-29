@@ -24,6 +24,8 @@
 
 // globals from main.c
 extern uint8_t g_DST_offset;  // DST offset
+extern uint8_t g_gps_updating;
+extern enum shield_t shield;
 
 // String buffer for processing GPS data:
 char gpsBuffer[GPSBUFFERSIZE];
@@ -164,6 +166,7 @@ void parseGPSdata() {
 
 				if ((tm.Second == 0) || ((tNow - tGPSupdate)>=60)) {  // update RTC once/minute or if it's been 60 seconds
 					//beep(1000, 1);  // debugging
+					g_gps_updating = true;
 					tGPSupdate = tNow;
 					tNow = tNow + (g_TZ_hour + g_DST_offset) * SECS_PER_HOUR;  // add time zone hour offset & DST offset
 					if (g_TZ_hour < 0)  // add or subtract time zone minute offset
@@ -171,11 +174,11 @@ void parseGPSdata() {
 					else
 						tNow = tNow + g_TZ_minutes * SECS_PER_HOUR;
 					rtc_set_time_t(tNow);  // set RTC from adjusted GPS time & date
-//					set_display(false);
-//					_delay_ms(100);
-//					set_display(true);  // flash the display for 200 ms to show GPS update
-					flash_display(200);
+					if (shield != SHIELD_IV18)
+						flash_display(100);  // flash display to show GPS update 28oct12/wbp - shorter blink
 				}
+				else
+					g_gps_updating = false;
 
 			} // if fix status is A
 		} // if checksums match
