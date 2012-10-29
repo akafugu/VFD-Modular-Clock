@@ -402,12 +402,18 @@ uint8_t print_strn(char* str, uint8_t offset, uint8_t n)
 extern uint8_t g_volume;
 
 // set dots based on mode and seconds
-void print_dots(uint8_t mode, uint8_t seconds)
+void print_dots(uint8_t mode, bool _24h_clock, uint8_t seconds)
 {
 	if (g_show_dots) {
 		if (digits == 8 && mode == 0) {
-			sbi(dots, 2);  // 28oct12/wbp
-			sbi(dots, 4);  // 28oct12/wbp
+			if (_24h_clock) {
+				sbi(dots, 3);
+				sbi(dots, 5);
+			}
+			else{
+				sbi(dots, 2);  // 28oct12/wbp
+				sbi(dots, 4);  // 28oct12/wbp
+			}
 		}
 		else if (digits == 6 && mode == 0) {
 			sbi(dots, 1);
@@ -445,24 +451,25 @@ void show_time(tmElements_t* te, bool _24h_clock, uint8_t mode)
 		}
 	}	
 	
-	print_dots(mode, te->Second);
+	print_dots(mode, _24h_clock, te->Second);
 
 	if (mode == 0) { // normal display mode
 		if (digits == 8) { // " HH.MM.SS "
-			if (!_24h_clock) { 
+			if (_24h_clock) { 
+				offset = print_ch(' ', offset);  // 28oct12/wbp  no am/pm for 24 hour
+			}
+			else {
 				if (pm)
 					offset = print_ch('P', offset);
 				else
 					offset = print_ch('A', offset);  // 28oct12/wbp 'A' for am
+				offset = print_ch(' ', offset);  // 28oct12/wbp shift time to right 1 char
 			}
-			else {
-				offset = print_ch(' ', offset);  // 28oct12/wbp  no am/pm for 24 hour
-			}
-			offset = print_ch(' ', offset);  // 28oct12/wbp shift time to right 1 char
 			offset = print_hour(hour, offset, _24h_clock);  // wm
 			offset = print_digits(te->Minute, offset);
 			offset = print_digits(te->Second, offset);
-//			offset = print_ch(' ', offset);
+			if (_24h_clock) 
+				offset = print_ch(' ', offset);
 		}
 		else if (digits == 6) { // "HH.MM.SS"
 			offset = print_hour(hour, offset, _24h_clock);  // wm

@@ -14,9 +14,8 @@
  */
 
 /* Updates by William B Phelps
- * 29oct12 "gps_updating" flag, use segment on IV18
- *
- * 26oct12 add DST rules to menu
+ * 29oct12 "gps_updating" flag, use segment on IV18 to show updates
+ * shift time 1 pos for 12 hour display
  *
  * 25oct12 implement Auto DST
  *
@@ -275,9 +274,6 @@ typedef enum {
 #endif
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 	STATE_MENU_DST,
-#endif
-#if defined FEATURE_AUTO_DSTx
-	STATE_MENU_RULES,
 #endif
 #ifdef FEATURE_WmGPS
 	STATE_MENU_GPS,
@@ -690,10 +686,6 @@ void main(void)
 						show_setting_string("DST", "DST", g_DST_mode ? " on" : " off", true);
 						break;
 #endif
-#if defined FEATURE_AUTO_DSTx
-					case STATE_MENU_RULES:
-						break;
-#endif
 #ifdef FEATURE_WmGPS
 					case STATE_MENU_ZONEH:
 						if (!menu_b1_first)	
@@ -731,36 +723,9 @@ void main(void)
 			if (buttons.b2_keyup) {
 				if (get_digits() == 4)  // only set first time flag for 4 digit displays
 					menu_b1_first = true;  // reset b1 first time flag
-
-				if (submenu_state>SUB_MENU_OFF) {
-					submenu_state++;
-					switch (submenu_state) {
-						case SUB_MENU_DATE_YEAR:
-							show_setting_int("YEAR", "YEAR ", g_dateyear, false);
-							break;
-						case SUB_MENU_DATE_MONTH:
-							show_setting_int("MNTH", "MONTH", g_datemonth, false);
-							break;
-						case SUB_MENU_DATE_DAY:
-							show_setting_int("DAY ", "DAY  ", g_dateday, false);
-							break;
-						case SUB_MENU_DATE_EXIT:
-							submenu_state = SUB_MENU_OFF;
-							menu_state++;
-							break;
-					}
-					
-				}
-				else {
-				}
 			
 				menu_state++;
 				
-#if defined FEATURE_AUTO_DSTx
-				// show DST Rules only when DST mode is Auto
-				if (menu_state == STATE_MENU_RULES && (g_DST_mode<2)) menu_state++;
-#endif
-
 				// show temperature setting only when running on a DS3231
 				if (menu_state == STATE_MENU_TEMP && !rtc_is_ds3231()) menu_state++;
 
