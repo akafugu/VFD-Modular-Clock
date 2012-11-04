@@ -83,6 +83,7 @@ uint8_t getDSToffset(tmElements_t* te, DST_Rules* rules)
 	// seconds til end of DST this year
   long seconds2 = DSTseconds(te->Year, rules->End.Month, rules->End.DOTW, rules->End.Week, rules->End.Hour);  
 	long seconds_now = yearSeconds(te->Year, te->Month, te->Day, te->Hour, te->Minute, te->Second);
+// NOTE - the following could be improved - if user sets date, or even time, reset "seconds_last" ???
 	if (seconds_now < seconds_last)  // is time less than it was?
 		seconds_now = seconds_last;  // prevent loop when setting time back
 	if (seconds2>seconds1) {  // northern hemisphere
