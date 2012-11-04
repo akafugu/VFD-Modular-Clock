@@ -14,6 +14,8 @@
  */
 
 /* Updates by William B Phelps
+ * 30oct12 menu changes - single menu block instead of 2
+ *
  * 29oct12 "gps_updating" flag, use segment on IV18 to show updates
  * shift time 1 pos for 12 hour display
  *
@@ -419,6 +421,141 @@ void set_date(uint8_t yy, uint8_t mm, uint8_t dd) {
 }
 #endif
 
+void menu(bool update)
+{
+	switch (menu_state) {
+		case STATE_MENU_BRIGHTNESS:
+			if (update) {	
+				g_brightness++;
+				if (g_brightness > 10) g_brightness = 1;
+				eeprom_update_byte(&b_brightness, g_brightness);
+				set_brightness(g_brightness);
+			}
+			show_setting_int("BRIT", "BRITE", g_brightness, update);
+			break;
+		case STATE_MENU_24H:
+			if (update)	{
+				g_24h_clock = !g_24h_clock;
+				eeprom_update_byte(&b_24h_clock, g_24h_clock);
+			}
+			show_setting_string("24H", "24H", g_24h_clock ? " on" : " off", update);
+			break;
+		case STATE_MENU_VOL:
+			if (update)	{
+				g_volume = !g_volume;
+				eeprom_update_byte(&b_volume, g_volume);
+				piezo_init();
+				beep(1000, 1);
+			}
+			show_setting_string("VOL", "VOL", g_volume ? " hi" : " lo", update);
+			break;
+#ifdef FEATURE_SET_DATE						
+		case STATE_MENU_SETYEAR:
+			if (update) {
+				g_dateyear++;
+				if (g_dateyear > 29) g_dateyear = 10;  // 20 years...
+				set_date(g_dateyear, g_datemonth, g_dateday);
+			}
+			show_setting_int("YEAR", "YEAR ", g_dateyear, update);
+			break;
+		case STATE_MENU_SETMONTH:
+			if (update) {
+				g_datemonth++;
+				if (g_datemonth > 12) g_datemonth = 1;  
+				set_date(g_dateyear, g_datemonth, g_dateday);
+				}
+			show_setting_int("MNTH", "MONTH", g_datemonth, update);
+			break;
+		case STATE_MENU_SETDAY:
+			if (update) {
+				g_dateday++;
+				if (g_dateday > 31) g_dateday = 1;  
+				set_date(g_dateyear, g_datemonth, g_dateday);
+			}
+			show_setting_int("DAY", "DAY  ", g_dateday, update);
+			break;
+#endif						
+#ifdef FEATURE_AUTO_DATE						
+		case STATE_MENU_AUTODATE:
+			if (update)	{
+				g_autodate = !g_autodate;
+				eeprom_update_byte(&b_AutoDate, g_autodate);
+			}
+			show_setting_string("ADTE", "ADATE", g_autodate ? " on " : " off", update);
+			break;
+		case STATE_MENU_REGION:
+			if (update)	{
+				g_region = (g_region+1)%2;  // 0 = EUR, 1 = USA
+				eeprom_update_byte(&b_Region, g_region);
+			}
+			show_setting_string("REGN", "REGION", g_region ? " USA" : " EUR", update);
+			break;
+#endif						
+#ifdef FEATURE_WmGPS
+		case STATE_MENU_GPS:
+			if (update)	{
+				g_gps_enabled = (g_gps_enabled+48)%144;  // 0, 48, 96
+				eeprom_update_byte(&b_gps_enabled, g_gps_enabled);
+				gps_init(g_gps_enabled);  // change baud rate
+			}
+			show_setting_string("GPS", "GPS", gps_setting(g_gps_enabled), update);
+			break;
+#endif
+#if defined FEATURE_AUTO_DST
+		case STATE_MENU_DST:
+			if (update) {	
+				g_DST_mode = (g_DST_mode+1)%3;  //  0: off, 1: on, 2: auto
+				eeprom_update_byte(&b_DST_mode, g_DST_mode);
+				setDSToffset(g_DST_mode);
+			}
+			show_setting_string("DST", "DST", dst_setting(g_DST_mode), update);
+			break;
+#elif defined FEATURE_WmGPS
+		case STATE_MENU_DST:
+			if (update) {	
+				g_DST_mode = (g_DST_mode+1)%2;  //  0: off, 1: on
+				eeprom_update_byte(&b_DST_mode, g_DST_mode);
+				setDSToffset(g_DST_mode);
+			}
+			show_setting_string("DST", "DST", g_DST_mode ? " on" : " off", update);
+			break;
+#endif
+#ifdef FEATURE_WmGPS
+		case STATE_MENU_ZONEH:
+			if (update)	{
+				g_TZ_hour++;
+				if (g_TZ_hour > 12) g_TZ_hour = -12;
+				eeprom_update_byte(&b_TZ_hour, g_TZ_hour + 12);
+			}
+			show_setting_int("TZ-H", "TZ-H", g_TZ_hour, update);
+			break;
+		case STATE_MENU_ZONEM:
+			if (update)	{
+				g_TZ_minutes = (g_TZ_minutes + 15) % 60;;
+				eeprom_update_byte(&b_TZ_minutes, g_TZ_minutes);
+			}
+			show_setting_int("TZ-M", "TZ-M", g_TZ_minutes, update);
+			break;
+#endif
+		case STATE_MENU_TEMP:
+			if (update)	{
+				g_show_temp = !g_show_temp;
+				eeprom_update_byte(&b_show_temp, g_show_temp);
+			}
+			show_setting_string("TEMP", "TEMP", g_show_temp ? " on" : " off", update);
+			break;
+		case STATE_MENU_DOTS:
+			if (update)	{
+				g_show_dots = !g_show_dots;
+				eeprom_update_byte(&b_show_dots, g_show_dots);
+			}
+			show_setting_string("DOTS", "DOTS", g_show_dots ? " on" : " off", update);
+			break;
+		default:
+			break; // do nothing
+	}  // switch (menu_state)
+}  // menu
+
 void main(void) __attribute__ ((noreturn));
 
 void main(void)
@@ -595,129 +732,9 @@ void main(void)
 			}
 			
 			if (buttons.b1_keyup) {
-				switch (menu_state) {
-					case STATE_MENU_BRIGHTNESS:
-						if (!menu_b1_first)	
-							g_brightness++;
-						if (g_brightness > 10) g_brightness = 1;
-						eeprom_update_byte(&b_brightness, g_brightness);
-//						if (shield == SHIELD_IV17)  // wm ???
-//							show_setting_string("BRIT", "BRITE", (g_brightness % 2 == 0) ? "  lo" : "  hi", true);
-//						else
-						show_setting_int("BRIT", "BRITE", g_brightness, true);
-						set_brightness(g_brightness);
-						break;
-					case STATE_MENU_24H:
-						if (!menu_b1_first)	
-							g_24h_clock = !g_24h_clock;
-						eeprom_update_byte(&b_24h_clock, g_24h_clock);
-						show_setting_string("24H", "24H", g_24h_clock ? " on" : " off", true);
-						break;
-					case STATE_MENU_VOL:
-						if (!menu_b1_first)	
-							g_volume = !g_volume;
-						eeprom_update_byte(&b_volume, g_volume);
-						show_setting_string("VOL", "VOL", g_volume ? " hi" : " lo", true);
-						piezo_init();
-						beep(1000, 1);
-						break;
-#ifdef FEATURE_SET_DATE						
-					case STATE_MENU_SETYEAR:
-						if (!menu_b1_first)
-							g_dateyear++;
-						if (g_dateyear > 29) g_dateyear = 10;  // 20 years...
-						show_setting_int("YEAR", "YEAR ", g_dateyear, true);
-						set_date(g_dateyear, g_datemonth, g_dateday);
-						break;
-					case STATE_MENU_SETMONTH:
-						if (!menu_b1_first)
-							g_datemonth++;
-						if (g_datemonth > 12) g_datemonth = 1;  
-						show_setting_int("MNTH", "MONTH", g_datemonth, true);
-						set_date(g_dateyear, g_datemonth, g_dateday);
-						break;
-					case STATE_MENU_SETDAY:
-						if (!menu_b1_first)
-							g_dateday++;
-						if (g_dateday > 31) g_dateday = 1;  
-						show_setting_int("DAY", "DAY  ", g_dateday, true);
-						set_date(g_dateyear, g_datemonth, g_dateday);
-						break;
-#endif						
-#ifdef FEATURE_AUTO_DATE						
-					case STATE_MENU_AUTODATE:
-						if (!menu_b1_first)	
-							g_autodate = !g_autodate;
-						eeprom_update_byte(&b_AutoDate, g_autodate);
-						show_setting_string("ADTE", "ADATE", g_autodate ? " on " : " off", true);
-						break;
-					case STATE_MENU_REGION:
-						if (!menu_b1_first)	
-							g_region = (g_region+1)%2;  // 0 = EUR, 1 = USA
-						eeprom_update_byte(&b_Region, g_region);
-						show_setting_string("REGN", "REGION", g_region ? " USA" : " EUR", true);
-						break;
-#endif						
-#ifdef FEATURE_WmGPS
-					case STATE_MENU_GPS:
-						if (!menu_b1_first)	
-							g_gps_enabled = (g_gps_enabled+48)%144;  // 0, 48, 96
-						eeprom_update_byte(&b_gps_enabled, g_gps_enabled);
-						gps_init(g_gps_enabled);  // change baud rate
-						show_setting_string("GPS", "GPS", gps_setting(g_gps_enabled), true);
-						break;
-#endif
-#if defined FEATURE_AUTO_DST
-					case STATE_MENU_DST:
-						if (!menu_b1_first) {	
-							g_DST_mode = (g_DST_mode+1)%3;  //  0: off, 1: on, 2: auto
-							eeprom_update_byte(&b_DST_mode, g_DST_mode);
-							setDSToffset(g_DST_mode);
-						}
-						show_setting_string("DST", "DST", dst_setting(g_DST_mode), true);
-						break;
-#elif defined FEATURE_WmGPS
-					case STATE_MENU_DST:
-						if (!menu_b1_first) {	
-							g_DST_mode = (g_DST_mode+1)%2;  //  0: off, 1: on
-							eeprom_update_byte(&b_DST_mode, g_DST_mode);
-							setDSToffset(g_DST_mode);
-						}
-						show_setting_string("DST", "DST", g_DST_mode ? " on" : " off", true);
-						break;
-#endif
-#ifdef FEATURE_WmGPS
-					case STATE_MENU_ZONEH:
-						if (!menu_b1_first)	
-							g_TZ_hour++;
-						if (g_TZ_hour > 12) g_TZ_hour = -12;
-						eeprom_update_byte(&b_TZ_hour, g_TZ_hour + 12);
-						show_setting_int("TZ-H", "TZ-H", g_TZ_hour, true);
-						break;
-					case STATE_MENU_ZONEM:
-						if (!menu_b1_first)	
-							g_TZ_minutes = (g_TZ_minutes + 15) % 60;;
-						eeprom_update_byte(&b_TZ_minutes, g_TZ_minutes);
-						show_setting_int("TZ-M", "TZ-M", g_TZ_minutes, true);
-						break;
-#endif
-					case STATE_MENU_TEMP:
-						if (!menu_b1_first)	
-							g_show_temp = !g_show_temp;
-						eeprom_update_byte(&b_show_temp, g_show_temp);
-						show_setting_string("TEMP", "TEMP", g_show_temp ? " on" : " off", true);
-						break;
-					case STATE_MENU_DOTS:
-						if (!menu_b1_first)	
-							g_show_dots = !g_show_dots;
-						eeprom_update_byte(&b_show_dots, g_show_dots);
-						show_setting_string("DOTS", "DOTS", g_show_dots ? " on" : " off", true);
-						break;
-					default:
-						break; // do nothing
-				}  // switch (menu_state)
-			buttons.b1_keyup = false;
-			menu_b1_first = false;  // b1 not first time now
+				menu(!menu_b1_first);
+				buttons.b1_keyup = false;
+				menu_b1_first = false;  // b1 not first time now
 			}  // if (buttons.b1_keyup) 
 
 			if (buttons.b2_keyup) {
@@ -734,67 +751,7 @@ void main(void)
 
 				if (menu_state == STATE_MENU_LAST) menu_state = STATE_MENU_BRIGHTNESS;
 				
-				switch (menu_state) {
-					case STATE_MENU_BRIGHTNESS:
-						show_setting_int("BRIT", "BRITE", g_brightness, false);
-						break;
-					case STATE_MENU_VOL:
-						show_setting_string("VOL", "VOL", g_volume ? " hi" : " lo", false);
-						break;
-#ifdef FEATURE_SET_DATE						
-					case STATE_MENU_SETYEAR:
-						show_setting_int("YEAR", "YEAR ", g_dateyear, false);
-						break;
-					case STATE_MENU_SETMONTH:
-						show_setting_int("MNTH", "MONTH", g_datemonth, false);
-						break;
-					case STATE_MENU_SETDAY:
-						show_setting_int("DAY ", "DAY  ", g_dateday, false);
-						break;
-#endif						
-#ifdef FEATURE_AUTO_DATE
-					case STATE_MENU_AUTODATE:
-						show_setting_string("ADTE", "ADATE", g_autodate ? " on " : " off", false);
-						break;
-					case STATE_MENU_REGION:
-						show_setting_string("REGN", "REGION", g_region ? " USA" : " EUR", false);
-						break;
-#endif						
-#ifdef FEATURE_WmGPS
-					case STATE_MENU_GPS:
-						show_setting_string("GPS", "GPS", gps_setting(g_gps_enabled), false);
-						break;
-#endif
-#if defined FEATURE_AUTO_DST
-					case STATE_MENU_DST:
-						show_setting_string("DST", "DST", dst_setting(g_DST_mode), false);
-						break;
-#elif defined FEATURE_WmGPS
-					case STATE_MENU_DST:
-						show_setting_int("DST", "DST", g_DST, false);
-						break;
-#endif
-#ifdef FEATURE_WmGPS
-					case STATE_MENU_ZONEH:
-						show_setting_int("TZ-H", "TZ-H", g_TZ_hour, false);
-						break;
-					case STATE_MENU_ZONEM:
-						show_setting_int("TZ-M", "TZ-M", g_TZ_minutes, false);
-						break;
-#endif
-					case STATE_MENU_24H:
-						show_setting_string("24H", "24H", g_24h_clock ? " on" : " off", false);
-						break;
-					case STATE_MENU_DOTS:
-						show_setting_string("DOTS", "DOTS", g_show_dots ? " on" : " off", false);
-						break;
-					case STATE_MENU_TEMP:
-						show_setting_string("TEMP", "TEMP", g_show_temp ? " on" : " off", false);
-						break;
-					default:
-						break; // do nothing
-				}
-				
+				menu(false);
 				buttons.b2_keyup = 0; // clear state
 			}
 		}
