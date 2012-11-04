@@ -615,30 +615,49 @@ void show_setting_string(char* short_str, char* long_str, char* value, bool show
 void show_date(tmElements_t *te_, uint8_t region)
 {
 	dots = 0;
+	char sl;
 	char d[18];
 	d[0] = d[1] = ' ';
 	if (shield == SHIELD_IV6)
-		d[4] = d[7] = '/';
+		sl = '/';
 	else
-		d[4] = d[7] = '-';
-	if (region == 0) {
-		d[2] = te_->Day / 10;
-		d[3] = te_->Day % 10;
-		d[5] = te_->Month / 10;
-		d[6] = te_->Month % 10;
-	}
-	else {
-		d[2] = te_->Month / 10;
-		d[3] = te_->Month % 10;
-		d[5] = te_->Day / 10;
-		d[6] = te_->Day % 10;
-	}
-	d[8] = '2';
-	d[9] = '0';
-	d[10] = te_->Year / 10;
-	d[11] = te_->Year % 10;
-	d[12] = ' ';
-	d[13] = ' ';
+		sl = '-';
+	switch (region) {
+		case 0:  // DMY
+			d[2] = te_->Day / 10;
+			d[3] = te_->Day % 10;
+			d[4] = d[7] = sl;
+			d[5] = te_->Month / 10;
+			d[6] = te_->Month % 10;
+			d[8] = '2';
+			d[9] = '0';
+			d[10] = te_->Year / 10;
+			d[11] = te_->Year % 10;
+			break;
+		case 1:  // MDY
+			d[2] = te_->Month / 10;
+			d[3] = te_->Month % 10;
+			d[4] = d[7] = sl;
+			d[5] = te_->Day / 10;
+			d[6] = te_->Day % 10;
+			d[8] = '2';
+			d[9] = '0';
+			d[10] = te_->Year / 10;
+			d[11] = te_->Year % 10;
+			break;
+		case 2:  // YMD
+			d[2] = '2';
+			d[3] = '0';
+			d[4] = te_->Year / 10;
+			d[5] = te_->Year % 10;
+			d[6] = d[9] = sl;
+			d[7] = te_->Month / 10;
+			d[8] = te_->Month % 10;
+			d[10] = te_->Day / 10;
+			d[11] = te_->Day % 10;
+			break;
+		}
+	d[12] = d[13] = ' ';
 	d[14] = d[15] = d[16] = d[17] = ' ';
 	switch (digits) {
 	case 8:

@@ -14,6 +14,9 @@
  */
 
 /* Updates by William B Phelps
+ * 03nov12 fix for ADST falling back
+ * change region to "DMY/MDY/YMD"
+ *
  * 29oct12 "gps_updating" flag, use segment on IV18 to show updates
  * shift time 1 pos for 12 hour display
  *
@@ -75,6 +78,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "Time.h"
 #include "display.h"
@@ -124,7 +128,7 @@ uint8_t EEMEM b_DST_mode = 0;  // 0: off, 1: on, 2: Auto
 uint8_t EEMEM b_DST_offset = 0;
 #endif
 #ifdef FEATURE_AUTO_DATE
-uint8_t EEMEM b_Region = 0;  // default European date format yyyy/mm/dd
+uint8_t EEMEM b_Region = 0;  // default European date format Y/M/D
 uint8_t EEMEM b_AutoDate = false;
 #endif
 // Cached settings
@@ -336,6 +340,27 @@ ISR( PCINT2_vect )
 	else
 		clock_mode = MODE_ALARM_TEXT;
 }
+
+#ifdef FEATURE_AUTO_DATE
+char reg_setting_[5];
+char* region_setting(uint8_t reg)
+{
+	switch (reg) {
+		case(0):
+			strcpy(reg_setting_," dmy");
+			break;
+		case(1):
+			strcpy(reg_setting_," mdy");
+			break;
+		case(2):
+			strcpy(reg_setting_," ymd");
+			break;
+		default:
+			strcpy(reg_setting_," ???");
+	}
+	return reg_setting_;
+}
+#endif
 
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 void setDSToffset(int8_t newOffset) {
@@ -653,9 +678,9 @@ void main(void)
 						break;
 					case STATE_MENU_REGION:
 						if (!menu_b1_first)	
-							g_region = (g_region+1)%2;  // 0 = EUR, 1 = USA
+							g_region = (g_region+1)%3;  // 0 = YMD, 1 = MDY, 2 = DMY
 						eeprom_update_byte(&b_Region, g_region);
-						show_setting_string("REGN", "REGION", g_region ? " USA" : " EUR", true);
+						show_setting_string("REGN", "REGION", region_setting(g_region), true);
 						break;
 #endif						
 #ifdef FEATURE_WmGPS
@@ -757,7 +782,7 @@ void main(void)
 						show_setting_string("ADTE", "ADATE", g_autodate ? " on " : " off", false);
 						break;
 					case STATE_MENU_REGION:
-						show_setting_string("REGN", "REGION", g_region ? " USA" : " EUR", false);
+						show_setting_string("REGN", "REGION", region_setting(g_region), false);
 						break;
 #endif						
 #ifdef FEATURE_WmGPS

@@ -25,6 +25,8 @@ extern uint8_t g_DST_update;  // DST update flag
 
 // Number of days at the beginning of the month if not leap year
 static const uint16_t monthDays[]={0,31,59,90,120,151,181,212,243,273,304,334};
+// value used to prevent looping when "falling back"
+static long seconds_last = 0;
 
 // Calculate day of the week - Sunday=1, Saturday=7  (non ISO)
 uint8_t dotw(uint8_t year, uint8_t month, uint8_t day)
@@ -81,17 +83,23 @@ uint8_t getDSToffset(tmElements_t* te, DST_Rules* rules)
 	// seconds til end of DST this year
   long seconds2 = DSTseconds(te->Year, rules->End.Month, rules->End.DOTW, rules->End.Week, rules->End.Hour);  
 	long seconds_now = yearSeconds(te->Year, te->Month, te->Day, te->Hour, te->Minute, te->Second);
+	if (seconds_now < seconds_last)  // is time less than it was?
+		seconds_now = seconds_last;  // prevent loop when setting time back
 	if (seconds2>seconds1) {  // northern hemisphere
 		if ((seconds_now >= seconds1) && (seconds_now < seconds2))  // spring ahead
 			return(rules->Offset);  // return Offset 
-		else
+		else {  // fall back
+			seconds_last = seconds_now;
 			return(0);  // return 0
+		}
 	}
 	else {  // southern hemisphere
 		if ((seconds_now >= seconds2) && (seconds_now < seconds1))  // fall ahead
 			return(rules->Offset);  // return Offset
-		else
+		else {  // spring back
+			seconds_last = seconds_now;
 			return(0);  // return 0
+		}
 	}
 }
 
