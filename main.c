@@ -14,6 +14,9 @@
  */
 
 /* Updates by William B Phelps
+ * 05nov12 fix DST calc bug
+ * speed up alarm check in rtc (not done)
+ *
  * 03nov12 fix for ADST falling back
  * change region to "DMY/MDY/YMD"
  *
@@ -149,7 +152,7 @@ uint8_t g_gps_updating = 0;  // for signalling GPS update on some displays
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 uint8_t g_DST_mode;  // DST off, on, auto?
 uint8_t g_DST_offset;  // DST offset in Hours
-uint8_t g_DST_update = 0;  // DST update flag
+uint8_t g_DST_updated = false;  // DST update flag = allow update only once per day
 #endif
 #ifdef FEATURE_AUTO_DST
 //DST_Rules dst_rules = {{10,1,1,2},{4,1,1,2},1};   // DST Rules for parts of OZ including NSW (for JG)
@@ -174,7 +177,8 @@ uint8_t g_alarming = false; // alarm is going off
 uint8_t g_alarm_switch;
 uint16_t g_show_special_cnt = 0;  // display something special ("time", "alarm", etc)
 //time_t g_tNow = 0;  // current local date and time as time_t, with DST offset
-tmElements_t* te; // current local date and time as TimeElements
+tmElements_t* tm_; // current local date and time as TimeElements (pointer)
+uint8_t alarm_hour = 0, alarm_min = 0, alarm_sec = 0;
 
 extern enum shield_t shield;
 
@@ -236,6 +240,7 @@ void initialize(void)
 	display_init(g_brightness);
 
 	g_alarm_switch = get_alarm_switch();
+	rtc_get_alarm_s(&alarm_hour, &alarm_min, &alarm_sec);
 
 	// set up interrupt for alarm switch
 	PCICR |= (1 << PCIE2);
@@ -363,29 +368,37 @@ char* region_setting(uint8_t reg)
 #endif
 
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
-void setDSToffset(int8_t newOffset) {
+void setDSToffset(uint8_t mode) {
 	int8_t adjOffset;
-	if (newOffset == 2) {  // Auto DST
-		newOffset = getDSToffset(te, &dst_rules);  // get current DST offset based on DST Rules
+	uint8_t newOffset;
+	if (mode == 2) {  // Auto DST
+		if (g_DST_updated) return;  // already done it once today
+		if (tm_ == NULL) return;  // safet check
+		newOffset = getDSToffset(tm_, &dst_rules);  // get current DST offset based on DST Rules
 	}
+	else
+		newOffset = mode;  // 0 or 1
 	adjOffset = newOffset - g_DST_offset;  // offset delta
 	if (adjOffset == 0)  return;  // nothing to do
+	g_DST_updated = true;
+	beep(400, 1);  // debugging
 	time_t tNow = rtc_get_time_t();  // fetch current time from RTC as time_t
 	tNow += adjOffset * SECS_PER_HOUR;  // add or subtract new DST offset
 	rtc_set_time_t(tNow);  // adjust RTC
 	g_DST_offset = newOffset;
 	eeprom_update_byte(&b_DST_offset, g_DST_offset);
+	// save DST_updated in ee ???
 }
 #endif
 
 void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 {
 	static uint16_t counter = 0;
-	uint8_t hour = 0, min = 0, sec = 0;
+//	uint8_t hour = 0, min = 0, sec = 0;
 	
 #ifdef FEATURE_AUTO_DATE
 	if (mode == MODE_DATE) {
-		show_date(te, g_region);  // show date from last rtc_get_time() call
+		show_date(tm_, g_region);  // show date from last rtc_get_time() call
 	}
 	else
 #endif	
@@ -394,8 +407,8 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 	}
 	else if (mode == MODE_ALARM_TIME) {
 		if (g_alarm_switch) {
-			rtc_get_alarm_s(&hour, &min, &sec);
-			show_alarm_time(hour, min, 0);
+			rtc_get_alarm_s(&alarm_hour, &alarm_min, &alarm_sec);
+			show_alarm_time(alarm_hour, alarm_min, 0);
 		}
 		else {
 			show_alarm_off();
@@ -408,20 +421,21 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 		show_temp(t, f);
 	}
 	else {
-		te = rtc_get_time();
-		if (te == NULL) return;
+		tm_ = rtc_get_time();
+		if (tm_ == NULL) return;
 #ifdef FEATURE_SET_DATE
-		g_dateyear = te->Year;  // save year for Menu
-		g_datemonth = te->Month;  // save month for Menu
-		g_dateday = te->Day;  // save day for Menu
+		g_dateyear = tm_->Year;  // save year for Menu
+		g_datemonth = tm_->Month;  // save month for Menu
+		g_dateday = tm_->Day;  // save day for Menu
 #endif
 #ifdef FEATURE_AUTO_DST
-		if (te->Second%10 == 0) {  // check DST Offset every 10 seconds
+		if (tm_->Second%10 == 0)  // check DST Offset every 10 seconds
 			setDSToffset(g_DST_mode); 
-		}
+		if ((tm_->Hour == 0) && (tm_->Minute == 0) && (tm_->Second == 0))
+			g_DST_updated = false;
 #endif
 #ifdef FEATURE_AUTO_DATE
-		if (g_autodate && (te->Second == g_autotime) ) { 
+		if (g_autodate && (tm_->Second == g_autotime) ) { 
 			save_mode = clock_mode;  // save current mode
 			clock_mode = MODE_DATE;  // display date now
 			g_show_special_cnt = g_autodisp;  // show date for g_autodisp ms
@@ -429,7 +443,7 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 			}
 		else
 #endif		
-		show_time(te, g_24h_clock, mode);  // (wm)
+		show_time(tm_, g_24h_clock, mode);  // (wm)
 	}
 	counter++;
 	if (counter == 250) counter = 0;
@@ -437,10 +451,14 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 
 #ifdef FEATURE_SET_DATE
 void set_date(uint8_t yy, uint8_t mm, uint8_t dd) {
-	te->Year = yy;
-	te->Month = mm;
-	te->Day = dd;
-	rtc_set_time(te);
+	tm_ = rtc_get_time();  // refresh current time 
+	tm_->Year = yy;
+	tm_->Month = mm;
+	tm_->Day = dd;
+	rtc_set_time(tm_);
+#ifdef FEATURE_AUTO_DST
+	g_DST_updated = false;  // allow automatic DST adjustment again
+#endif
 }
 #endif
 
@@ -527,7 +545,7 @@ void main(void)
 			if (g_alarm_switch) {
 				menu_state = STATE_SET_ALARM;
 				show_set_alarm();
-				rtc_get_alarm_s(&hour, &min, &sec);
+				rtc_get_alarm_s(&alarm_hour, &alarm_min, &alarm_sec);
 				time_to_set = hour*60 + min;
 			}
 			else {
@@ -568,8 +586,12 @@ void main(void)
 				button_speed = 1;
 				
 				// fixme: should be different in 12h mode
-				if (menu_state == STATE_SET_CLOCK)
+				if (menu_state == STATE_SET_CLOCK) {
 					rtc_set_time_s(time_to_set / 60, time_to_set % 60, 0);
+#if defined FEATURE_AUTO_DST
+					g_DST_updated = false;  // allow automatic DST adjustment again
+#endif
+				}
 				else
 					rtc_set_alarm_s(time_to_set / 60, time_to_set % 60, 0);
 
@@ -590,7 +612,7 @@ void main(void)
 		// Left button enters menu
 		else if (menu_state == STATE_CLOCK && buttons.b2_keyup) {
 			menu_state = STATE_MENU_BRIGHTNESS;
-			if (get_digits() == 4)  // only set first time flag for 4 digit displays
+			if (get_digits() < 8)  // only set first time flag for 4 or 6 digit displays
 				menu_b1_first = true;  // set first time flag
 			show_setting_int("BRIT", "BRITE", g_brightness, false);
 			buttons.b2_keyup = 0; // clear state
@@ -697,6 +719,7 @@ void main(void)
 						if (!menu_b1_first) {	
 							g_DST_mode = (g_DST_mode+1)%3;  //  0: off, 1: on, 2: auto
 							eeprom_update_byte(&b_DST_mode, g_DST_mode);
+							g_DST_updated = false;  // allow automatic DST adjustment again
 							setDSToffset(g_DST_mode);
 						}
 						show_setting_string("DST", "DST", dst_setting(g_DST_mode), true);
@@ -855,7 +878,7 @@ void main(void)
 		}
 		
 		// fixme: alarm should not be checked when setting time or alarm
-		if (g_alarm_switch && rtc_check_alarm())
+		if (g_alarm_switch && rtc_check_alarm_t(tm_))
 			g_alarming = true;
 
 #ifdef FEATURE_WmGPS

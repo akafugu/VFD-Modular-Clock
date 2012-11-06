@@ -29,7 +29,7 @@ typedef struct  {
 } DST_Rules;
 
 char* dst_setting(uint8_t dst);
-uint8_t dotw(uint8_t year, uint8_t month, uint8_t day);
+uint8_t dotw(uint16_t year, uint8_t month, uint8_t day);
 uint8_t getDSToffset(tmElements_t* te, DST_Rules* rules);
 //void save_dstrules(uint8_t mods[]);
 //long DSTseconds(uint8_t month, uint8_t doftw, uint8_t n, uint8_t hour);

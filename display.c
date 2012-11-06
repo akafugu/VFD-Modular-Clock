@@ -618,7 +618,7 @@ void show_date(tmElements_t *te_, uint8_t region)
 	char sl;
 	char d[18];
 	d[0] = d[1] = ' ';
-	if (shield == SHIELD_IV6)
+	if (shield == SHIELD_IV17)
 		sl = '/';
 	else
 		sl = '-';

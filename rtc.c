@@ -98,7 +98,6 @@ uint8_t rtc_read_byte(uint8_t offset)
 	twi_begin_transmission(RTC_ADDR);
 	twi_send_byte(offset);
 	twi_end_transmission();
-
 	twi_request_from(RTC_ADDR, 1);
 	return twi_receive();
 }
@@ -258,7 +257,7 @@ time_t rtc_get_time_t(void)
 	te.Day = bcd2dec(rtc[4]);  // day 1-31
 	te.Month  = bcd2dec(rtc[5]); // month 1-12
 	te.Year = bcd2dec(rtc[6]); // year 0-99
-	te.Year = y2kYearToTm(te.Year);  // convert yy year to (yyyy-1970) (add 30)
+	te.Year = y2kYearToTm(te.Year);  // convert yy year to (yyyy-1970) (add 30) for makeTime
 	tNow = makeTime(&te);  // convert to time_t
 	return tNow;
 }
@@ -652,6 +651,28 @@ bool rtc_check_alarm(void)
 		rtc_get_time_s(&cur_hour, &cur_min, &cur_sec);
 		
 		if (cur_hour == hour && cur_min == min && cur_sec == sec)
+			return true;
+		return false;
+	}
+	else {
+		// Alarm 1 flag (A1F) in bit 0
+		uint8_t val = rtc_read_byte(0x0f);
+
+		// clear flag when set
+		if (val & 1)
+			rtc_write_byte(val & ~0b00000001, 0x0f);
+			
+		return val & 1 ? 1 : 0;
+	}
+}
+
+bool rtc_check_alarm_t(TimeElements* te)
+{
+	if (s_is_ds1307) {
+		uint8_t hour = rtc_get_sram_byte(0);
+		uint8_t min  = rtc_get_sram_byte(1);
+		uint8_t sec  = rtc_get_sram_byte(2);
+		if (hour == te->Hour && min == te->Minute && sec == te->Second)
 			return true;
 		return false;
 	}

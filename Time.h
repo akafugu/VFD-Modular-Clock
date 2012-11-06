@@ -53,7 +53,8 @@ typedef struct  {
 #define SECS_PER_DAY  (SECS_PER_HOUR * 24UL)
 #define DAYS_PER_WEEK (7UL)
 #define SECS_PER_WEEK (SECS_PER_DAY * DAYS_PER_WEEK)
-#define SECS_PER_YEAR (SECS_PER_WEEK * 52UL)
+//#define SECS_PER_YEAR (SECS_PER_WEEK * 52UL)  // is this correct ??? 05nov12/wbp
+#define SECS_PER_YEAR (SECS_PER_DAY * 365UL)  // 05nov12/wbp
 #define SECS_YR_2000  (946684800UL) // the time at the start of y2k
  
 /* Useful Macros for getting elapsed time */
