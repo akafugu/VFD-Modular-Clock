@@ -32,7 +32,9 @@ SRCS = main.c \
 	twi-lowlevel.c \
 	rtc.c \
 	piezo.c \
-	Time.c
+	Time.c \
+	flw.c
+
 # Default values
 FEATURE_SET_TIME ?= YES
 FEATURE_CHARACTERS ?= YES
