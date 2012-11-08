@@ -439,7 +439,6 @@ void print_dots(uint8_t mode, bool _24h_clock, uint8_t seconds)
 // 8 digits: hour:min:sec / hour-min-sec
 void show_time(tmElements_t* te, bool _24h_clock, uint8_t mode)
 {
-	static uint8_t print_offset = 0;
 	dots = 0;
 
 	uint8_t offset = 0;
@@ -524,7 +523,35 @@ void show_time(tmElements_t* te, bool _24h_clock, uint8_t mode)
 			}
 		}
 	}
+	/*
 	else if (mode == 2 && g_has_eeprom && prev_sec != te->Second) {
+		g_offset = get_word(g_offset, g_flw);
+		prev_sec = te->Second;
+		
+		if (digits == 8) {
+			print_offset++;
+			if (print_offset == 5) print_offset = 0;
+		}
+		else if (digits == 6) {
+			print_offset++;
+			if (print_offset == 3) print_offset = 0;
+		}
+		else {
+			print_offset = 0;
+		}
+		
+		data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
+		print_strn(g_flw, print_offset, 4);
+	}
+	*/
+}
+
+// shows FLW
+void show_flw(tmElements_t* te)
+{
+	static uint8_t print_offset = 0;
+
+	if (g_has_eeprom && prev_sec != te->Second) {
 		g_offset = get_word(g_offset, g_flw);
 		prev_sec = te->Second;
 		

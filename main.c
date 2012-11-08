@@ -461,7 +461,15 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 			}
 		else
 #endif		
-		show_time(tm_, g_24h_clock, mode);  // (wm)
+
+		if (mode == MODE_FLW) {
+			if (tm_->Second >= g_autotime - 3 && tm_->Second < g_autotime)
+				show_time(tm_, g_24h_clock, 0); // show time briefly each minute
+			else
+				show_flw(tm_); // otherwise show FLW
+		}
+		else
+			show_time(tm_, g_24h_clock, mode);
 	}
 	counter++;
 	if (counter == 250) counter = 0;
