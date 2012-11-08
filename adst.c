@@ -26,6 +26,8 @@ extern uint8_t g_DST_update;  // DST update flag
 uint8_t mDays[]={31,28,31,30,31,30,31,31,30,31,30,31};
 uint16_t tmDays[]={0,31,59,90,120,151,181,212,243,273,304,334}; // Number days at beginning of month if not leap year
 
+long DSTstart, DSTend;  // start and end of DST for this year, in Year Seconds
+
 // Calculate day of the week - Sunday=1, Saturday=7  (non ISO)
 uint8_t dotw(uint16_t year, uint8_t month, uint8_t day)
 {
@@ -68,6 +70,15 @@ long DSTseconds(uint16_t year, uint8_t month, uint8_t doftw, uint8_t week, uint8
   return yearSeconds(year,month,day,hour,0,0);  // seconds til DST event this year
 }
 
+void DSTinit(tmElements_t* te, DST_Rules* rules)
+{
+	uint16_t yr = 2000 + te->Year;  // Year as 20yy; te.Year is not 1970 based
+  // seconds til start of DST this year
+  DSTstart = DSTseconds(yr, rules->Start.Month, rules->Start.DOTW, rules->Start.Week, rules->Start.Hour);  
+	// seconds til end of DST this year
+  DSTend = DSTseconds(yr, rules->End.Month, rules->End.DOTW, rules->End.Week, rules->End.Hour);  
+}
+
 // DST Rules: Start(month, dotw, n, hour), End(month, dotw, n, hour), Offset
 // DOTW is Day of the Week.  1=Sunday, 7=Saturday
 // N is which occurrence of DOTW
@@ -75,23 +86,18 @@ long DSTseconds(uint16_t year, uint8_t month, uint8_t doftw, uint8_t week, uint8
 // 		3,1,2,2,  11,1,1,2,  1
 uint8_t getDSToffset(tmElements_t* te, DST_Rules* rules)
 {
-//	uint16_t yr = 2000 + tmYearToY2k(te->Year);  // convert tmElements_t Year to 20yy
 	uint16_t yr = 2000 + te->Year;  // Year as 20yy; te.Year is not 1970 based
 	// if current time & date is at or past the first DST rule and before the second, return 1
 	// otherwise return 0
-  // seconds til start of DST this year
-  long seconds1 = DSTseconds(yr, rules->Start.Month, rules->Start.DOTW, rules->Start.Week, rules->Start.Hour);  
-	// seconds til end of DST this year
-  long seconds2 = DSTseconds(yr, rules->End.Month, rules->End.DOTW, rules->End.Week, rules->End.Hour);  
 	long seconds_now = yearSeconds(yr, te->Month, te->Day, te->Hour, te->Minute, te->Second);
-	if (seconds2>seconds1) {  // northern hemisphere
-		if ((seconds_now >= seconds1) && (seconds_now < seconds2))  // spring ahead
+	if (DSTstart<DSTend) {  // northern hemisphere
+		if ((seconds_now >= DSTstart) && (seconds_now < DSTend))  // spring ahead
 			return(rules->Offset);  // return Offset 
 		else  // fall back
 			return(0);  // return 0
 	}
 	else {  // southern hemisphere
-		if ((seconds_now >= seconds2) && (seconds_now < seconds1))  // fall ahead
+		if ((seconds_now >= DSTend) && (seconds_now < DSTstart))  // fall ahead
 			return(rules->Offset);  // return Offset
 		else  // spring back
 			return(0);  // return 0

@@ -14,6 +14,8 @@
  */
 
 /* Updates by William B Phelps
+ * 07nov12 check GPS time vs. previous, add GPS error counter
+ * 06nov12 rtc: separate alarm time, adst: add DSTinit function
  * 05nov12 fix DST calc bug
  * speed up alarm check in rtc (not done)
  *
@@ -150,6 +152,7 @@ uint8_t g_dateday = 1;
 #ifdef FEATURE_WmGPS 
 uint8_t g_gps_enabled = 0;
 uint8_t g_gps_updating = 0;  // for signalling GPS update on some displays
+uint16_t g_gps_errors;  // gps error counter
 #endif
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 uint8_t g_DST_mode;  // DST off, on, auto?
@@ -252,13 +255,9 @@ void initialize(void)
   // setup uart for GPS
 	gps_init(g_gps_enabled);
 #endif
-	
-//#ifdef FEATURE_AUTO_DATE
-//	if (get_digits() > 4) {
-//		g_autotime = 54;  // display date at secs = 58;
-//		g_autodisp = 550;  // display for 1.5 secs;
-//	}
-//#endif
+#ifdef FEATURE_AUTO_DST
+	DSTinit(tm_, &dst_rules);  // re-compute DST start, end	
+#endif
 }
 
 struct BUTTON_STATE buttons;
@@ -288,6 +287,7 @@ typedef enum {
 #endif
 #ifdef FEATURE_WmGPS
 	STATE_MENU_GPS,
+	STATE_MENU_GPSE,  // GPS error counter
 	STATE_MENU_ZONEH,
 	STATE_MENU_ZONEM,
 #endif
@@ -382,13 +382,16 @@ void setDSToffset(uint8_t mode) {
 		newOffset = mode;  // 0 or 1
 	adjOffset = newOffset - g_DST_offset;  // offset delta
 	if (adjOffset == 0)  return;  // nothing to do
-	g_DST_updated = true;
-	beep(400, 1);  // debugging
+	if (adjOffset > 0)
+		beep(880, 1);  // spring ahead
+	else
+		beep(440, 1);  // fall back
 	time_t tNow = rtc_get_time_t();  // fetch current time from RTC as time_t
 	tNow += adjOffset * SECS_PER_HOUR;  // add or subtract new DST offset
 	rtc_set_time_t(tNow);  // adjust RTC
 	g_DST_offset = newOffset;
 	eeprom_update_byte(&b_DST_offset, g_DST_offset);
+	g_DST_updated = true;
 	// save DST_updated in ee ???
 }
 #endif
@@ -433,8 +436,10 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 #ifdef FEATURE_AUTO_DST
 		if (tm_->Second%10 == 0)  // check DST Offset every 10 seconds
 			setDSToffset(g_DST_mode); 
-		if ((tm_->Hour == 0) && (tm_->Minute == 0) && (tm_->Second == 0))
+		if ((tm_->Hour == 0) && (tm_->Minute == 0) && (tm_->Second == 0)) {  // MIDNIGHT!
 			g_DST_updated = false;
+			DSTinit(tm_, &dst_rules);  // re-compute DST start, end
+		}
 #endif
 #ifdef FEATURE_AUTO_DATE
 		if (g_autodate && (tm_->Second == g_autotime) ) { 
@@ -459,7 +464,9 @@ void set_date(uint8_t yy, uint8_t mm, uint8_t dd) {
 	tm_->Day = dd;
 	rtc_set_time(tm_);
 #ifdef FEATURE_AUTO_DST
+	DSTinit(tm_, &dst_rules);  // re-compute DST start, end for new date
 	g_DST_updated = false;  // allow automatic DST adjustment again
+	setDSToffset(g_DST_mode);  // set DSToffset based on new date
 #endif
 }
 #endif
@@ -565,6 +572,12 @@ void menu(bool update, bool show)
 			break;
 #endif
 #ifdef FEATURE_WmGPS
+		case STATE_MENU_GPSE:
+			if (update)	{
+				g_gps_errors = 0;  // reset error counter
+			}
+			show_setting_int("GPSE", "GPSE", g_gps_errors, show);
+			break;
 		case STATE_MENU_ZONEH:
 			if (update)	{
 				g_TZ_hour++;
@@ -650,9 +663,9 @@ void main(void)
 	}
 
 	piezo_init();
-	beep(500, 1);
-	beep(1000, 1);
-	beep(500, 1);
+	beep(440, 1);
+	beep(1320, 1);
+	beep(440, 1);
 
 	_delay_ms(500);
 	set_string("--------");

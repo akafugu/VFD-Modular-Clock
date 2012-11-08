@@ -82,6 +82,7 @@
 // statically allocated structure for time value
 //struct tm _tm;
 TimeElements _te;  // 25sep12/wbp
+TimeElements _ae;  // alarm time setting 06nov12/wbp
 
 uint8_t dec2bcd(uint8_t d)
 {
@@ -607,6 +608,9 @@ void rtc_set_alarm_s(uint8_t hour, uint8_t min, uint8_t sec)
 		uint8_t val = rtc_read_byte(0x0f);
 		rtc_write_byte(val & ~0b00000001, 0x0f);
 	}
+	_ae.Hour = hour;
+	_ae.Minute = min;
+	_ae.Second = sec;
 }
 
 void rtc_set_alarm(TimeElements* te)
@@ -632,12 +636,11 @@ void rtc_get_alarm_s(uint8_t* hour, uint8_t* min, uint8_t* sec)
 TimeElements* rtc_get_alarm(void)
 {
 	uint8_t hour, min, sec;
-
 	rtc_get_alarm_s(&hour, &min, &sec);
-	_te.Hour = hour;
-	_te.Minute = min;
-	_te.Second = sec;
-	return &_te;
+	_ae.Hour = hour;
+	_ae.Minute = min;
+	_ae.Second = sec;
+	return &_ae;
 }
 
 bool rtc_check_alarm(void)
