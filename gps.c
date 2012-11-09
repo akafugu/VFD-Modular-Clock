@@ -84,14 +84,16 @@ void getGPSdata(void) {
 	memset( gpsBuffer, 0, GPSBUFFERSIZE );  // clear GPS buffer
 }  // getGPSdata
 
-// search for 
-char * nexttok(char * str[])
-{
-//	char str[] ="- This, a sample string.";
-  char * pch;
-//  printf ("Splitting string \"%s\" into tokens:\n",str);
-  pch = strtok (str," ,*\r");
-	return pch;
+uint32_t parsedecimal(char *str) {
+  uint32_t d = 0;
+  while (str[0] != 0) {
+   if ((str[0] > '9') || (str[0] < '0'))
+     return d;  // no more digits
+   d *= 10;
+   d += str[0] - '0';
+   str++;
+  }
+  return d;
 }
 
 //  225446       Time of fix 22:54:46 UTC
@@ -109,36 +111,40 @@ char * nexttok(char * str[])
 // 0123456789012345678901234567890123456789012345678901234567890123456789012
 //    0     1       2    3    4     5    6   7     8      9     10  11 12
 void parseGPSdata() {
-	char gpsCheck1, gpsCheck2;
-	char gpsTime[7];
-	char gpsFixStat[1];  // fix status
-	char gpsLat[7];  // ddmmff  (with decimal point)
-	char gpsLatH[1];  // hemisphere 
-	char gpsLong[8];  // ddddmmff  (with decimal point)
-	char gpsLongH[1];  // hemisphere 
-	char gpsSpeed[5];  // speed over ground
-	char gpsCourse[5];  // Course
-	char gpsDate[7];  // Date
-	char gpsMagV[5];  // Magnetic variation 
-	char gpsMagD[1];  // Mag var E/W
-	char gpsCKS[2];  // Checksum without asterisk
-	char *gpsPtr;
+	time_t tNow;
+	tmElements_t tm;
+	uint8_t gpsCheck1, gpsCheck2;  // checksums
+//	char gpsTime[10];  // time including fraction hhmmss.fff
+	char gpsFixStat;  // fix status
+//	char gpsLat[7];  // ddmm.ff  (with decimal point)
+//	char gpsLatH;  // hemisphere 
+//	char gpsLong[8];  // dddmm.ff  (with decimal point)
+//	char gpsLongH;  // hemisphere 
+//	char gpsSpeed[5];  // speed over ground
+//	char gpsCourse[5];  // Course
+//	char gpsDate[6];  // Date
+//	char gpsMagV[5];  // Magnetic variation 
+//	char gpsMagD;  // Mag var E/W
+//	char gpsCKS[2];  // Checksum without asterisk
+	char *ptr;
+  uint32_t tmp;
+  char *tok = &gpsBuffer[0];
 	if ( strncmp( gpsBuffer, "$GPRMC,", 7 ) == 0 ) {  
 		//beep(1000, 1);
 		//Calculate checksum from the received data
-		gpsPtr = &gpsBuffer[1];  // start at the "G"
+		ptr = &gpsBuffer[1];  // start at the "G"
 		gpsCheck1 = 0;  // init collector
 		 /* Loop through entire string, XORing each character to the next */
-		while (*gpsPtr != '*') // count all the bytes up to the asterisk
+		while (*ptr != '*') // count all the bytes up to the asterisk
 		{
-			gpsCheck1 ^= *gpsPtr;
-			gpsPtr++;
-			if (gpsPtr>(gpsBuffer+GPSBUFFERSIZE)) goto GPSerror;  // do we really need this???
+			gpsCheck1 ^= *ptr;
+			ptr++;
+			if (ptr>(gpsBuffer+GPSBUFFERSIZE)) goto GPSerror;  // do we really need this???
 		}
 		// now get the checksum from the string itself, which is in hex
 		uint8_t chk1, chk2;
-		chk1 = *(gpsPtr+1);
-		chk2 = *(gpsPtr+2);
+		chk1 = *(ptr+1);
+		chk2 = *(ptr+2);
 		if (chk1 > '9') 
 			chk1 = chk1 - 55;  // convert 'A-F' to 10-15
 		else
@@ -150,51 +156,54 @@ void parseGPSdata() {
 		gpsCheck2 = (chk1 * 16)  + chk2;
 		if (gpsCheck1 == gpsCheck2) {  // if checksums match, process the data
 			//beep(1000, 1);
-			//Find the first comma:
-			gpsPtr = strchr( gpsBuffer, ',');
-			if (gpsPtr == NULL)  goto GPSerror;
-			//Copy the section of memory in the buffer that contains the time.
-			memcpy( gpsTime, gpsPtr + 1, 6 );
-			gpsTime[6] = 0;  //add a null character to the end of the time string.
-			gpsPtr = strchr( gpsPtr + 1, ',');  // find the next comma
-			if (gpsPtr == NULL)  goto GPSerror;
-			memcpy( gpsFixStat, gpsPtr + 1, 1 );  // copy fix status
-			if (gpsFixStat[0] == 'A') {  // if data valid, parse time & date
+			tok = strtok(gpsBuffer, ",*\r");  // parse $GPRMC
+			if (tok == NULL) goto GPSerror;
+			tok = strtok(NULL, ",*\r");  // Time including fraction hhmmss.fff
+			if (tok == NULL) goto GPSerror;
+			if ((strlen(tok) < 6) || (strlen(tok) > 10)) goto GPSerror;  // check time length
+//			strncpy(gpsTime, tok, 10);  // copy time string hhmmss
+			tmp = parsedecimal(tok);   // parse integer portion
+			tm.Hour = tmp / 10000;
+			tm.Minute = (tmp / 100) % 100;
+			tm.Second = tmp % 100;
+			tok = strtok(NULL, ",*\r");  // Status
+			if (tok == NULL) goto GPSerror;
+			gpsFixStat = tok[0];
+			if (gpsFixStat == 'A') {  // if data valid, parse time & date
 				gpsTimeout = 0;  // reset gps timeout counter
-				gpsPtr = strchr( gpsPtr + 1, ',');  // find the next comma
-				if (gpsPtr == NULL)  goto GPSerror;
-				memcpy( gpsLat, gpsPtr + 1, 7 );  // copy Latitude ddmm.ff
-				gpsPtr = strchr( gpsPtr + 1, ',');  // find the next comma
-				if (gpsPtr == NULL)  goto GPSerror;
-				memcpy( gpsLatH, gpsPtr + 1, 1 );  // copy Latitude Hemisphere
-				gpsPtr = strchr( gpsPtr + 1, ',');  // find the next comma
-				if (gpsPtr == NULL)  goto GPSerror;
-				memcpy( gpsLong, gpsPtr + 1 , 8 );  // copy Longitude dddmm.ff
-				gpsPtr = strchr( gpsPtr + 1, ',');  // find the next comma
-				if (gpsPtr == NULL)  goto GPSerror;
-				memcpy( gpsLongH, gpsPtr + 1 ,1 );  // copy Longitude Hemisphere
-				//Find three more commas to get the date:
-				for ( int i = 0; i < 3; i++ ) {
-					gpsPtr = strchr( gpsPtr + 1, ',');
-					if (gpsPtr == NULL)  goto GPSerror;
-				}
-				//Copy the section of memory in the buffer that contains the date.
-				memcpy( gpsDate, gpsPtr + 1, 6 );
-				gpsDate[6] = 0;  //add a null character to the end of the date string.
-				time_t tNow;
-				tmElements_t tm;
-				tm.Hour = (gpsTime[0] - '0') * 10;
-				tm.Hour = tm.Hour + (gpsTime[1] - '0');
-				tm.Minute = (gpsTime[2] - '0') * 10;
-				tm.Minute = tm.Minute + (gpsTime[3] - '0');
-				tm.Second = (gpsTime[4] - '0') * 10;
-				tm.Second = tm.Second + (gpsTime[5] - '0');
-				tm.Day = (gpsDate[0] - '0') * 10;
-				tm.Day = tm.Day + (gpsDate[1] - '0');
-				tm.Month = (gpsDate[2] - '0') * 10;
-				tm.Month = tm.Month + (gpsDate[3] - '0');
-				tm.Year = (gpsDate[4] - '0') * 10;
-				tm.Year = tm.Year + (gpsDate[5] - '0');
+				tok = strtok(NULL, ",*\r");  // Latitude including fraction
+				if (tok == NULL) goto GPSerror;
+//				strncpy(gpsLat, tok, 7);  // copy Latitude ddmm.ff
+				tok = strtok(NULL, ",*\r");  // Latitude N/S
+				if (tok == NULL) goto GPSerror;
+//				gpsLatH = tok[0];
+				tok = strtok(NULL, ",*\r");  // Longitude including fraction hhmm.ff
+				if (tok == NULL) goto GPSerror;
+//				strncpy(gpsLong, tok, 7);
+				tok = strtok(NULL, ",*\r");  // Longitude Hemisphere
+				if (tok == NULL) goto GPSerror;
+//				gpsLongH = tok[0];
+				tok = strtok(NULL, ",*\r");  // Ground speed 000.5
+				if (tok == NULL) goto GPSerror;
+//				strncpy(gpsSpeed, tok, 5);
+				tok = strtok(NULL, ",*\r");  // Track angle (course) 054.7
+				if (tok == NULL) goto GPSerror;
+//				strncpy(gpsCourse, tok, 5);
+				tok = strtok(NULL, ",*\r");  // Date ddmmyy
+				if (tok == NULL) goto GPSerror;
+//				strncpy(gpsDate, tok, 6);
+				if (strlen(tok) != 6) goto GPSerror;  // check date length
+				tmp = parsedecimal(tok); 
+				tm.Day = tmp / 10000;
+				tm.Month = (tmp / 100) % 100;
+				tm.Year = tmp % 100;
+				tok = strtok(NULL, "*\r");  // magnetic variation & dir
+				if (tok == NULL) goto GPSerror;
+				if (tok == NULL) goto GPSerror;
+				tok = strtok(NULL, ",*\r");  // Checksum
+				if (tok == NULL) goto GPSerror;
+//				strncpy(gpsCKS, tok, 2);  // save checksum chars
+				
 				tm.Year = y2kYearToTm(tm.Year);  // convert yy year to (yyyy-1970) (add 30)
 				tNow = makeTime(&tm);  // convert to time_t
 				

@@ -14,6 +14,9 @@
  */
 
 /* Updates by William B Phelps
+ * 09nov12 rewrite GPS parse
+ *
+ * 08nov12 auto menu feature
  * 07nov12 check GPS time vs. previous, add GPS error counter
  * 06nov12 rtc: separate alarm time, adst: add DSTinit function
  * 05nov12 fix DST calc bug
