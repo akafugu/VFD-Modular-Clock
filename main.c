@@ -77,6 +77,8 @@
 //#define FEATURE_ADATE  // automatic date display 
 //#define FEATURE_WmGPS  // GPS support
 //#define FEATURE_WmDST  // AUto DST support
+
+#define FEATURE_AUTO_MENU  // temp
  
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -153,6 +155,7 @@ uint8_t g_dateday = 1;
 uint8_t g_gps_enabled = 0;
 uint8_t g_gps_updating = 0;  // for signalling GPS update on some displays
 uint16_t g_gps_errors;  // gps error counter
+uint16_t g_gps_cks_errors;  // gps error counter
 #endif
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 uint8_t g_DST_mode;  // DST off, on, auto?
@@ -316,7 +319,12 @@ typedef enum {
 
 menu_state_t menu_state = STATE_CLOCK;
 sub_menu_state_t submenu_state = SUB_MENU_OFF;
-bool menu_b1_first = false;
+bool menu_update = false;
+
+#define MENU_TIMEOUT 220  
+#ifdef FEATURE_AUTO_MENU
+#define BUTTON2_TIMEOUT 100
+#endif
 
 // display modes
 typedef enum {
@@ -643,6 +651,9 @@ void main(void)
 	// Counters used when setting time
 	int16_t time_to_set = 0;
 	uint16_t button_released_timer = 0;
+#ifdef FEATURE_AUTO_MENU
+  uint16_t button2_release_timer = 0;
+#endif
 	uint16_t button_speed = 25;
 	
 	switch (shield) {
@@ -731,7 +742,7 @@ void main(void)
 			}
 
 			// exit mode after no button has been touched for a while
-			if (button_released_timer >= 160) {
+			if (button_released_timer >= MENU_TIMEOUT) {
 				set_blink(false);
 				button_released_timer = 0;
 				button_speed = 1;
@@ -764,9 +775,12 @@ void main(void)
 		else if (menu_state == STATE_CLOCK && buttons.b2_keyup) {
 			menu_state = STATE_MENU_BRIGHTNESS;
 			if (get_digits() < 8)  // only set first time flag for 4 or 6 digit displays
-				menu_b1_first = true;  // set first time flag
+				menu_update = false;  // set first time flag
 			show_setting_int("BRIT", "BRITE", g_brightness, false);
 			buttons.b2_keyup = 0; // clear state
+#ifdef FEATURE_AUTO_MENU
+      button2_release_timer = BUTTON2_TIMEOUT;  // start button 2 timer
+#endif      
 		}
 		// Right button toggles display mode
 		else if (menu_state == STATE_CLOCK && buttons.b1_keyup) {
@@ -786,21 +800,39 @@ void main(void)
 			else
 				button_released_timer = 0;
 //			if (button_released_timer >= 80) {
-			if (button_released_timer >= 200) {  // 2 seconds (wm)
+			if (button_released_timer >= MENU_TIMEOUT) {  
 				button_released_timer = 0;
+#ifdef FEATURE_AUTO_MENU
+        button2_release_timer = 0;
+#endif
 				menu_state = STATE_CLOCK;
-//				flash_display(100);  // flash briefly
 			}
+
+#ifdef FEATURE_AUTO_MENU
+      if (button2_release_timer > 0) {
+        button2_release_timer--;
+        if (button2_release_timer == 0) {
+          menu(false, true);  // show menu item value
+          menu_update = true;
+        }
+      }
+#endif
 			
 			if (buttons.b1_keyup) {  // right button
-				menu(!menu_b1_first, true);
+#ifdef FEATURE_AUTO_MENU
+        button2_release_timer = 0;  // cancel button 2 timer
+#endif
+				menu(menu_update, true);
 				buttons.b1_keyup = false;
-				menu_b1_first = false;  // b1 not first time now
+				menu_update = true;  // b1 not first time now
 			}  // if (buttons.b1_keyup) 
 
 			if (buttons.b2_keyup) {  // left button
 				if (get_digits() < 8)  // only set first time flag for 4 or 6 digit displays
-					menu_b1_first = true;  // reset b1 first time flag
+					menu_update = false;  // reset b1 first time flag
+#ifdef FEATURE_AUTO_MENU
+        button2_release_timer = BUTTON2_TIMEOUT;  // restart button2 timer
+#endif
 			
 				menu_state++;
 				
