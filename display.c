@@ -369,6 +369,22 @@ uint8_t print_digits(int8_t num, uint8_t offset)
 	return offset+2;
 }
 
+uint8_t print_digits4(int num, uint8_t offset)
+{
+//	if (num < 0) {
+//		data[offset-1] = '-';  // note assumption that offset is always positive!
+//		num = -num;
+//	}
+	data[offset+3] = num % 10;
+	num /= 10;
+	data[offset+2] = num % 10;
+	num /= 10;
+	data[offset+1] = num % 10;
+	num /= 10;
+	data[offset] = num % 10;
+	return offset+4;
+}
+
 uint8_t print_ch(char ch, uint8_t offset)
 {
 	data[offset++] = ch;
@@ -697,6 +713,22 @@ void show_setting_int(char* short_str, char* long_str, int value, bool show_sett
 	else {
 		if (show_setting)
 			print_digits(value, 2);
+		else
+			set_string(short_str);
+	}
+}
+
+void show_setting_int4(char* short_str, char* long_str, int value, bool show_setting)
+{
+	data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
+
+	if (get_digits() == 8) {
+		set_string(long_str);
+		print_digits4(value, 4);
+	}
+	else {
+		if (show_setting)
+			print_digits4(value, 0);
 		else
 			set_string(short_str);
 	}

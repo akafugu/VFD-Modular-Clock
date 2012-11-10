@@ -591,19 +591,19 @@ void menu(bool update, bool show)
 			if (update)	{
 				g_gps_cks_errors = 0;  // reset error counter
 			}
-			show_setting_int("GPSC", "GPSC", g_gps_cks_errors, show);
+			show_setting_int4("GPSC", "GPSC", g_gps_cks_errors, show);
 			break;
 		case STATE_MENU_GPSP:
 			if (update)	{
 				g_gps_parse_errors = 0;  // reset error counter
 			}
-			show_setting_int("GPSP", "GPSP", g_gps_parse_errors, show);
+			show_setting_int4("GPSP", "GPSP", g_gps_parse_errors, show);
 			break;
 		case STATE_MENU_GPST:
 			if (update)	{
 				g_gps_time_errors = 0;  // reset error counter
 			}
-			show_setting_int("GPST", "GPST", g_gps_time_errors, show);
+			show_setting_int4("GPST", "GPST", g_gps_time_errors, show);
 			break;
 		case STATE_MENU_ZONEH:
 			if (update)	{
