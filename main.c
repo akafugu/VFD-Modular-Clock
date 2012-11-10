@@ -90,7 +90,9 @@
 #include "button.h"
 #include "twi.h"
 #include "rtc.h"
+#ifdef FEATURE_FLW
 #include "flw.h"
+#endif
 #include "piezo.h"
 
 #ifdef FEATURE_AUTO_DST
@@ -124,7 +126,9 @@ uint8_t EEMEM b_show_temp = false;
 uint8_t EEMEM b_show_dots = true;
 uint8_t EEMEM b_brightness = 8;
 uint8_t EEMEM b_volume = 0;
+#ifdef FEATURE_FLW
 uint8_t EEMEM b_flw_enabled = false;
+#endif
 #ifdef FEATURE_WmGPS
 uint8_t EEMEM b_gps_enabled = 0;  // 0, 48, or 96 - default no gps
 uint8_t EEMEM b_TZ_hour = -8 + 12;
@@ -144,7 +148,9 @@ uint8_t g_show_temp = false;
 uint8_t g_show_dots = true;
 uint8_t g_brightness = 5;
 uint8_t g_volume = 0;
+#ifdef FEATURE_FLW
 uint8_t g_flw_enabled = false;
+#endif
 #ifdef FEATURE_SET_DATE
 uint8_t g_dateyear = 12;
 uint8_t g_datemonth = 1;
@@ -178,7 +184,9 @@ uint16_t g_autodisp = 550;  // how long to display date
 
 // Other globals
 uint8_t g_has_dots = false; // can current shield show dot (decimal points)
+#ifdef FEATURE_FLW
 uint8_t g_has_eeprom = false; // set to true if there is a four letter word EEPROM attached
+#endif
 uint8_t g_alarming = false; // alarm is going off
 uint8_t g_alarm_switch;
 uint16_t g_show_special_cnt = 0;  // display something special ("time", "alarm", etc)
@@ -195,7 +203,9 @@ void initialize(void)
 	g_show_temp  = eeprom_read_byte(&b_show_temp);
 	g_brightness = eeprom_read_byte(&b_brightness);
 	g_volume     = eeprom_read_byte(&b_volume);
+#ifdef FEATURE_FLW
 	g_flw_enabled = eeprom_read_byte(&b_flw_enabled);
+#endif
 #ifdef FEATURE_WmGPS
 	g_gps_enabled = eeprom_read_byte(&b_gps_enabled);
 	g_TZ_hour = eeprom_read_byte(&b_TZ_hour) - 12;
@@ -247,6 +257,7 @@ void initialize(void)
 	display_init(g_brightness);
 
 	g_alarm_switch = get_alarm_switch();
+#ifdef FEATURE_FLW
 	g_has_eeprom = has_eeprom();
 
 	if (!g_has_eeprom)
@@ -255,7 +266,7 @@ void initialize(void)
 	tm_ = rtc_get_time();	
 	if (tm_ && g_has_eeprom)
 		seed_random(tm_->Hour * 10000 + tm_->Minute + 100 + tm_->Second);
-
+#endif
 	rtc_get_alarm_s(&alarm_hour, &alarm_min, &alarm_sec);
 
 	// set up interrupt for alarm switch
@@ -307,7 +318,9 @@ typedef enum {
 #endif
 	STATE_MENU_TEMP,
 	STATE_MENU_DOTS,
+#ifdef FEATURE_FLW
 	STATE_MENU_FLW,
+#endif
 	STATE_MENU_LAST,
 } menu_state_t;
 
@@ -337,7 +350,9 @@ bool menu_b1_first = false;
 typedef enum {
 	MODE_NORMAL = 0, // normal mode: show time/seconds
 	MODE_AMPM, // shows time AM/PM
+#ifdef FEATURE_FLW
 	MODE_FLW,  // shows four letter words
+#endif
 #ifdef FEATURE_AUTO_DATE
 	MODE_DATE, // shows date
 #endif
@@ -462,6 +477,7 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 		else
 #endif		
 
+#ifdef FEATURE_FLW
 		if (mode == MODE_FLW) {
 			if (tm_->Second >= g_autotime - 3 && tm_->Second < g_autotime)
 				show_time(tm_, g_24h_clock, 0); // show time briefly each minute
@@ -469,6 +485,7 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 				show_flw(tm_); // otherwise show FLW
 		}
 		else
+#endif
 			show_time(tm_, g_24h_clock, mode);
 	}
 	counter++;
@@ -619,6 +636,7 @@ void menu(bool update, bool show)
 			}
 			show_setting_string("DOTS", "DOTS", g_show_dots ? " on" : " off", show);
 			break;
+#ifdef FEATURE_FLW
 		case STATE_MENU_FLW:
 			if (update)	{
 				g_flw_enabled = !g_flw_enabled;
@@ -627,6 +645,7 @@ void menu(bool update, bool show)
 				
 			show_setting_string("FLW", "FLW", g_flw_enabled ? " on" : " off", show);
 			break;
+#endif
 		default:
 			break; // do nothing
 	}  // switch (menu_state)
@@ -791,8 +810,10 @@ void main(void)
 		else if (menu_state == STATE_CLOCK && buttons.b1_keyup) {
 			clock_mode++;
 
+#ifdef FEATURE_FLW
 			if (clock_mode == MODE_FLW && !g_has_eeprom) clock_mode++;
 			if (clock_mode == MODE_FLW && !g_flw_enabled) clock_mode++;
+#endif
 
 #ifdef FEATURE_AUTO_DATE
 			if (clock_mode == MODE_DATE) {
@@ -833,8 +854,10 @@ void main(void)
 				// don't show dots settings for shields that have no dots
 				if (menu_state == STATE_MENU_DOTS && !g_has_dots) menu_state++;
 
+#ifdef FEATURE_FLW
 				// don't show FLW settings when there is no EEPROM with database
 				if (menu_state == STATE_MENU_FLW && !g_has_eeprom) menu_state++;
+#endif
 
 				if (menu_state == STATE_MENU_LAST) menu_state = STATE_MENU_BRIGHTNESS;
 				

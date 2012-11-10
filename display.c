@@ -19,7 +19,9 @@
 #include <string.h>
 #include "display.h"
 #include "rtc.h"
+#ifdef FEATURE_FLW
 #include "flw.h"
+#endif
 
 void write_vfd_iv6(uint8_t digit, uint8_t segments);
 void write_vfd_iv17(uint8_t digit, uint16_t segments);
@@ -404,8 +406,10 @@ uint8_t print_strn(char* str, uint8_t offset, uint8_t n)
 extern uint8_t g_volume;
 
 unsigned long g_offset = 0; // offset for where to search for next word in eeprom
+#ifdef FEATURE_FLW
 char g_flw[6]; // contains actual four letter word
 extern uint8_t g_flw_print_offset; // offset for where to start printing four letter words
+#endif
 
 uint8_t prev_sec = 0;
 
@@ -546,6 +550,7 @@ void show_time(tmElements_t* te, bool _24h_clock, uint8_t mode)
 	*/
 }
 
+#ifdef FEATURE_FLW
 // shows FLW
 void show_flw(tmElements_t* te)
 {
@@ -571,6 +576,7 @@ void show_flw(tmElements_t* te)
 		print_strn(g_flw, print_offset, 4);
 	}
 }
+#endif
 
 // shows time - used when setting time
 void show_time_setting(uint8_t hour, uint8_t min, uint8_t sec)
