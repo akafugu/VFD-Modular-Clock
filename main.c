@@ -157,8 +157,9 @@ uint8_t g_dateday = 1;
 #ifdef FEATURE_WmGPS 
 uint8_t g_gps_enabled = 0;
 uint8_t g_gps_updating = 0;  // for signalling GPS update on some displays
-uint16_t g_gps_errors;  // gps error counter
-uint16_t g_gps_cks_errors;  // gps error counter
+uint16_t g_gps_cks_errors;  // gps checksum error counter
+uint16_t g_gps_parse_errors;  // gps parse error counter
+uint16_t g_gps_time_errors;  // gps time error counter
 #endif
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 uint8_t g_DST_mode;  // DST off, on, auto?
@@ -203,6 +204,7 @@ void initialize(void)
 #ifdef FEATURE_WmGPS
 	g_gps_enabled = eeprom_read_byte(&b_gps_enabled);
 	g_TZ_hour = eeprom_read_byte(&b_TZ_hour) - 12;
+	if ((g_TZ_hour<-12) || (g_TZ_hour>12))  g_TZ_hour = 0;  // add range check
 	g_TZ_minutes = eeprom_read_byte(&b_TZ_minutes);
 #endif
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
@@ -293,7 +295,9 @@ typedef enum {
 #endif
 #ifdef FEATURE_WmGPS
 	STATE_MENU_GPS,
-	STATE_MENU_GPSE,  // GPS error counter
+	STATE_MENU_GPSC,  // GPS error counter
+	STATE_MENU_GPSP,  // GPS error counter
+	STATE_MENU_GPST,  // GPS error counter
 	STATE_MENU_ZONEH,
 	STATE_MENU_ZONEM,
 #endif
@@ -583,11 +587,23 @@ void menu(bool update, bool show)
 			break;
 #endif
 #ifdef FEATURE_WmGPS
-		case STATE_MENU_GPSE:
+		case STATE_MENU_GPSC:
 			if (update)	{
-				g_gps_errors = 0;  // reset error counter
+				g_gps_cks_errors = 0;  // reset error counter
 			}
-			show_setting_int("GPSE", "GPSE", g_gps_errors, show);
+			show_setting_int("GPSC", "GPSC", g_gps_cks_errors, show);
+			break;
+		case STATE_MENU_GPSP:
+			if (update)	{
+				g_gps_parse_errors = 0;  // reset error counter
+			}
+			show_setting_int("GPSP", "GPSP", g_gps_parse_errors, show);
+			break;
+		case STATE_MENU_GPST:
+			if (update)	{
+				g_gps_time_errors = 0;  // reset error counter
+			}
+			show_setting_int("GPST", "GPST", g_gps_time_errors, show);
 			break;
 		case STATE_MENU_ZONEH:
 			if (update)	{
