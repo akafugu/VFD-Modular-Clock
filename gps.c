@@ -89,13 +89,22 @@ uint32_t parsedecimal(char *str) {
   while (str[0] != 0) {
    if ((str[0] > '9') || (str[0] < '0'))
      return d;  // no more digits
-   d *= 10;
-   d += str[0] - '0';
+	 d = (d*10) + (str[0] - '0');
    str++;
   }
   return d;
 }
-
+char hex[17] = "0123456789ABCDEF";
+uint8_t atoh(char x) {
+  return (strchr(hex, x) - hex);
+}
+uint32_t hex2i(char *str, uint8_t len) {
+  uint32_t d = 0;
+	for (uint8_t i=0; i<len; i++) {
+	 d = (d*10) + (strchr(hex, str[i]) - hex);
+	}
+	return d;
+}
 //  225446       Time of fix 22:54:46 UTC
 //  A            Navigation receiver warning A = OK, V = warning
 //  4916.45,N    Latitude 49 deg. 16.45 min North
@@ -142,18 +151,7 @@ void parseGPSdata() {
 			if (ptr>(gpsBuffer+GPSBUFFERSIZE)) goto GPSerror;  // do we really need this???
 		}
 		// now get the checksum from the string itself, which is in hex
-		uint8_t chk1, chk2;
-		chk1 = *(ptr+1);
-		chk2 = *(ptr+2);
-		if (chk1 > '9') 
-			chk1 = chk1 - 55;  // convert 'A-F' to 10-15
-		else
-			chk1 = chk1 - 48;  // convert '0-9' to 0-9
-		if (chk2 > '9') 
-			chk2 = chk2 - 55;  // convert 'A-F' to 10-15
-		else
-			chk2 = chk2 - 48;  // convert '0-9' to 0-9
-		gpsCheck2 = (chk1 * 16)  + chk2;
+    gpsCheck2 = atoh(*(ptr+1)) * 16 + atoh(*(ptr+2));
 		if (gpsCheck1 == gpsCheck2) {  // if checksums match, process the data
 			//beep(1000, 1);
 			tok = strtok(gpsBuffer, ",*\r");  // parse $GPRMC
@@ -231,7 +229,7 @@ void parseGPSdata() {
 			g_gps_cks_errors++;  // increment error count
 		return;
 GPSerror:
-//	beep(1000,3);  // error signal
+		beep(2093,1);  // error signal
 		flash_display(200);  // flash display to show GPS error
 		g_gps_errors++;  // increment error count
 		strcpy(gpsBuffer, "");  // wipe GPS buffer
@@ -260,4 +258,5 @@ void gps_init(uint8_t gps) {
 			uart_init(BRRL_9600);
 			break;
 	}
+	tGPSupdate = 0;  // reset GPS last update time
 }
