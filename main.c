@@ -389,12 +389,15 @@ char* region_setting(uint8_t reg)
 void setDSToffset(uint8_t mode) {
 	int8_t adjOffset;
 	uint8_t newOffset;
+
+#ifdef FEATURE_AUTO_DST
 	if (mode == 2) {  // Auto DST
 		if (g_DST_updated) return;  // already done it once today
 		if (tm_ == NULL) return;  // safet check
 		newOffset = getDSToffset(tm_, &dst_rules);  // get current DST offset based on DST Rules
 	}
 	else
+#endif
 		newOffset = mode;  // 0 or 1
 	adjOffset = newOffset - g_DST_offset;  // offset delta
 	if (adjOffset == 0)  return;  // nothing to do
