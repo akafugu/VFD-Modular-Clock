@@ -172,9 +172,10 @@ const DST_Rules dst_rules_hi = {{12,7,5,23},{12,7,5,23},1};  // high limit
 #ifdef FEATURE_AUTO_DATE
 uint8_t g_region = 0;
 uint8_t g_autodate = false;
-uint8_t g_autotime = 54;  // when to display date
 uint16_t g_autodisp = 550;  // how long to display date
 #endif
+
+uint8_t g_autotime = 54;  // controls when to display date and when to display time in FLW mode
 
 // Other globals
 uint8_t g_has_dots = false; // can current shield show dot (decimal points)
@@ -397,7 +398,7 @@ void setDSToffset(uint8_t mode) {
 		newOffset = getDSToffset(tm_, &dst_rules);  // get current DST offset based on DST Rules
 	}
 	else
-#endif
+#endif // FEATURE_AUTO_DST
 		newOffset = mode;  // 0 or 1
 	adjOffset = newOffset - g_DST_offset;  // offset delta
 	if (adjOffset == 0)  return;  // nothing to do
