@@ -44,6 +44,9 @@ uint8_t calculate_segments_7(uint8_t character)
 			break;
 		case 2:
 		case '2':
+// 10nov12/wbp
+		case 'Z':
+		case 'z':
 			segments = (1<<A)|(1<<B)|(1<<D)|(1<<E)|(1<<G);
 			break;
 		case 3:

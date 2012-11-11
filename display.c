@@ -752,8 +752,10 @@ void show_setting_int(char* short_str, char* long_str, int value, bool show_sett
 		print_digits(value, 6);
 	}
 	else if (get_digits() == 6) {
-		set_string(long_str);
-		print_digits(value, 4);
+		if (show_setting)
+			print_digits(value, 4);
+		else
+			set_string(long_str);
 	}
 	else {
 		if (show_setting)
