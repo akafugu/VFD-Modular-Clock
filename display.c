@@ -19,6 +19,9 @@
 #include <string.h>
 #include "display.h"
 #include "rtc.h"
+#ifdef FEATURE_FLW
+#include "flw.h"
+#endif
 
 void write_vfd_iv6(uint8_t digit, uint8_t segments);
 void write_vfd_iv17(uint8_t digit, uint16_t segments);
@@ -49,6 +52,7 @@ extern uint8_t g_has_dots;
 extern uint8_t g_alarm_switch;
 extern uint8_t g_brightness;
 extern uint8_t g_gps_updating;
+extern uint8_t g_has_eeprom;
 
 // variables for controlling display blink
 uint8_t blink;
@@ -417,6 +421,14 @@ uint8_t print_strn(char* str, uint8_t offset, uint8_t n)
 
 extern uint8_t g_volume;
 
+unsigned long g_offset = 0; // offset for where to search for next word in eeprom
+#ifdef FEATURE_FLW
+char g_flw[6]; // contains actual four letter word
+extern uint8_t g_flw_print_offset; // offset for where to start printing four letter words
+#endif
+
+uint8_t prev_sec = 0;
+
 // set dots based on mode and seconds
 void print_dots(uint8_t mode, bool _24h_clock, uint8_t seconds)
 {
@@ -531,7 +543,56 @@ void show_time(tmElements_t* te, bool _24h_clock, uint8_t mode)
 			}
 		}
 	}
+	/*
+	else if (mode == 2 && g_has_eeprom && prev_sec != te->Second) {
+		g_offset = get_word(g_offset, g_flw);
+		prev_sec = te->Second;
+		
+		if (digits == 8) {
+			print_offset++;
+			if (print_offset == 5) print_offset = 0;
+		}
+		else if (digits == 6) {
+			print_offset++;
+			if (print_offset == 3) print_offset = 0;
+		}
+		else {
+			print_offset = 0;
+		}
+		
+		data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
+		print_strn(g_flw, print_offset, 4);
+	}
+	*/
 }
+
+#ifdef FEATURE_FLW
+// shows FLW
+void show_flw(tmElements_t* te)
+{
+	static uint8_t print_offset = 0;
+
+	if (g_has_eeprom && prev_sec != te->Second) {
+		g_offset = get_word(g_offset, g_flw);
+		prev_sec = te->Second;
+		
+		if (digits == 8) {
+			print_offset++;
+			if (print_offset == 5) print_offset = 0;
+		}
+		else if (digits == 6) {
+			print_offset++;
+			if (print_offset == 3) print_offset = 0;
+		}
+		else {
+			print_offset = 0;
+		}
+		
+		data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
+		print_strn(g_flw, print_offset, 4);
+	}
+}
+#endif
 
 // shows time - used when setting time
 void show_time_setting(uint8_t hour, uint8_t min, uint8_t sec)

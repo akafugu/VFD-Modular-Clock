@@ -32,7 +32,9 @@ SRCS = main.c \
 	twi-lowlevel.c \
 	rtc.c \
 	piezo.c \
-	Time.c
+	Time.c \
+	flw.c
+
 # Default values
 FEATURE_SET_TIME ?= YES
 FEATURE_CHARACTERS ?= YES
@@ -44,6 +46,7 @@ FEATURE_SET_DATE ?= YES
 FEATURE_AUTO_DATE ?= YES
 FEATURE_WmGPS ?= YES
 FEATURE_AUTO_DST ?= YES
+FEATURE_FLW ?= YES
 
 ifeq ($(MCU), attiny4313)
   FEATURE_CHANGE_TWI_ADDRESS ?= YES
@@ -65,6 +68,7 @@ SPECIAL_DEFS += DEMO \
 	FEATURE_AUTO_DATE \
 	FEATURE_WmGPS \
 	FEATURE_AUTO_DST \
+	FEATURE_FLW \
 	BOARD_1_0
 	  
 
