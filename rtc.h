@@ -104,7 +104,8 @@ void rtc_set_alarm(TimeElements* te);
 void rtc_set_alarm_s(uint8_t hour, uint8_t min, uint8_t sec);
 TimeElements* rtc_get_alarm(void);
 void rtc_get_alarm_s(uint8_t* hour, uint8_t* min, uint8_t* sec);
-bool rtc_check_alarm(void);  
-bool rtc_check_alarm_t(TimeElements* te);  
+bool rtc_check_alarm(void);
+bool rtc_check_alarm_t(TimeElements* te);
+bool rtc_check_alarm_cached(TimeElements* te, uint8_t hour, uint8_t min, uint8_t sec);
 
 #endif

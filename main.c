@@ -720,7 +720,7 @@ void main(void)
 				menu_state = STATE_SET_ALARM;
 				show_set_alarm();
 				rtc_get_alarm_s(&alarm_hour, &alarm_min, &alarm_sec);
-				time_to_set = hour*60 + min;
+				time_to_set = alarm_hour*60 + alarm_min;
 			}
 			else {
 				menu_state = STATE_SET_CLOCK;
@@ -766,8 +766,12 @@ void main(void)
 					g_DST_updated = false;  // allow automatic DST adjustment again
 #endif
 				}
-				else
-					rtc_set_alarm_s(time_to_set / 60, time_to_set % 60, 0);
+				else {
+					alarm_hour = time_to_set / 60;
+					alarm_min  = time_to_set % 60;
+					alarm_sec  = 0;
+					rtc_set_alarm_s(alarm_hour, alarm_min, alarm_sec);
+				}
 
 				menu_state = STATE_CLOCK;
 			}
@@ -878,7 +882,7 @@ void main(void)
 		}
 		
 		// fixme: alarm should not be checked when setting time or alarm
-		if (g_alarm_switch && rtc_check_alarm_t(tm_))
+		if (g_alarm_switch && rtc_check_alarm_cached(tm_, alarm_hour, alarm_min, alarm_sec))
 			g_alarming = true;
 
 #ifdef FEATURE_WmGPS
