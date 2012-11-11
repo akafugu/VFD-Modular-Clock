@@ -14,65 +14,46 @@
  */
 
 /* Updates by William B Phelps
+ * 10nov12 add gps error counters to menu
  * 09nov12 rewrite GPS parse
- *
  * 08nov12 auto menu feature
  * 07nov12 check GPS time vs. previous, add GPS error counter
  * 06nov12 rtc: separate alarm time, adst: add DSTinit function
  * 05nov12 fix DST calc bug
- * speed up alarm check in rtc (not done)
- *
+ *  speed up alarm check in rtc (not done)
  * 03nov12 fix for ADST falling back
- * change region to "DMY/MDY/YMD"
- *
+ *  change region to "DMY/MDY/YMD"
  * 30oct12 menu changes - single menu block instead of 2
- *
  * 29oct12 "gps_updating" flag, use segment on IV18 to show updates
- * shift time 1 pos for 12 hour display
- *
+ *  shift time 1 pos for 12 hour display
  * 25oct12 implement Auto DST
- *
  * 24oct12 fix date display for larger displays
- *
  * 22oct12 add DATE to menu, add FEATURE_SET_DATE and FEATURE_AUTO_DATE
- * added to menu: YEAR, MONTH, DAY
- *
+ *  added to menu: YEAR, MONTH, DAY
  * 12oct12 fix blank display when setting time (blink)
- * return to AMPM after AutoDate display
- *
+ *  return to AMPM after AutoDate display
  * 05oct12 clean up GPS mods for commit
- * add get/set time in time_t to RTC
- * slight blink when RTC updated from GPS to show signal reception
- *
+ *  add get/set time in time_t to RTC
+ *  slight blink when RTC updated from GPS to show signal reception
  * 26sap12
- * fix EUR date display
- * add GPS 48, 96 (support 9600 baud GPS) 
- *
- * 25sep12
- * improve date scrolling
- * add Time.h/Time.c, use tmElements_t structure instead of tm
- * add '/' to font-16seg.c
- * 
+ *  fix EUR date display
+ *  add GPS 48, 96 (support 9600 baud GPS) 
+ * 25sep12 improve date scrolling
+ *  add Time.h/Time.c, use tmElements_t structure instead of tm
+ *  add '/' to font-16seg.c
  * 24sep12 - add time zone & DST menu items
- * show current value without change on 1st press of b1
- * scroll the date for smaller displays
- *
+ *  show current value without change on 1st press of b1
+ *  scroll the date for smaller displays
  * 21sep12 - GPS support
- *
  * 02sep12 - post to Github
- *
  * 28aug12 - clean up display multiplex code
- *
  * 27aug12 - 10 step brightness for IV-17
- *
  * 26aug12 - display "off" after "alarm" if alarm switch off
- *
  * 25aug12 - change Menu timeout to ~2 seconds
- * show Alarm time when Alarm switch is set to enable the alarm
- * get time from RTC every 200 ms instead of every 150 ms
- * blank hour leading zero if not 24 hr display mode
- * minor typos & cleanup
- *
+ *  show Alarm time when Alarm switch is set to enable the alarm
+ *  get time from RTC every 200 ms instead of every 150 ms
+ *  blank hour leading zero if not 24 hr display mode
+ *  minor typos & cleanup
  */
 
 // defines moved to makefile
@@ -923,7 +904,7 @@ void main(void)
 				if (menu_state == STATE_MENU_FLW && !g_has_eeprom) menu_state++;
 #endif
 
-				if (menu_state == STATE_MENU_LAST) menu_state = STATE_MENU_BRIGHTNESS;
+				if (menu_state == STATE_MENU_LAST) menu_state = STATE_CLOCK;  //wbp
 				
 				menu(false,false);  
 				buttons.b2_keyup = 0; // clear state
