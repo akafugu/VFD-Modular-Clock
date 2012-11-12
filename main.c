@@ -702,6 +702,7 @@ void menu(bool update, bool show)
 				g_TZ_hour++;
 				if (g_TZ_hour > 12) g_TZ_hour = -12;
 				eeprom_update_byte(&b_TZ_hour, g_TZ_hour + 12);
+				tGPSupdate = 0;  // allow GPS to refresh
 			}
 			show_setting_int("TZH", "TZH", g_TZ_hour, show);
 			break;
@@ -709,6 +710,7 @@ void menu(bool update, bool show)
 			if (update)	{
 				g_TZ_minutes = (g_TZ_minutes + 15) % 60;;
 				eeprom_update_byte(&b_TZ_minutes, g_TZ_minutes);
+				tGPSupdate = 0;  // allow GPS to refresh
 			}
 			show_setting_int("TZM", "TZM", g_TZ_minutes, show);
 			break;
