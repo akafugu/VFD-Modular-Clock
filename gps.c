@@ -35,7 +35,6 @@ extern uint16_t g_gps_time_errors;  // GPS error counter
 //volatile uint8_t gpsEnabled = 0;
 #define gpsTimeoutLimit 5  // 5 seconds until we display the "no gps" message
 uint16_t gpsTimeout = 0;  // how long since we received valid GPS data?
-time_t tGPSupdate = 0;
 
 void GPSread(void) 
 {
