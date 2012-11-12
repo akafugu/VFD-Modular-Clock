@@ -638,14 +638,14 @@ void menu(bool update, bool show)
 				if (g_TZ_hour > 12) g_TZ_hour = -12;
 				eeprom_update_byte(&b_TZ_hour, g_TZ_hour + 12);
 			}
-			show_setting_int("TZ-H", "TZ-H", g_TZ_hour, show);
+			show_setting_int("TZH", "TZH", g_TZ_hour, show);
 			break;
 		case STATE_MENU_ZONEM:
 			if (update)	{
 				g_TZ_minutes = (g_TZ_minutes + 15) % 60;;
 				eeprom_update_byte(&b_TZ_minutes, g_TZ_minutes);
 			}
-			show_setting_int("TZ-M", "TZ-M", g_TZ_minutes, show);
+			show_setting_int("TZM", "TZM", g_TZ_minutes, show);
 			break;
 #endif
 		case STATE_MENU_TEMP:
