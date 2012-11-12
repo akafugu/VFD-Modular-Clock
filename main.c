@@ -1028,12 +1028,16 @@ void main(void)
 		}
 
 #ifdef FEATURE_WmGPS
-		if (g_gps_enabled && gpsDataReady()) {
-			parseGPSdata(gpsNMEA());  // get the GPS serial stream and possibly update the clock 
-			_delay_ms(5);
+		if (g_gps_enabled) {
+			if (gpsDataReady()) {
+				parseGPSdata(gpsNMEA());  // get the GPS serial stream and possibly update the clock 
+//				_delay_ms(5);
+				}
+			else
+				_delay_ms(7);
 			}
 		else
-			_delay_ms(6);  // do something that takes about the same amount of time
+			_delay_ms(7);  // do something that takes about the same amount of time
 #else
 		_delay_ms(7);  // roughly 10 ms per loop
 #endif
