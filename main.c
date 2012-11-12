@@ -14,6 +14,7 @@
  */
 
 /* Updates by William B Phelps
+ * 11nov12 add local FEATURE_GPS_DEBUG to control if gps debug counters are in menu
  * 10nov12 add gps error counters to menu
  * 09nov12 rewrite GPS parse
  * 08nov12 auto menu feature
@@ -63,6 +64,7 @@
 //#define FEATURE_WmDST  // AUto DST support
 
 #define FEATURE_AUTO_MENU  // temp
+#define FEATURE_GPS_DEBUG  // enables GPS debugging counters & menu items
  
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -147,9 +149,6 @@ uint8_t g_dateday = 1;
 #ifdef FEATURE_WmGPS 
 uint8_t g_gps_enabled = 0;
 uint8_t g_gps_updating = 0;  // for signalling GPS update on some displays
-uint16_t g_gps_cks_errors;  // gps checksum error counter
-uint16_t g_gps_parse_errors;  // gps parse error counter
-uint16_t g_gps_time_errors;  // gps time error counter
 #endif
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 uint8_t g_DST_mode;  // DST off, on, auto?
@@ -171,7 +170,6 @@ uint8_t g_region = 0;
 uint8_t g_autodate = false;
 uint16_t g_autodisp = 550;  // how long to display date
 #endif
-
 uint8_t g_autotime = 54;  // controls when to display date and when to display time in FLW mode
 
 // Other globals
@@ -302,9 +300,11 @@ typedef enum {
 #endif
 #ifdef FEATURE_WmGPS
 	STATE_MENU_GPS,
+#ifdef FEATURE_GPS_DEBUG
 	STATE_MENU_GPSC,  // GPS error counter
 	STATE_MENU_GPSP,  // GPS error counter
 	STATE_MENU_GPST,  // GPS error counter
+#endif
 	STATE_MENU_ZONEH,
 	STATE_MENU_ZONEM,
 #endif
@@ -401,7 +401,6 @@ char* region_setting(uint8_t reg)
 void setDSToffset(uint8_t mode) {
 	int8_t adjOffset;
 	uint8_t newOffset;
-
 #ifdef FEATURE_AUTO_DST
 	if (mode == 2) {  // Auto DST
 		if (g_DST_updated) return;  // already done it once today
@@ -613,6 +612,7 @@ void menu(bool update, bool show)
 			break;
 #endif
 #ifdef FEATURE_WmGPS
+#ifdef FEATURE_GPS_DEBUG
 		case STATE_MENU_GPSC:
 			if (update)	{
 				g_gps_cks_errors = 0;  // reset error counter
@@ -631,20 +631,21 @@ void menu(bool update, bool show)
 			}
 			show_setting_int4("GPST", "GPST", g_gps_time_errors, show);
 			break;
+#endif
 		case STATE_MENU_ZONEH:
 			if (update)	{
 				g_TZ_hour++;
 				if (g_TZ_hour > 12) g_TZ_hour = -12;
 				eeprom_update_byte(&b_TZ_hour, g_TZ_hour + 12);
 			}
-			show_setting_int("TZ-H", "TZ-H ", g_TZ_hour, show);
+			show_setting_int("TZ-H", "TZ-H", g_TZ_hour, show);
 			break;
 		case STATE_MENU_ZONEM:
 			if (update)	{
 				g_TZ_minutes = (g_TZ_minutes + 15) % 60;;
 				eeprom_update_byte(&b_TZ_minutes, g_TZ_minutes);
 			}
-			show_setting_int("TZ-M", "TZ-M ", g_TZ_minutes, show);
+			show_setting_int("TZ-M", "TZ-M", g_TZ_minutes, show);
 			break;
 #endif
 		case STATE_MENU_TEMP:

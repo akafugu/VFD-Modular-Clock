@@ -23,6 +23,10 @@
 
 int8_t g_TZ_hour;
 uint8_t g_TZ_minutes;
+// debugging counters
+uint16_t g_gps_cks_errors;  // gps checksum error counter
+uint16_t g_gps_parse_errors;  // gps parse error counter
+uint16_t g_gps_time_errors;  // gps time error counter
 
 // we double buffer: read into one line and leave one for the main program
 volatile char gpsBuffer1[GPSBUFFERSIZE];

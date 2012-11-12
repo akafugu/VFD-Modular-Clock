@@ -137,7 +137,7 @@ void parseGPSdata(char *gpsBuffer) {
 		{
 			gpsCheck1 ^= *ptr;
 			ptr++;
-			if (ptr>(gpsBuffer+GPSBUFFERSIZE)) goto GPSerror1;  // do we really need this???
+			if (ptr>(gpsBuffer+GPSBUFFERSIZE)) goto GPSerror1;  // extra sanity check, can't hurt...
 		}
 		// now get the checksum from the string itself, which is in hex
     gpsCheck2 = atoh(*(ptr+1)) * 16 + atoh(*(ptr+2));
@@ -223,7 +223,7 @@ GPSerror1:
 GPSerror2:
 		g_gps_time_errors++;  // increment error count
 GPSerror2a:
-		beep(2093,1);  // error signal
+		beep(2093,1);  // error signal - I'm leaving this in for now /wm
 		flash_display(200);  // flash display to show GPS error
 		strcpy(gpsBuffer, "");  // wipe GPS buffer
 	}  // if "$GPRMC"
