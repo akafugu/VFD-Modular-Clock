@@ -57,14 +57,9 @@
  *  minor typos & cleanup
  */
 
-// defines moved to makefile
-//#define FEATURE_SDATE  // add (set) DATE to menu
-//#define FEATURE_ADATE  // automatic date display 
-//#define FEATURE_WmGPS  // GPS support
-//#define FEATURE_WmDST  // AUto DST support
-
 #define FEATURE_AUTO_MENU  // temp
 #define FEATURE_GPS_DEBUG  // enables GPS debugging counters & menu items
+#define FEATURE_AUTO_DIM  // temp
  
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -132,6 +127,13 @@ uint8_t EEMEM b_DST_offset = 0;
 uint8_t EEMEM b_Region = 0;  // default European date format Y/M/D
 uint8_t EEMEM b_AutoDate = false;
 #endif
+#ifdef FEATURE_AUTO_DIM
+uint8_t EEMEM b_AutoDim = false;
+uint8_t EEMEM b_AutoDimHour = 22;
+uint8_t EEMEM b_AutoDimLevel = 2;
+uint8_t EEMEM b_AutoBrtHour = 7;
+uint8_t EEMEM b_AutoBrtLevel = 8;
+#endif
 // Cached settings
 uint8_t g_24h_clock = true;
 uint8_t g_show_temp = false;
@@ -169,6 +171,13 @@ const DST_Rules dst_rules_hi = {{12,7,5,23},{12,7,5,23},1};  // high limit
 uint8_t g_region = 0;
 uint8_t g_autodate = false;
 uint16_t g_autodisp = 550;  // how long to display date
+#endif
+#ifdef FEATURE_AUTO_DIM
+uint8_t g_AutoDim = false;
+uint8_t g_AutoDimHour;
+uint8_t g_AutoDimLevel;
+uint8_t g_AutoBrtHour;
+uint8_t g_AutoBrtLevel;
 #endif
 uint8_t g_autotime = 54;  // controls when to display date and when to display time in FLW mode
 
@@ -209,6 +218,13 @@ void initialize(void)
 #ifdef FEATURE_AUTO_DATE
 	g_region = eeprom_read_byte(&b_Region);
 	g_autodate = eeprom_read_byte(&b_AutoDate);
+#endif
+#ifdef FEATURE_AUTO_DIM
+	g_AutoDim = eeprom_read_byte(&b_AutoDim);
+	g_AutoDimHour = eeprom_read_byte(&b_AutoDimHour);
+	g_AutoDimLevel = eeprom_read_byte(&b_AutoDimLevel);
+	g_AutoBrtHour = eeprom_read_byte(&b_AutoBrtHour);
+	g_AutoBrtLevel = eeprom_read_byte(&b_AutoBrtLevel);
 #endif
 
 	PIEZO_DDR |= _BV(PIEZO_LOW_BIT);
@@ -294,6 +310,13 @@ typedef enum {
 #ifdef FEATURE_AUTO_DATE
 	STATE_MENU_AUTODATE,
 	STATE_MENU_REGION,
+#endif
+#ifdef FEATURE_AUTO_DIM
+	STATE_MENU_AUTODIM,
+	STATE_MENU_AUTODIM_HOUR,
+	STATE_MENU_AUTODIM_LEVEL,
+	STATE_MENU_AUTOBRT_HOUR,
+	STATE_MENU_AUTOBRT_LEVEL,
 #endif
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 	STATE_MENU_DST,
@@ -579,6 +602,47 @@ void menu(bool update, bool show)
 				eeprom_update_byte(&b_Region, g_region);
 				}
 			show_setting_string("REGN", "REGION", region_setting(g_region), show);
+			break;
+#endif						
+#ifdef FEATURE_AUTO_DIM
+		case STATE_MENU_AUTODIM:
+			if (update)	{
+				g_AutoDim = !g_AutoDim;
+				eeprom_update_byte(&b_AutoDim, g_AutoDim);
+			}
+			show_setting_string("ADIM", "ADIM", g_AutoDim ? " on " : " off", show);
+			break;
+		case STATE_MENU_AUTODIM_HOUR:
+			if (update)	{
+				g_AutoDimHour++;
+				if (g_AutoDimHour > 23) g_AutoDimHour = 0;
+				eeprom_update_byte(&b_AutoDimHour, g_AutoDimHour);
+			}
+			show_setting_int("ADMH", "ADIMH", g_AutoDimHour, show);
+			break;
+		case STATE_MENU_AUTODIM_LEVEL:
+			if (update)	{
+				g_AutoDimLevel++;
+				if (g_AutoDimLevel > 10) g_AutoDimLevel = 1;  // level 0 for blank???
+				eeprom_update_byte(&b_AutoDimLevel, g_AutoDimLevel);
+			}
+			show_setting_int("ADML", "ADIML", g_AutoDimLevel, show);
+			break;
+		case STATE_MENU_AUTOBRT_HOUR:
+			if (update)	{
+				g_AutoBrtHour++;
+				if (g_AutoBrtHour > 23) g_AutoBrtHour = 0;
+				eeprom_update_byte(&b_AutoBrtHour, g_AutoBrtHour);
+			}
+			show_setting_int("ABTH", "ABRTH", g_AutoBrtHour, show);
+			break;
+		case STATE_MENU_AUTOBRT_LEVEL:
+			if (update)	{
+				g_AutoBrtLevel++;
+				if (g_AutoBrtLevel > 10) g_AutoBrtLevel = 1;  // level 0 for blank???
+				eeprom_update_byte(&b_AutoBrtLevel, g_AutoBrtLevel);
+			}
+			show_setting_int("ABTL", "ABRTL", g_AutoBrtLevel, show);
 			break;
 #endif						
 #ifdef FEATURE_WmGPS
@@ -951,8 +1015,16 @@ void main(void)
 		}
 		
 		// fixme: alarm should not be checked when setting time or alarm
+		// fixme: alarm will be missed if time goes by Second=0 while in menu
 		if (g_alarm_switch && rtc_check_alarm_cached(tm_, alarm_hour, alarm_min, alarm_sec))
 			g_alarming = true;
+			
+		if ((g_AutoDim) && (tm_->Minute == 0) && (tm_->Second == 0))  {  // Auto Dim enabled?
+			if (tm_->Hour == g_AutoDimHour)
+				set_brightness(g_AutoDimLevel);
+			else if (tm_->Hour == g_AutoBrtHour)
+				set_brightness(g_AutoBrtLevel);
+		}
 
 #ifdef FEATURE_WmGPS
 		if (g_gps_enabled && gpsDataReady()) {
