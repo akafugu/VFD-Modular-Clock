@@ -21,25 +21,30 @@
 //The year the clock was programmed, used for error checking
 #define PROGRAMMING_YEAR 12
 
-char* gps_setting(uint8_t gps);
-
 int8_t g_TZ_hour;
 uint8_t g_TZ_minutes;
-//uint8_t g_DST_mode;  // DST off, on, auto?
-//uint8_t g_DST_offset;  // DST offset in hours
+
+// we double buffer: read into one line and leave one for the main program
+volatile char gpsBuffer1[GPSBUFFERSIZE];
+volatile char gpsBuffer2[GPSBUFFERSIZE];
+// our index into filling the current line
+volatile uint8_t gpsBufferPtr;
+// pointers to the double buffers
+volatile char *gpsNextBuffer;
+volatile char *gpsLastBuffer;
+volatile uint8_t gpsDataReady_;
 
 //GPS serial data handling functions:
 uint8_t gpsDataReady(void);
-void getGPSdata(void);
-void parseGPSdata(void);
-
-void fix_time(void);
-//Set the time zone:
-void set_timezone(void);
+void GPSread(void);
+char *gpsNMEA(void);
+void parseGPSdata(char *gpsBuffer);
 
 uint8_t leapyear(uint16_t y);
 void uart_init(uint16_t BRR);
 void gps_init(uint8_t gps);
+
+char* gps_setting(uint8_t gps);
 
 #if (F_CPU == 16000000)
 #define BRRL_4800 207    // for 16MHZ

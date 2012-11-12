@@ -946,13 +946,12 @@ void main(void)
 			g_alarming = true;
 
 #ifdef FEATURE_WmGPS
-		if (g_gps_enabled)
-			for (long i = 0; i < 2500; i++) {  // loop count set to create equivalent delay, and works at 9600 bps
-				if (gpsDataReady())
-					getGPSdata();  // get the GPS serial stream and possibly update the clock 
+		if (g_gps_enabled && gpsDataReady()) {
+			parseGPSdata(gpsNMEA());  // get the GPS serial stream and possibly update the clock 
+			_delay_ms(5);
 			}
 		else
-			_delay_ms(7);  // do something that takes about the same amount of time
+			_delay_ms(6);  // do something that takes about the same amount of time
 #else
 		_delay_ms(7);  // roughly 10 ms per loop
 #endif

@@ -19,6 +19,9 @@
 #include <string.h>
 #include "display.h"
 #include "rtc.h"
+#ifdef FEATURE_WmGPS
+#include "gps.h"
+#endif
 #ifdef FEATURE_FLW
 #include "flw.h"
 #endif
@@ -45,12 +48,16 @@ uint8_t mpx_count = 8;  // wm
 volatile char data[8]; // Digit data
 uint8_t us_counter = 0; // microsecond counter
 uint8_t multiplex_counter = 0;
+#ifdef FEATURE_WmGPS
+uint8_t gps_counter = 0;
+#endif
 
 // globals from main.c
 extern uint8_t g_show_dots;
 extern uint8_t g_has_dots;
 extern uint8_t g_alarm_switch;
 extern uint8_t g_brightness;
+extern uint8_t g_gps_enabled;
 extern uint8_t g_gps_updating;
 extern uint8_t g_has_eeprom;
 
@@ -351,6 +358,13 @@ ISR(TIMER0_OVF_vect)
 		display_multiplex();  
 		interrupt_counter = 0;
 	}
+
+#ifdef FEATURE_WmGPS
+	if (++gps_counter == 4) {  // every 0.001024 seconds
+		GPSread();  // check for data on the serial port
+		gps_counter = 0;
+	}
+#endif
 
 // IV-18 done twice??? See display_multiplex()
 //	// display multiplex (IV-18 shield)  

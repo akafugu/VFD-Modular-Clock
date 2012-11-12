@@ -26,64 +26,53 @@
 // globals from main.c
 extern uint8_t g_DST_offset;  // DST offset
 extern uint8_t g_gps_updating;
+extern uint8_t g_gps_enabled;
 extern enum shield_t shield;
 extern uint16_t g_gps_cks_errors;  // GPS checksum error counter
 extern uint16_t g_gps_parse_errors;  // GPS error counter
 extern uint16_t g_gps_time_errors;  // GPS error counter
 
-// String buffer for processing GPS data:
-char gpsBuffer[GPSBUFFERSIZE+2];
 //volatile uint8_t gpsEnabled = 0;
 #define gpsTimeoutLimit 5  // 5 seconds until we display the "no gps" message
 uint16_t gpsTimeout = 0;  // how long since we received valid GPS data?
 time_t tGPSupdate = 0;
 
-char gps_setting_[4];
-char* gps_setting(uint8_t gps)
+void GPSread(void) 
 {
-	switch (gps) {
-		case(0):
-			strcpy(gps_setting_,"off");
-			break;
-		case(48):
-			strcpy(gps_setting_," 48");
-			break;
-		case(96):
-			strcpy(gps_setting_," 96");
-			break;
-		default:
-			strcpy(gps_setting_," ??");
-	}
-	return gps_setting_;
-}
-
-// Set DST offset and save in EE prom
-
-//Check to see if there is any serial data.
-uint8_t gpsDataReady(void) {
-  return (UCSR0A & _BV(RXC0));
-}
-
-// get data from gps and update the clock (if possible)
-void getGPSdata(void) {
-	char charReceived = UDR0;  // get a byte from the port
-	uint8_t bufflen = strlen(gpsBuffer);
-	//If the buffer has not been started, check for '$'
-	if ( ( bufflen == 0 ) &&  ( '$' != charReceived ) )
-		return;  // wait for start of next sentence from GPS
-	if ( bufflen < (GPSBUFFERSIZE - 1) ) {  // is there room left? (allow room for null term)
-		if ( '\r' != charReceived ) {  // end of sentence?
-			strncat(gpsBuffer, &charReceived, 1);  // add char to buffer
-			return;
+  char c = 0;
+  if ((g_gps_enabled) && (UCSR0A & _BV(RXC0))) {
+		c=UDR0;  // get a byte from the port
+		if (c == '$') {
+			gpsNextBuffer[gpsBufferPtr] = 0;
+			gpsBufferPtr = 0;
 		}
-		strncat(gpsBuffer, "*", 1);  // mark end of buffer just in case
-		//beep(1000, 1);  // debugging
-		// end of sentence - is this the message we are looking for?
-		parseGPSdata();  // check for GPRMC sentence and set clock
-	}  // if space left in buffer
-	// either buffer is full, or the message has been processed. reset buffer for next message
-	memset( gpsBuffer, 0, GPSBUFFERSIZE );  // clear GPS buffer
-}  // getGPSdata
+		if (c == '\n') {  // newline marks end of sentence
+			gpsNextBuffer[gpsBufferPtr] = 0;  // terminate string
+			if (gpsNextBuffer == gpsBuffer1) {  // switch buffers
+				gpsNextBuffer = gpsBuffer2;
+				gpsLastBuffer = gpsBuffer1;
+			} else {
+				gpsNextBuffer = gpsBuffer1;
+				gpsLastBuffer = gpsBuffer2;
+			}
+			gpsBufferPtr = 0;
+			gpsDataReady_ = true;  // signal data ready
+		}
+		gpsNextBuffer[gpsBufferPtr++] = c;  // add char to current buffer, then increment index
+		if (gpsBufferPtr >= GPSBUFFERSIZE)  // if buffer full
+			gpsBufferPtr = GPSBUFFERSIZE-1;  // decrement index to make room (overrun)
+	}
+//	return c;
+}
+
+uint8_t gpsDataReady(void) {
+	return gpsDataReady_;
+}
+
+char *gpsNMEA(void) {
+  gpsDataReady_ = false;
+  return (char *)gpsLastBuffer;
+}
 
 uint32_t parsedecimal(char *str) {
   uint32_t d = 0;
@@ -120,7 +109,7 @@ uint32_t hex2i(char *str, uint8_t len) {
 // 0         1         2         3         4         5         6         7
 // 0123456789012345678901234567890123456789012345678901234567890123456789012
 //    0     1       2    3    4     5    6   7     8      9     10  11 12
-void parseGPSdata() {
+void parseGPSdata(char *gpsBuffer) {
 	time_t tNow;
 	tmElements_t tm;
 	uint8_t gpsCheck1, gpsCheck2;  // checksums
@@ -243,12 +232,10 @@ GPSerror2a:
 void uart_init(uint16_t BRR) {
   /* setup the main UART */
   UBRR0 = BRR;               // set baudrate counter
-
   UCSR0B = _BV(RXEN0) | _BV(TXEN0);
   UCSR0C = _BV(USBS0) | (3<<UCSZ00);
   DDRD |= _BV(PD1);
   DDRD &= ~_BV(PD0);
-
 }
 
 void gps_init(uint8_t gps) {
@@ -263,4 +250,27 @@ void gps_init(uint8_t gps) {
 			break;
 	}
 	tGPSupdate = 0;  // reset GPS last update time
+	gpsDataReady_ = false;
+  gpsBufferPtr = 0;
+  gpsNextBuffer = gpsBuffer1;
+  gpsLastBuffer = gpsBuffer2;
+}
+
+char gps_setting_[4];
+char* gps_setting(uint8_t gps)
+{
+	switch (gps) {
+		case(0):
+			strcpy(gps_setting_,"off");
+			break;
+		case(48):
+			strcpy(gps_setting_," 48");
+			break;
+		case(96):
+			strcpy(gps_setting_," 96");
+			break;
+		default:
+			strcpy(gps_setting_," ??");
+	}
+	return gps_setting_;
 }
