@@ -690,3 +690,11 @@ bool rtc_check_alarm_t(TimeElements* te)
 		return val & 1 ? 1 : 0;
 	}
 }
+
+// Check alarm against cached values
+bool rtc_check_alarm_cached(TimeElements* te, uint8_t hour, uint8_t min, uint8_t sec)
+{
+	if (hour == te->Hour && min == te->Minute && sec == te->Second)
+		return true;
+	return false;
+}

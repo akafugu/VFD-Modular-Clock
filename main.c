@@ -169,9 +169,10 @@ const DST_Rules dst_rules_hi = {{12,7,5,23},{12,7,5,23},1};  // high limit
 #ifdef FEATURE_AUTO_DATE
 uint8_t g_region = 0;
 uint8_t g_autodate = false;
-uint8_t g_autotime = 54;  // when to display date
 uint16_t g_autodisp = 550;  // how long to display date
 #endif
+
+uint8_t g_autotime = 54;  // controls when to display date and when to display time in FLW mode
 
 // Other globals
 uint8_t g_has_dots = false; // can current shield show dot (decimal points)
@@ -400,12 +401,15 @@ char* region_setting(uint8_t reg)
 void setDSToffset(uint8_t mode) {
 	int8_t adjOffset;
 	uint8_t newOffset;
+
+#ifdef FEATURE_AUTO_DST
 	if (mode == 2) {  // Auto DST
 		if (g_DST_updated) return;  // already done it once today
 		if (tm_ == NULL) return;  // safet check
 		newOffset = getDSToffset(tm_, &dst_rules);  // get current DST offset based on DST Rules
 	}
 	else
+#endif // FEATURE_AUTO_DST
 		newOffset = mode;  // 0 or 1
 	adjOffset = newOffset - g_DST_offset;  // offset delta
 	if (adjOffset == 0)  return;  // nothing to do
@@ -759,7 +763,7 @@ void main(void)
 				menu_state = STATE_SET_ALARM;
 				show_set_alarm();
 				rtc_get_alarm_s(&alarm_hour, &alarm_min, &alarm_sec);
-				time_to_set = hour*60 + min;
+				time_to_set = alarm_hour*60 + alarm_min;
 			}
 			else {
 				menu_state = STATE_SET_CLOCK;
@@ -805,8 +809,12 @@ void main(void)
 					g_DST_updated = false;  // allow automatic DST adjustment again
 #endif
 				}
-				else
-					rtc_set_alarm_s(time_to_set / 60, time_to_set % 60, 0);
+				else {
+					alarm_hour = time_to_set / 60;
+					alarm_min  = time_to_set % 60;
+					alarm_sec  = 0;
+					rtc_set_alarm_s(alarm_hour, alarm_min, alarm_sec);
+				}
 
 				menu_state = STATE_CLOCK;
 			}
@@ -942,7 +950,7 @@ void main(void)
 		}
 		
 		// fixme: alarm should not be checked when setting time or alarm
-		if (g_alarm_switch && rtc_check_alarm_t(tm_))
+		if (g_alarm_switch && rtc_check_alarm_cached(tm_, alarm_hour, alarm_min, alarm_sec))
 			g_alarming = true;
 
 #ifdef FEATURE_WmGPS
