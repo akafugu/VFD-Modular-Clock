@@ -370,7 +370,6 @@ void menu(uint8_t update, uint8_t show)
 				g_flw_enabled = !g_flw_enabled;
 				eeprom_update_byte(&b_flw_enabled, g_flw_enabled);
 			}
-				
 			show_setting_string("FLW", "FLW", g_flw_enabled ? " on" : " off", show);
 			break;
 #endif

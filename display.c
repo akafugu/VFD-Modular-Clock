@@ -803,6 +803,12 @@ void show_setting_int4(char* short_str, char* long_str, int value, bool show_set
 		set_string(long_str);
 		print_digits4(value, 4);
 	}
+	else if (get_digits() == 6) {
+		if (show_setting)
+			print_digits(value, 2);
+		else
+			set_string(short_str);
+	}
 	else {
 		if (show_setting)
 			print_digits4(value, 0);
