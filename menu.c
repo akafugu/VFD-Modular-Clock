@@ -13,6 +13,10 @@
  *
  */
 
+#define FEATURE_AUTO_MENU  // temp
+#define FEATURE_GPS_DEBUG  // enables GPS debugging counters & menu items
+#define FEATURE_AUTO_DIM  // temp
+
 #include <util/delay.h>
 #include <avr/eeprom.h>
 #include <string.h>
@@ -77,6 +81,13 @@ extern uint8_t g_DST_updated;  // DST update flag = allow update only once per d
 #ifdef FEATURE_AUTO_DATE
 extern uint8_t g_region;
 extern uint8_t g_autodate;
+#endif
+#ifdef FEATURE_AUTO_DIM
+extern uint8_t g_AutoDim;
+extern uint8_t g_AutoDimHour;
+extern uint8_t g_AutoDimLevel;
+extern uint8_t g_AutoBrtHour;
+extern uint8_t g_AutoBrtLevel;
 #endif
 #if defined FEATURE_AUTO_DST
 extern DST_Rules dst_rules;   // initial values from US DST rules as of 2011
