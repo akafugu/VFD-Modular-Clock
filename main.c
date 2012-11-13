@@ -1,6 +1,6 @@
 /*
  * VFD Modular Clock
- * (C) 2011 Akafugu Corporation
+ * (C) 2011-2012 Akafugu Corporation
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
@@ -72,6 +72,7 @@
 #include <string.h>
 
 #include "Time.h"
+#include "menu.h"
 #include "display.h"
 #include "button.h"
 #include "twi.h"
@@ -252,7 +253,7 @@ void initialize(void)
 		LED_LOW;
 		_delay_ms(100);
 	}
-
+	
 	sei();
 	twi_init_master();
 	
@@ -263,6 +264,7 @@ void initialize(void)
 	//rtc_set_alarm_s(17,0,0);
 
 	display_init(g_brightness);
+	menu_init();
 
 	g_alarm_switch = get_alarm_switch();
 #ifdef FEATURE_FLW
@@ -292,99 +294,6 @@ void initialize(void)
 
 struct BUTTON_STATE buttons;
 
-// menu states
-typedef enum {
-	// basic states
-	STATE_CLOCK = 0,  // show clock time
-	STATE_SET_CLOCK,
-	STATE_SET_ALARM,
-	// menu
-	STATE_MENU_BRIGHTNESS,
-	STATE_MENU_24H,
-	STATE_MENU_VOL,
-#ifdef FEATURE_SET_DATE
-//	STATE_MENU_DATE,
-	STATE_MENU_SETYEAR,
-	STATE_MENU_SETMONTH,
-	STATE_MENU_SETDAY,
-#endif
-#ifdef FEATURE_AUTO_DATE
-	STATE_MENU_AUTODATE,
-	STATE_MENU_REGION,
-#endif
-#ifdef FEATURE_AUTO_DIM
-	STATE_MENU_AUTODIM,
-	STATE_MENU_AUTODIM_HOUR,
-	STATE_MENU_AUTODIM_LEVEL,
-	STATE_MENU_AUTOBRT_HOUR,
-	STATE_MENU_AUTOBRT_LEVEL,
-#endif
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
-	STATE_MENU_DST,
-#endif
-#ifdef FEATURE_WmGPS
-	STATE_MENU_GPS,
-#ifdef FEATURE_GPS_DEBUG
-	STATE_MENU_GPSC,  // GPS error counter
-	STATE_MENU_GPSP,  // GPS error counter
-	STATE_MENU_GPST,  // GPS error counter
-#endif
-	STATE_MENU_ZONEH,
-	STATE_MENU_ZONEM,
-#endif
-	STATE_MENU_TEMP,
-	STATE_MENU_DOTS,
-#ifdef FEATURE_FLW
-	STATE_MENU_FLW,
-#endif
-	STATE_MENU_LAST,
-} menu_state_t;
-
-typedef enum {
-	SUB_MENU_OFF = 0,
-	SUB_MENU_DATE_YEAR,
-	SUB_MENU_DATE_MONTH,
-	SUB_MENU_DATE_DAY,
-	SUB_MENU_DATE_EXIT,
-	SUB_MENU_RULE_SMONTH,
-	SUB_MENU_RULE_SDOTW,
-	SUB_MENU_RULE_SWEEK,
-	SUB_MENU_RULE_SHOUR,
-	SUB_MENU_RULE_EMONTH,
-	SUB_MENU_RULE_EDOTW,
-	SUB_MENU_RULE_EWEEK,
-	SUB_MENU_RULE_EHOUR,
-	SUB_MENU_RULE_OFFSET,
-	SUB_MENU_RULE_EXIT,
-} sub_menu_state_t;
-
-menu_state_t menu_state = STATE_CLOCK;
-sub_menu_state_t submenu_state = SUB_MENU_OFF;
-bool menu_update = false;
-
-#define MENU_TIMEOUT 220  
-#ifdef FEATURE_AUTO_MENU
-#define BUTTON2_TIMEOUT 100
-#endif
-
-// display modes
-typedef enum {
-	MODE_NORMAL = 0, // normal mode: show time/seconds
-	MODE_AMPM, // shows time AM/PM
-#ifdef FEATURE_FLW
-	MODE_FLW,  // shows four letter words
-#endif
-#ifdef FEATURE_AUTO_DATE
-	MODE_DATE, // shows date
-#endif
-	MODE_LAST,  // end of display modes for right button pushes
-	MODE_ALARM_TEXT,  // show "alarm" (wm)
-	MODE_ALARM_TIME,  // show alarm time (wm)
-} display_mode_t;
-
-display_mode_t clock_mode = MODE_NORMAL;
-display_mode_t save_mode = MODE_NORMAL;  // for restoring mode after autodate display
-
 // Alarm switch changed interrupt
 ISR( PCINT2_vect )
 {
@@ -399,56 +308,6 @@ ISR( PCINT2_vect )
 	else
 		clock_mode = MODE_ALARM_TEXT;
 }
-
-#ifdef FEATURE_AUTO_DATE
-char reg_setting_[5];
-char* region_setting(uint8_t reg)
-{
-	switch (reg) {
-		case(0):
-			strcpy(reg_setting_," dmy");
-			break;
-		case(1):
-			strcpy(reg_setting_," mdy");
-			break;
-		case(2):
-			strcpy(reg_setting_," ymd");
-			break;
-		default:
-			strcpy(reg_setting_," ???");
-	}
-	return reg_setting_;
-}
-#endif
-
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
-void setDSToffset(uint8_t mode) {
-	int8_t adjOffset;
-	uint8_t newOffset;
-#ifdef FEATURE_AUTO_DST
-	if (mode == 2) {  // Auto DST
-		if (g_DST_updated) return;  // already done it once today
-		if (tm_ == NULL) return;  // safet check
-		newOffset = getDSToffset(tm_, &dst_rules);  // get current DST offset based on DST Rules
-	}
-	else
-#endif // FEATURE_AUTO_DST
-		newOffset = mode;  // 0 or 1
-	adjOffset = newOffset - g_DST_offset;  // offset delta
-	if (adjOffset == 0)  return;  // nothing to do
-	if (adjOffset > 0)
-		beep(880, 1);  // spring ahead
-	else
-		beep(440, 1);  // fall back
-	time_t tNow = rtc_get_time_t();  // fetch current time from RTC as time_t
-	tNow += adjOffset * SECS_PER_HOUR;  // add or subtract new DST offset
-	rtc_set_time_t(tNow);  // adjust RTC
-	g_DST_offset = newOffset;
-	eeprom_update_byte(&b_DST_offset, g_DST_offset);
-	g_DST_updated = true;
-	// save DST_updated in ee ???
-}
-#endif
 
 void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 {
@@ -519,230 +378,6 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 	counter++;
 	if (counter == 250) counter = 0;
 }
-
-#ifdef FEATURE_SET_DATE
-void set_date(uint8_t yy, uint8_t mm, uint8_t dd) {
-	tm_ = rtc_get_time();  // refresh current time 
-	tm_->Year = yy;
-	tm_->Month = mm;
-	tm_->Day = dd;
-	rtc_set_time(tm_);
-#ifdef FEATURE_AUTO_DST
-	DSTinit(tm_, &dst_rules);  // re-compute DST start, end for new date
-	g_DST_updated = false;  // allow automatic DST adjustment again
-	setDSToffset(g_DST_mode);  // set DSToffset based on new date
-#endif
-}
-#endif
-
-void menu(bool update, bool show)
-{
-	switch (menu_state) {
-		case STATE_MENU_BRIGHTNESS:
-			if (update) {	
-				g_brightness++;
-				if (g_brightness > 10) g_brightness = 1;
-				eeprom_update_byte(&b_brightness, g_brightness);
-				set_brightness(g_brightness);
-			}
-			show_setting_int("BRIT", "BRITE", g_brightness, show);
-			break;
-		case STATE_MENU_24H:
-			if (update)	{
-				g_24h_clock = !g_24h_clock;
-				eeprom_update_byte(&b_24h_clock, g_24h_clock);
-			}
-			show_setting_string("24H", "24H", g_24h_clock ? " on" : " off", show);
-			break;
-		case STATE_MENU_VOL:
-			if (update)	{
-				g_volume = !g_volume;
-				eeprom_update_byte(&b_volume, g_volume);
-				piezo_init();
-				beep(1000, 1);
-			}
-			show_setting_string("VOL", "VOL", g_volume ? " hi" : " lo", show);
-			break;
-#ifdef FEATURE_SET_DATE						
-		case STATE_MENU_SETYEAR:
-			if (update) {
-				g_dateyear++;
-				if (g_dateyear > 29) g_dateyear = 10;  // 20 years...
-				set_date(g_dateyear, g_datemonth, g_dateday);
-			}
-			show_setting_int("YEAR", "YEAR ", g_dateyear, show);
-			break;
-		case STATE_MENU_SETMONTH:
-			if (update) {
-				g_datemonth++;
-				if (g_datemonth > 12) g_datemonth = 1;  
-				set_date(g_dateyear, g_datemonth, g_dateday);
-				}
-			show_setting_int("MNTH", "MONTH", g_datemonth, show);
-			break;
-		case STATE_MENU_SETDAY:
-			if (update) {
-				g_dateday++;
-				if (g_dateday > 31) g_dateday = 1;  
-				set_date(g_dateyear, g_datemonth, g_dateday);
-			}
-			show_setting_int("DAY", "DAY  ", g_dateday, show);
-			break;
-#endif						
-#ifdef FEATURE_AUTO_DATE						
-		case STATE_MENU_AUTODATE:
-			if (update)	{
-				g_autodate = !g_autodate;
-				eeprom_update_byte(&b_AutoDate, g_autodate);
-			}
-			show_setting_string("ADTE", "ADATE", g_autodate ? " on " : " off", show);
-			break;
-		case STATE_MENU_REGION:
-			if (update)	{
-				g_region = (g_region+1)%3;  // 0 = YMD, 1 = MDY, 2 = DMY
-				eeprom_update_byte(&b_Region, g_region);
-				}
-			show_setting_string("REGN", "REGION", region_setting(g_region), show);
-			break;
-#endif						
-#ifdef FEATURE_AUTO_DIM
-		case STATE_MENU_AUTODIM:
-			if (update)	{
-				g_AutoDim = !g_AutoDim;
-				eeprom_update_byte(&b_AutoDim, g_AutoDim);
-			}
-			show_setting_string("ADIM", "ADIM", g_AutoDim ? " on " : " off", show);
-			break;
-		case STATE_MENU_AUTODIM_HOUR:
-			if (update)	{
-				g_AutoDimHour++;
-				if (g_AutoDimHour > 23) g_AutoDimHour = 0;
-				eeprom_update_byte(&b_AutoDimHour, g_AutoDimHour);
-			}
-			show_setting_int("ADMH", "ADIMH", g_AutoDimHour, show);
-			break;
-		case STATE_MENU_AUTODIM_LEVEL:
-			if (update)	{
-				g_AutoDimLevel++;
-				if (g_AutoDimLevel > 10) g_AutoDimLevel = 1;  // level 0 for blank???
-				eeprom_update_byte(&b_AutoDimLevel, g_AutoDimLevel);
-			}
-			show_setting_int("ADML", "ADIML", g_AutoDimLevel, show);
-			break;
-		case STATE_MENU_AUTOBRT_HOUR:
-			if (update)	{
-				g_AutoBrtHour++;
-				if (g_AutoBrtHour > 23) g_AutoBrtHour = 0;
-				eeprom_update_byte(&b_AutoBrtHour, g_AutoBrtHour);
-			}
-			show_setting_int("ABTH", "ABRTH", g_AutoBrtHour, show);
-			break;
-		case STATE_MENU_AUTOBRT_LEVEL:
-			if (update)	{
-				g_AutoBrtLevel++;
-				if (g_AutoBrtLevel > 10) g_AutoBrtLevel = 1;  // level 0 for blank???
-				eeprom_update_byte(&b_AutoBrtLevel, g_AutoBrtLevel);
-			}
-			show_setting_int("ABTL", "ABRTL", g_AutoBrtLevel, show);
-			break;
-#endif						
-#ifdef FEATURE_WmGPS
-		case STATE_MENU_GPS:
-			if (update)	{
-				g_gps_enabled = (g_gps_enabled+48)%144;  // 0, 48, 96
-				eeprom_update_byte(&b_gps_enabled, g_gps_enabled);
-				gps_init(g_gps_enabled);  // change baud rate
-			}
-			show_setting_string("GPS", "GPS", gps_setting(g_gps_enabled), show);
-			break;
-#endif
-#if defined FEATURE_AUTO_DST
-		case STATE_MENU_DST:
-			if (update) {	
-				g_DST_mode = (g_DST_mode+1)%3;  //  0: off, 1: on, 2: auto
-				eeprom_update_byte(&b_DST_mode, g_DST_mode);
-				g_DST_updated = false;  // allow automatic DST adjustment again
-				setDSToffset(g_DST_mode);
-			}
-			show_setting_string("DST", "DST", dst_setting(g_DST_mode), show);
-			break;
-#elif defined FEATURE_WmGPS
-		case STATE_MENU_DST:
-			if (update) {	
-				g_DST_mode = (g_DST_mode+1)%2;  //  0: off, 1: on
-				eeprom_update_byte(&b_DST_mode, g_DST_mode);
-				setDSToffset(g_DST_mode);
-			}
-			show_setting_string("DST", "DST", g_DST_mode ? " on" : " off", show);
-			break;
-#endif
-#ifdef FEATURE_WmGPS
-#ifdef FEATURE_GPS_DEBUG
-		case STATE_MENU_GPSC:
-			if (update)	{
-				g_gps_cks_errors = 0;  // reset error counter
-			}
-			show_setting_int4("GPSC", "GPSC", g_gps_cks_errors, show);
-			break;
-		case STATE_MENU_GPSP:
-			if (update)	{
-				g_gps_parse_errors = 0;  // reset error counter
-			}
-			show_setting_int4("GPSP", "GPSP", g_gps_parse_errors, show);
-			break;
-		case STATE_MENU_GPST:
-			if (update)	{
-				g_gps_time_errors = 0;  // reset error counter
-			}
-			show_setting_int4("GPST", "GPST", g_gps_time_errors, show);
-			break;
-#endif
-		case STATE_MENU_ZONEH:
-			if (update)	{
-				g_TZ_hour++;
-				if (g_TZ_hour > 12) g_TZ_hour = -12;
-				eeprom_update_byte(&b_TZ_hour, g_TZ_hour + 12);
-				tGPSupdate = 0;  // allow GPS to refresh
-			}
-			show_setting_int("TZH", "TZH", g_TZ_hour, show);
-			break;
-		case STATE_MENU_ZONEM:
-			if (update)	{
-				g_TZ_minutes = (g_TZ_minutes + 15) % 60;;
-				eeprom_update_byte(&b_TZ_minutes, g_TZ_minutes);
-				tGPSupdate = 0;  // allow GPS to refresh
-			}
-			show_setting_int("TZM", "TZM", g_TZ_minutes, show);
-			break;
-#endif
-		case STATE_MENU_TEMP:
-			if (update)	{
-				g_show_temp = !g_show_temp;
-				eeprom_update_byte(&b_show_temp, g_show_temp);
-			}
-			show_setting_string("TEMP", "TEMP", g_show_temp ? " on" : " off", show);
-			break;
-		case STATE_MENU_DOTS:
-			if (update)	{
-				g_show_dots = !g_show_dots;
-				eeprom_update_byte(&b_show_dots, g_show_dots);
-			}
-			show_setting_string("DOTS", "DOTS", g_show_dots ? " on" : " off", show);
-			break;
-#ifdef FEATURE_FLW
-		case STATE_MENU_FLW:
-			if (update)	{
-				g_flw_enabled = !g_flw_enabled;
-				eeprom_update_byte(&b_flw_enabled, g_flw_enabled);
-			}
-				
-			show_setting_string("FLW", "FLW", g_flw_enabled ? " on" : " off", show);
-			break;
-#endif
-		default:
-			break; // do nothing
-	}  // switch (menu_state)
-}  // menu
 
 void main(void) __attribute__ ((noreturn));
 

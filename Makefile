@@ -24,6 +24,7 @@ TARGET = main
 SRCS = main.c \
 	button.c \
 	display.c \
+	menu.c \
 	font-16seg.c \
 	font-7seg.c \
 	adst.c \
