@@ -14,6 +14,7 @@
  */
 
 /* Updates by William B Phelps
+ * 13nov12 begin NewMenu
  * 12nov12 add Auto dim/brt feature
  * 11nov12 add local FEATURE_GPS_DEBUG to control if gps debug counters are in menu
  * 10nov12 add gps error counters to menu
@@ -166,8 +167,8 @@ DST_Rules dst_rules = {{3,1,2,2},{11,1,1,2},1};   // initial values from US DST 
 // DOTW is Day of the Week, 1=Sunday, 7=Saturday
 // N is which occurrence of DOTW
 // Current US Rules:  March, Sunday, 2nd, 2am, November, Sunday, 1st, 2 am, 1 hour
-const DST_Rules dst_rules_lo = {{1,1,1,0},{1,1,1,0},0};  // low limit
-const DST_Rules dst_rules_hi = {{12,7,5,23},{12,7,5,23},1};  // high limit
+//const DST_Rules dst_rules_lo = {{1,1,1,0},{1,1,1,0},0};  // low limit
+//const DST_Rules dst_rules_hi = {{12,7,5,23},{12,7,5,23},1};  // high limit
 #endif
 #ifdef FEATURE_AUTO_DATE
 uint8_t g_region = 0;
