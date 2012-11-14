@@ -320,10 +320,12 @@ void menu(uint8_t n, uint8_t update, uint8_t show)
 				if (valnum > menuPtr->hiLimit)
 					valnum = menuPtr->loLimit;
 				*menuPtr->setting = valnum;
-				if (menuPtr->menuNum == MENU_TZH)
-					eeprom_update_byte(menuPtr->eeAddress, valnum+12);
-				else
-					eeprom_update_byte(menuPtr->eeAddress, valnum);
+				if (menuPtr->eeAddress != NULL) {
+					if (menuPtr->menuNum == MENU_TZH)
+						eeprom_update_byte(menuPtr->eeAddress, valnum+12);
+					else
+						eeprom_update_byte(menuPtr->eeAddress, valnum);
+					}
 				menu_action(menuPtr);
 			}
 			show_setting_int(menuPtr->shortName, menuPtr->longName, valnum, show);
@@ -332,7 +334,8 @@ void menu(uint8_t n, uint8_t update, uint8_t show)
 			if ((n == 1) && update) {
 				valnum = !valnum;
 				*menuPtr->setting = valnum;
-				eeprom_update_byte(menuPtr->eeAddress, valnum);
+				if (menuPtr->eeAddress != NULL) 
+					eeprom_update_byte(menuPtr->eeAddress, valnum);
 				menu_action(menuPtr);
 			}
 			if (valnum)
@@ -355,13 +358,14 @@ void menu(uint8_t n, uint8_t update, uint8_t show)
 				valnum = menuValues[idx].value;
 				valstr = (char*)menuValues[idx].valName;
 				*menuPtr->setting = valnum;
-				eeprom_update_byte(menuPtr->eeAddress, valnum);
+				if (menuPtr->eeAddress != NULL) 
+					eeprom_update_byte(menuPtr->eeAddress, valnum);
 				menu_action(menuPtr);
 				//// store new value in EE
 			}
 			show_setting_string(menuPtr->shortName, menuPtr->longName, valstr, show);
 			break;
-		case menu_sub:  // sub menu item, just show name
+		case menu_sub:  // sub menu item, just show name, right button will select
 			show_setting_int(menuPtr->shortName, menuPtr->longName, 0, false);
 			break;
 	}
