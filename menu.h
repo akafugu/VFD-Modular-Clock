@@ -17,8 +17,9 @@
 
 typedef enum {
 	menu_num = 0,  // simple numeric value
-	menu_list = 1,  // select one from a list
-	menu_sub = 2,  // sub menu
+	menu_tf = 1, // true/false
+	menu_list = 2,  // select one from a list
+	menu_sub = 3,  // sub menu
 } menu_types;
 
 typedef struct {
@@ -27,11 +28,12 @@ typedef struct {
 } menu_values;
 
 typedef struct {
+	const uint8_t menuNum;  // menu item number
 	char * shortName;
 	char * longName;
 	const menu_types menuType;
 	int8_t * setting;
-	const int8_t lowLimit;  // low limit for num
+	const int8_t loLimit;  // low limit for num
 	const int8_t hiLimit;  // high limit for num, # of values for list
 	const menu_values * menuList[];
 } menu_item;
@@ -44,46 +46,35 @@ typedef enum {
 	STATE_SET_ALARM,
 	// menu
 	STATE_MENU,
-	// STATE_MENU_BRIGHTNESS,
-	// STATE_MENU_24H,
-	// STATE_MENU_VOL,
-// #ifdef FEATURE_SET_DATE
-// //	STATE_MENU_DATE,
-	// STATE_MENU_SETYEAR,
-	// STATE_MENU_SETMONTH,
-	// STATE_MENU_SETDAY,
-// #endif
-// #ifdef FEATURE_AUTO_DATE
-	// STATE_MENU_AUTODATE,
-	// STATE_MENU_REGION,
-// #endif
-// #ifdef FEATURE_AUTO_DIM
-	// STATE_MENU_AUTODIM,
-	// STATE_MENU_AUTODIM_HOUR,
-	// STATE_MENU_AUTODIM_LEVEL,
-	// STATE_MENU_AUTOBRT_HOUR,
-	// STATE_MENU_AUTOBRT_LEVEL,
-// #endif
-// #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
-	// STATE_MENU_DST,
-// #endif
-// #ifdef FEATURE_WmGPS
-	// STATE_MENU_GPS,
-// #ifdef FEATURE_GPS_DEBUG
-	// STATE_MENU_GPSC,  // GPS error counter
-	// STATE_MENU_GPSP,  // GPS error counter
-	// STATE_MENU_GPST,  // GPS error counter
-// #endif
-	// STATE_MENU_ZONEH,
-	// STATE_MENU_ZONEM,
-// #endif
-	// STATE_MENU_TEMP,
-	// STATE_MENU_DOTS,
-// #ifdef FEATURE_FLW
-	// STATE_MENU_FLW,
-// #endif
 	STATE_MENU_LAST,
 } menu_state_t;
+
+typedef enum {
+	MENU_BRIGHTNESS = 0,
+	MENU_24H,
+	MENU_VOL,
+//	MENU_DATE,
+	MENU_SETYEAR,
+	MENU_SETMONTH,
+	MENU_SETDAY,
+	MENU_AUTODATE,
+	MENU_REGION,
+	MENU_AUTODIM,
+	MENU_AUTODIM_HOUR,
+	MENU_AUTODIM_LEVEL,
+	MENU_AUTOBRT_HOUR,
+	MENU_AUTOBRT_LEVEL,
+	MENU_DST,
+	MENU_GPS,
+	MENU_GPSC,  // GPS error counter
+	MENU_GPSP,  // GPS error counter
+	MENU_GPST,  // GPS error counter
+	MENU_TZH,
+	MENU_TZM,
+	MENU_TEMP,
+	MENU_DOTS,
+	MENU_FLW,
+} menu_number;
 
 menu_state_t menu_state;
 uint8_t menu_update;

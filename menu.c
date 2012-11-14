@@ -27,7 +27,7 @@
 #include "gps.h"
 #include "adst.h"
 
-menu_values menu_onoff[] = { {0, "off"}, {1, "on"} };
+menu_values menu_offon[] = { {false, "off"}, {true, "on"} };
 menu_values menu_gps[] = { {0, "off"}, {48, "48"}, {96, "96"} };
 #if defined FEATURE_AUTO_DST
 menu_values menu_adst[] = { {0, "off"}, {1, "on"}, {2, "auto"} };
@@ -35,44 +35,44 @@ menu_values menu_adst[] = { {0, "off"}, {1, "on"}, {2, "auto"} };
 const menu_values menu_volume[] = { {0, "lo"}, {1, "hi"} };
 menu_values menu_region[] = { {0, "ymd"}, {1, "dmy"}, {2, "mdy"} };
 
-menu_item menuBrt = {"BRIT", "BRITE", menu_num, &g_brightness, 0, 10, {NULL} };
-menu_item menu24h = {"24H", "24H", menu_list, &g_24h_clock, 0, 2, {menu_onoff}};
-menu_item menuVol = {"VOL", "VOL", menu_list, &g_volume, 0, 2, {menu_volume}};
+menu_item menuBrt = {MENU_BRIGHTNESS, "BRIT", "BRITE", menu_num, &g_brightness, 0, 10, {NULL} };
+menu_item menu24h = {MENU_24H, "24H", "24H", menu_tf, &g_24h_clock, 0, 2, {menu_offon}};
+menu_item menuVol = {MENU_VOL, "VOL", "VOL", menu_list, &g_volume, 0, 2, {menu_volume}};
 #ifdef FEATURE_SET_DATE						
-menu_item menuYear = {"YEAR", "YEAR", menu_num, &g_dateyear, 10, 29, {NULL}};
-menu_item menuMonth = {"MNTH", "MONTH", menu_num, &g_datemonth, 1, 12, {NULL}};
-menu_item menuDay = {"DAY", "DAY", menu_num, &g_dateday, 1, 31, {NULL}};
+menu_item menuYear = {MENU_SETYEAR, "YEAR", "YEAR", menu_num, &g_dateyear, 10, 29, {NULL}};
+menu_item menuMonth = {MENU_SETMONTH, "MNTH", "MONTH", menu_num, &g_datemonth, 1, 12, {NULL}};
+menu_item menuDay = {MENU_SETDAY, "DAY", "DAY", menu_num, &g_dateday, 1, 31, {NULL}};
 #endif
 #ifdef FEATURE_AUTO_DATE
-menu_item menuAdate = {"ADTE", "ADATE", menu_list, &g_autodate, 0, 2, {menu_onoff}};
-menu_item menuRegion = {"REGN", "RGION", menu_list, &g_region, 0, 3, {menu_region}};
+menu_item menuAdate = {MENU_AUTODATE, "ADTE", "ADATE", menu_tf, &g_autodate, 0, 1, {menu_offon}};
+menu_item menuRegion = {MENU_REGION, "REGN", "RGION", menu_list, &g_region, 0, 3, {menu_region}};
 #endif
 #ifdef FEATURE_AUTO_DIM
-menu_item menuAdim = {"ADIM", "ADIM", menu_list, &g_AutoDim, 0, 2, {menu_onoff}};
-menu_item menuAdimHr = {"ADMH", "ADMH", menu_num, &g_AutoDimHour, 0, 23, {NULL}};
-menu_item menuAdimLvl = {"ADML", "ADML", menu_num, &g_AutoDimLevel, 1, 10, {NULL}};
-menu_item menuAbrtHr = {"ABTH", "ABTH", menu_num, &g_AutoBrtHour, 0, 23, {NULL}};
-menu_item menuAbrtLvl = {"ABTL", "ABTL", menu_num, &g_AutoBrtLevel, 1, 10, {NULL}};
+menu_item menuAdim = {MENU_AUTODIM, "ADIM", "ADIM", menu_tf, &g_AutoDim, 0, 1, {menu_offon}};
+menu_item menuAdimHr = {MENU_AUTODIM_HOUR,"ADMH", "ADMH", menu_num, &g_AutoDimHour, 0, 23, {NULL}};
+menu_item menuAdimLvl = {MENU_AUTODIM_LEVEL,"ADML", "ADML", menu_num, &g_AutoDimLevel, 0, 10, {NULL}};
+menu_item menuAbrtHr = {MENU_AUTOBRT_HOUR,"ABTH", "ABTH", menu_num, &g_AutoBrtHour, 0, 23, {NULL}};
+menu_item menuAbrtLvl = {MENU_AUTOBRT_LEVEL,"ABTL", "ABTL", menu_num, &g_AutoBrtLevel, 1, 10, {NULL}};
 #endif
 #if defined FEATURE_AUTO_DST
-menu_item menuDST = {"DST", "DST", menu_list, &g_DST_mode, 0, 3, {menu_adst}};
+menu_item menuDST = {MENU_DST, "DST", "DST", menu_list, &g_DST_mode, 0, 3, {menu_adst}};
 #elif defined FEATURE_WmGPS
-menu_item menuDST = {"DST", "DST", menu_list, &g_DST_mode, 0, 2, {menu_onoff}};
+menu_item menuDST = {MENU_DST, "DST", "DST", menu_tf, &g_DST_mode, 0, 1, {menu_offon}};
 #endif
 #if defined FEATURE_WmGPS
-menu_item menuGPS = {"GPS", "GPS", menu_list, &g_gps_enabled, 0, 2, {menu_gps}};
-menu_item menuTZh = {"TZH", "TZ-H", menu_num, &g_TZ_hour, -12, 12, {NULL}};
-menu_item menuTZm = {"TZM", "TZ-M", menu_num, &g_TZ_minutes, 0, 59, {NULL}};
+menu_item menuGPS = {MENU_GPS, "GPS", "GPS", menu_list, &g_gps_enabled, 0, 2, {menu_gps}};
+menu_item menuTZh = {MENU_TZH, "TZH", "TZ-H", menu_num, &g_TZ_hour, -12, 12, {NULL}};
+menu_item menuTZm = {MENU_TZM, "TZM", "TZ-M", menu_num, &g_TZ_minutes, 0, 59, {NULL}};
 #endif
 #if defined FEATURE_GPS_DEBUG
-menu_item menuGPSc = {"GPSC", "GPSC", menu_num, NULL, 0, 0, {NULL}};
-menu_item menuGPSp = {"GPSP", "GPSP", menu_num, NULL, 0, 0, {NULL}};
-menu_item menuGPSt = {"GPST", "GPST", menu_num, NULL, 0, 0, {NULL}};
+menu_item menuGPSc = {MENU_GPSC, "GPSC", "GPSC", menu_num, NULL, 0, 0, {NULL}};
+menu_item menuGPSp = {MENU_GPSP, "GPSP", "GPSP", menu_num, NULL, 0, 0, {NULL}};
+menu_item menuGPSt = {MENU_GPST, "GPST", "GPST", menu_num, NULL, 0, 0, {NULL}};
 #endif
-menu_item menuTemp = {"TEMP", "TEMP", menu_list, &g_show_temp, 0, 2, {menu_onoff}};
-menu_item menuDots = {"DOTS", "DOTS", menu_list, &g_show_dots, 0, 2, {menu_onoff}};
+menu_item menuTemp = {MENU_TEMP, "TEMP", "TEMP", menu_tf, &g_show_temp, 0, 1, {menu_offon}};
+menu_item menuDots = {MENU_DOTS, "DOTS", "DOTS", menu_tf, &g_show_dots, 0, 1, {menu_offon}};
 #if defined FEATURE_FLW
-menu_item menuFLW = {"FLW", "FLW", menu_list, &g_flw_enabled, 0, 2, {menu_onoff}};
+menu_item menuFLW = {MENU_FLW, "FLW", "FLW", menu_tf, &g_flw_enabled, 0, 1, {menu_offon}};
 #endif
 
 menu_item * menuItems[] = { 
@@ -102,13 +102,13 @@ uint8_t menuIdx = 0;
 menu_item * menuPtr;  // current menu item
 
 // Settings saved to eeprom
-uint8_t EEMEM b_24h_clock = true;
-uint8_t EEMEM b_show_temp = false;
-uint8_t EEMEM b_show_dots = true;
+uint8_t EEMEM b_24h_clock = 1;
+uint8_t EEMEM b_show_temp = 0;
+uint8_t EEMEM b_show_dots = 1;
 uint8_t EEMEM b_brightness = 8;
 uint8_t EEMEM b_volume = 0;
 #ifdef FEATURE_FLW
-uint8_t EEMEM b_flw_enabled = false;
+uint8_t EEMEM b_flw_enabled = 0;
 #endif
 #ifdef FEATURE_WmGPS
 uint8_t EEMEM b_gps_enabled = 0;  // 0, 48, or 96 - default no gps
@@ -121,10 +121,10 @@ uint8_t EEMEM b_DST_offset = 0;
 #endif
 #ifdef FEATURE_AUTO_DATE
 uint8_t EEMEM b_Region = 0;  // default European date format Y/M/D
-uint8_t EEMEM b_AutoDate = false;
+uint8_t EEMEM b_AutoDate = 0;
 #endif
 #ifdef FEATURE_AUTO_DIM
-uint8_t EEMEM b_AutoDim = false;
+uint8_t EEMEM b_AutoDim = 0;
 uint8_t EEMEM b_AutoDimHour = 22;
 uint8_t EEMEM b_AutoDimLevel = 2;
 uint8_t EEMEM b_AutoBrtHour = 7;
@@ -248,7 +248,36 @@ char* region_setting(uint8_t reg)
 	return reg_setting_;
 }
 #endif
-			
+
+void menu_action(menu_item * menuPtr)
+{
+	switch(menuPtr->menuNum) {
+		case MENU_BRIGHTNESS:
+			set_brightness(*menuPtr->setting);
+			break;
+		case MENU_VOL:
+			piezo_init();
+			beep(1000, 1);
+			break;
+		case MENU_SETYEAR:
+		case MENU_SETMONTH:
+		case MENU_SETDAY:
+			set_date(g_dateyear, g_datemonth, g_dateday);
+			break;
+		case MENU_GPS:
+			gps_init(g_gps_enabled);  // change baud rate
+			break;
+		case MENU_DST:
+			g_DST_updated = false;  // allow automatic DST adjustment again
+			setDSToffset(g_DST_mode);
+			break;
+		case MENU_TZH:
+		case MENU_TZM:
+			tGPSupdate = 0;  // allow GPS to refresh
+			break;
+	}
+}
+
 ////				menu_state++;
 				// show temperature setting only when running on a DS3231
 ////				if (menu_state == STATE_MENU_TEMP && !rtc_is_ds3231()) menu_state++;
@@ -283,15 +312,48 @@ void menu(uint8_t n, uint8_t update, uint8_t show)
 	valnum = *(menuPtr->setting);
 	const menu_values * menuValues;
 	menuValues = *menuPtr->menuList;
+	uint8_t idx = 0;
 	uint8_t size = sizeof(menuValues);
 	switch (menuPtr->menuType) {
 		case menu_num:
+			if ((n == 1) && update) {
+				valnum++;
+				if (valnum > menuPtr->hiLimit)
+					valnum = menuPtr->loLimit;
+				*menuPtr->setting = valnum;
+				menu_action(menuPtr);
+				//// store new value in EE
+			}
 			show_setting_int(menuPtr->shortName, menuPtr->longName, valnum, show);
+			break;
+		case menu_tf:  // true/false (or really, false/true)
+			if ((n == 1) && update) {
+				valnum = !valnum;
+				*menuPtr->setting = valnum;
+				menu_action(menuPtr);
+			}
+			if (valnum)
+				valstr = (char*)menuValues[1].valName;  // true
+			else
+				valstr = (char*)menuValues[0].valName;  // false
+			show_setting_string(menuPtr->shortName, menuPtr->longName, valstr, show);
 			break;
 		case menu_list:
 			for (uint8_t i=0;i<size;i++) {
-				if (menuValues[i].value == valnum)
-					valstr = (char*)menuValues[i].valName;
+				if (menuValues[i].value == valnum) {
+					idx = i;
+					}
+			}
+			valstr = (char*)menuValues[idx].valName;
+			if ((n == 1) && update) {
+				idx++;
+				if (idx > size)
+					idx = 0;
+				valnum = menuValues[idx].value;
+				valstr = (char*)menuValues[idx].valName;
+				*menuPtr->setting = valnum;
+				menu_action(menuPtr);
+				//// store new value in EE
 			}
 			show_setting_string(menuPtr->shortName, menuPtr->longName, valstr, show);
 			break;
