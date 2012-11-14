@@ -33,6 +33,7 @@ typedef struct {
 	char * longName;
 	const menu_types menuType;
 	int8_t * setting;
+	uint8_t * eeAddress;
 	const int8_t loLimit;  // low limit for num
 	const int8_t hiLimit;  // high limit for num, # of values for list
 	const menu_values * menuList[];
@@ -102,8 +103,8 @@ int8_t g_DST_offset;  // DST offset in Hours
 int8_t g_DST_updated;  // DST update flag = allow update only once per day
 #endif
 #ifdef FEATURE_AUTO_DATE
-int8_t g_region;
-int8_t g_autodate;
+int8_t g_Region;
+int8_t g_AutoDate;
 #endif
 #ifdef FEATURE_AUTO_DIM
 int8_t g_AutoDim;

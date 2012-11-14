@@ -66,7 +66,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
-#include <avr/eeprom.h>
+//#include <avr/eeprom.h>
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -228,7 +228,7 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 	
 #ifdef FEATURE_AUTO_DATE
 	if (mode == MODE_DATE) {
-		show_date(tm_, g_region);  // show date from last rtc_get_time() call
+		show_date(tm_, g_Region);  // show date from last rtc_get_time() call
 	}
 	else
 #endif	
@@ -267,7 +267,7 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 		}
 #endif
 #ifdef FEATURE_AUTO_DATE
-		if (g_autodate && (tm_->Second == g_autotime) ) { 
+		if (g_AutoDate && (tm_->Second == g_autotime) ) { 
 			save_mode = clock_mode;  // save current mode
 			clock_mode = MODE_DATE;  // display date now
 			g_show_special_cnt = g_autodisp;  // show date for g_autodisp ms
