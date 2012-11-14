@@ -22,6 +22,7 @@ F_CPU ?= 8000000
 TARGET = main
 
 SRCS = main.c \
+	globals.c \
 	button.c \
 	display.c \
 	menu.c \

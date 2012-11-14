@@ -17,6 +17,7 @@
 #include <string.h>
 #include <util/delay.h>
 #include <stdlib.h>
+#include "globals.h"
 #include "gps.h"
 #include "display.h"
 #include "piezo.h"
@@ -24,13 +25,7 @@
 #include "Time.h"
 
 // globals from main.c
-extern uint8_t g_DST_offset;  // DST offset
-extern uint8_t g_gps_updating;
-extern uint8_t g_gps_enabled;
 extern enum shield_t shield;
-extern uint16_t g_gps_cks_errors;  // GPS checksum error counter
-extern uint16_t g_gps_parse_errors;  // GPS error counter
-extern uint16_t g_gps_time_errors;  // GPS error counter
 
 //volatile uint8_t gpsEnabled = 0;
 #define gpsTimeoutLimit 5  // 5 seconds until we display the "no gps" message
@@ -201,9 +196,9 @@ void parseGPSdata(char *gpsBuffer) {
 					tGPSupdate = tNow;  // remember time of this update
 					tNow = tNow + (long)(g_TZ_hour + g_DST_offset) * SECS_PER_HOUR;  // add time zone hour offset & DST offset
 					if (g_TZ_hour < 0)  // add or subtract time zone minute offset
-						tNow = tNow - (long)g_TZ_minutes * SECS_PER_HOUR;
+						tNow = tNow - (long)g_TZ_minute * SECS_PER_HOUR;
 					else
-						tNow = tNow + (long)g_TZ_minutes * SECS_PER_HOUR;
+						tNow = tNow + (long)g_TZ_minute * SECS_PER_HOUR;
 					rtc_set_time_t(tNow);  // set RTC from adjusted GPS time & date
 					if (shield != SHIELD_IV18)
 						flash_display(100);  // flash display to show GPS update 28oct12/wbp - shorter blink

@@ -85,7 +85,9 @@ void detect_shield(void)
 		(((SIGNATURE_PIN & _BV(SIGNATURE_BIT_0)) ? 0b1   : 0) |
 		 ((SIGNATURE_PIN & _BV(SIGNATURE_BIT_1)) ? 0b10  : 0) |
 		 ((SIGNATURE_PIN & _BV(SIGNATURE_BIT_2)) ? 0b100 : 0 ));
-
+	// set common defaults
+	mpx_count = 8;
+	g_has_dots = true;
 	switch (sig) {
 		case(1):  // IV-17 shield
 			shield = SHIELD_IV17;
@@ -96,20 +98,15 @@ void detect_shield(void)
 		case(2):  // IV-6 shield
 			shield = SHIELD_IV6;
 			digits = 6;
-			mpx_count = 8;
-			g_has_dots = true;
 			break;
 		case(6):  // IV-22 shield
 			shield = SHIELD_IV22;
 			digits = 4;
-			mpx_count = 8;
-			g_has_dots = true;
 			break;
 		case(7):  // IV-18 shield (note: save value as no shield - all bits on)
 			shield = SHIELD_IV18;
 			digits = 8;
 			mpx_count = 7; 
-			g_has_dots = true;
 			break;
 		default:
 			shield = SHIELD_NONE;
@@ -685,7 +682,7 @@ void show_setting_string(char* short_str, char* long_str, char* value, bool show
 
 	if (get_digits() == 8) {
 		set_string(short_str);
-		print_strn(value, 4, 3);
+		print_strn(value, 5, 3);
 	}
 	else if (get_digits() == 6) {
 		if (show_setting)

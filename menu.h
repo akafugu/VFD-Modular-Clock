@@ -22,6 +22,12 @@ typedef enum {
 	menu_sub = 3,  // sub menu
 } menu_types;
 
+typedef enum {
+	menu_noflags = 0,
+	menu_disabled = 1,
+	menu_subMenu = 2,
+} menu_flags;
+
 typedef struct {
 	const int8_t value;  // list of possible values in order
 	const char * valName;  // list of value names for display
@@ -29,6 +35,7 @@ typedef struct {
 
 typedef struct {
 	const uint8_t menuNum;  // menu item number
+	uint8_t menuFlags;  // flags
 	char * shortName;
 	char * longName;
 	const menu_types menuType;
@@ -75,67 +82,16 @@ typedef enum {
 	MENU_TEMP,
 	MENU_DOTS,
 	MENU_FLW,
+	MENU_LAST,
 } menu_number;
 
 menu_state_t menu_state;
 uint8_t menu_update;
 
-int8_t g_24h_clock;
-int8_t g_show_temp;
-int8_t g_show_dots;
-int8_t g_brightness;
-int8_t g_volume;
-#ifdef FEATURE_SET_DATE
-int8_t g_dateyear;
-int8_t g_datemonth;
-int8_t g_dateday;
-#endif
-#ifdef FEATURE_FLW
-int8_t g_flw_enabled;
-#endif
-#ifdef FEATURE_WmGPS 
-int8_t g_gps_enabled;
-int8_t g_gps_updating;  // for signalling GPS update on some displays
-#endif
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
-int8_t g_DST_mode;  // DST off, on, auto?
-int8_t g_DST_offset;  // DST offset in Hours
-int8_t g_DST_updated;  // DST update flag = allow update only once per day
-#endif
-#ifdef FEATURE_AUTO_DATE
-int8_t g_Region;
-int8_t g_AutoDate;
-#endif
-#ifdef FEATURE_AUTO_DIM
-int8_t g_AutoDim;
-int8_t g_AutoDimHour;
-int8_t g_AutoDimLevel;
-int8_t g_AutoBrtHour;
-int8_t g_AutoBrtLevel;
-#endif
-
 #define MENU_TIMEOUT 220  
 #ifdef FEATURE_AUTO_MENU
 #define BUTTON2_TIMEOUT 100
 #endif
-
-// display modes
-typedef enum {
-	MODE_NORMAL = 0, // normal mode: show time/seconds
-	MODE_AMPM, // shows time AM/PM
-#ifdef FEATURE_FLW
-	MODE_FLW,  // shows four letter words
-#endif
-#ifdef FEATURE_AUTO_DATE
-	MODE_DATE, // shows date
-#endif
-	MODE_LAST,  // end of display modes for right button pushes
-	MODE_ALARM_TEXT,  // show "alarm" (wm)
-	MODE_ALARM_TIME,  // show alarm time (wm)
-} display_mode_t;
-
-display_mode_t clock_mode;
-display_mode_t save_mode;  // for restoring mode after autodate display
 
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 void setDSToffset(uint8_t mode);

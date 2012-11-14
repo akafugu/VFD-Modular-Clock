@@ -14,7 +14,7 @@
  */
 
 /* Updates by William B Phelps
- * 13nov12 begin NewMenu
+ * 14nov12 table driven Menu
  * 12nov12 add Auto dim/brt feature
  * 11nov12 add local FEATURE_GPS_DEBUG to control if gps debug counters are in menu
  * 10nov12 add gps error counters to menu
@@ -73,6 +73,7 @@
 #include <string.h>
 
 #include "Time.h"
+#include "globals.h"
 #include "menu.h"
 #include "display.h"
 #include "button.h"
@@ -124,11 +125,6 @@ uint16_t g_autodisp = 550;  // how long to display date
 #endif
 uint8_t g_autotime = 54;  // controls when to display date and when to display time in FLW mode
 
-// Other globals
-uint8_t g_has_dots = false; // can current shield show dot (decimal points)
-#ifdef FEATURE_FLW
-uint8_t g_has_eeprom = false; // set to true if there is a four letter word EEPROM attached
-#endif
 uint8_t g_alarming = false; // alarm is going off
 uint8_t g_alarm_switch;
 uint16_t g_show_special_cnt = 0;  // display something special ("time", "alarm", etc)
@@ -175,7 +171,7 @@ void initialize(void)
 	//rtc_set_time_s(16, 59, 50);
 	//rtc_set_alarm_s(17,0,0);
 
-	menu_init();
+	globals_init();
 	display_init(g_brightness);
 
 	g_alarm_switch = get_alarm_switch();
@@ -191,6 +187,8 @@ void initialize(void)
 #endif
 	rtc_get_alarm_s(&alarm_hour, &alarm_min, &alarm_sec);
 
+	menu_init();  // must come after display, flw init
+
 	// set up interrupt for alarm switch
 	PCICR |= (1 << PCIE2);
 	PCMSK2 |= (1 << PCINT18);
@@ -204,7 +202,24 @@ void initialize(void)
 #endif
 }
 
+// display modes
+typedef enum {
+	MODE_NORMAL = 0, // normal mode: show time/seconds
+	MODE_AMPM, // shows time AM/PM
+#ifdef FEATURE_FLW
+	MODE_FLW,  // shows four letter words
+#endif
+#ifdef FEATURE_AUTO_DATE
+	MODE_DATE, // shows date
+#endif
+	MODE_LAST,  // end of display modes for right button pushes
+	MODE_ALARM_TEXT,  // show "alarm" (wm)
+	MODE_ALARM_TIME,  // show alarm time (wm)
+} display_mode_t;
 struct BUTTON_STATE buttons;
+
+display_mode_t clock_mode = MODE_NORMAL;
+display_mode_t save_mode = MODE_NORMAL;  // for restoring mode after autodate display
 
 // Alarm switch changed interrupt
 ISR( PCINT2_vect )
