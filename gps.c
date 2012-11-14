@@ -249,22 +249,3 @@ void gps_init(uint8_t gps) {
   gpsNextBuffer = gpsBuffer1;
   gpsLastBuffer = gpsBuffer2;
 }
-
-char gps_setting_[4];
-char* gps_setting(uint8_t gps)
-{
-	switch (gps) {
-		case(0):
-			strcpy(gps_setting_,"off");
-			break;
-		case(48):
-			strcpy(gps_setting_," 48");
-			break;
-		case(96):
-			strcpy(gps_setting_," 96");
-			break;
-		default:
-			strcpy(gps_setting_," ??");
-	}
-	return gps_setting_;
-}

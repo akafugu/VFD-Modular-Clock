@@ -152,27 +152,6 @@ void set_date(uint8_t yy, uint8_t mm, uint8_t dd) {
 }
 #endif
 
-#ifdef FEATURE_AUTO_DATE
-char reg_setting_[5];
-char* region_setting(uint8_t reg)
-{
-	switch (reg) {
-		case(0):
-			strcpy(reg_setting_," dmy");
-			break;
-		case(1):
-			strcpy(reg_setting_," mdy");
-			break;
-		case(2):
-			strcpy(reg_setting_," ymd");
-			break;
-		default:
-			strcpy(reg_setting_," ???");
-	}
-	return reg_setting_;
-}
-#endif
-
 void menu_action(menu_item * menuPtr)
 {
 	switch(menuPtr->menuNum) {

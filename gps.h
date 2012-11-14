@@ -49,8 +49,6 @@ uint8_t leapyear(uint16_t y);
 void uart_init(uint16_t BRR);
 void gps_init(uint8_t gps);
 
-char* gps_setting(uint8_t gps);
-
 #if (F_CPU == 16000000)
 #define BRRL_4800 207    // for 16MHZ
 #define BRRL_9600 103    // for 16MHZ
