@@ -59,7 +59,7 @@
  *  minor typos & cleanup
  */
 
-#define FEATURE_AUTO_MENU  // temp
+////#define FEATURE_AUTO_MENU  // temp
 #define FEATURE_GPS_DEBUG  // enables GPS debugging counters & menu items
 #define FEATURE_AUTO_DIM  // temp
  
@@ -108,58 +108,7 @@
 #define PIEZO_LOW_ON  PIEZO_PORT |= _BV(PIEZO_LOW_BIT)
 #define PIEZO_HIGH_ON PIEZO_PORT |= _BV(PIEZO_HIGH_BIT)
 
-// Settings saved to eeprom
-uint8_t EEMEM b_24h_clock = true;
-uint8_t EEMEM b_show_temp = false;
-uint8_t EEMEM b_show_dots = true;
-uint8_t EEMEM b_brightness = 8;
-uint8_t EEMEM b_volume = 0;
-#ifdef FEATURE_FLW
-uint8_t EEMEM b_flw_enabled = false;
-#endif
-#ifdef FEATURE_WmGPS
-uint8_t EEMEM b_gps_enabled = 0;  // 0, 48, or 96 - default no gps
-uint8_t EEMEM b_TZ_hour = -8 + 12;
-uint8_t EEMEM b_TZ_minutes = 0;
-#endif
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
-uint8_t EEMEM b_DST_mode = 0;  // 0: off, 1: on, 2: Auto
-uint8_t EEMEM b_DST_offset = 0;
-#endif
-#ifdef FEATURE_AUTO_DATE
-uint8_t EEMEM b_Region = 0;  // default European date format Y/M/D
-uint8_t EEMEM b_AutoDate = false;
-#endif
-#ifdef FEATURE_AUTO_DIM
-uint8_t EEMEM b_AutoDim = false;
-uint8_t EEMEM b_AutoDimHour = 22;
-uint8_t EEMEM b_AutoDimLevel = 2;
-uint8_t EEMEM b_AutoBrtHour = 7;
-uint8_t EEMEM b_AutoBrtLevel = 8;
-#endif
 // Cached settings
-uint8_t g_24h_clock = true;
-uint8_t g_show_temp = false;
-uint8_t g_show_dots = true;
-uint8_t g_brightness = 5;
-uint8_t g_volume = 0;
-#ifdef FEATURE_FLW
-uint8_t g_flw_enabled = false;
-#endif
-#ifdef FEATURE_SET_DATE
-uint8_t g_dateyear = 12;
-uint8_t g_datemonth = 1;
-uint8_t g_dateday = 1;
-#endif
-#ifdef FEATURE_WmGPS 
-uint8_t g_gps_enabled = 0;
-uint8_t g_gps_updating = 0;  // for signalling GPS update on some displays
-#endif
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
-uint8_t g_DST_mode;  // DST off, on, auto?
-uint8_t g_DST_offset;  // DST offset in Hours
-uint8_t g_DST_updated = false;  // DST update flag = allow update only once per day
-#endif
 #ifdef FEATURE_AUTO_DST
 //DST_Rules dst_rules = {{10,1,1,2},{4,1,1,2},1};   // DST Rules for parts of OZ including NSW (for JG)
 DST_Rules dst_rules = {{3,1,2,2},{11,1,1,2},1};   // initial values from US DST rules as of 2011
@@ -171,16 +120,7 @@ DST_Rules dst_rules = {{3,1,2,2},{11,1,1,2},1};   // initial values from US DST 
 //const DST_Rules dst_rules_hi = {{12,7,5,23},{12,7,5,23},1};  // high limit
 #endif
 #ifdef FEATURE_AUTO_DATE
-uint8_t g_region = 0;
-uint8_t g_autodate = false;
 uint16_t g_autodisp = 550;  // how long to display date
-#endif
-#ifdef FEATURE_AUTO_DIM
-uint8_t g_AutoDim = false;
-uint8_t g_AutoDimHour;
-uint8_t g_AutoDimLevel;
-uint8_t g_AutoBrtHour;
-uint8_t g_AutoBrtLevel;
 #endif
 uint8_t g_autotime = 54;  // controls when to display date and when to display time in FLW mode
 
@@ -200,35 +140,6 @@ extern enum shield_t shield;
 
 void initialize(void)
 {
-	// read eeprom
-	g_24h_clock  = eeprom_read_byte(&b_24h_clock);
-	g_show_temp  = eeprom_read_byte(&b_show_temp);
-	g_brightness = eeprom_read_byte(&b_brightness);
-	g_volume     = eeprom_read_byte(&b_volume);
-#ifdef FEATURE_FLW
-	g_flw_enabled = eeprom_read_byte(&b_flw_enabled);
-#endif
-#ifdef FEATURE_WmGPS
-	g_gps_enabled = eeprom_read_byte(&b_gps_enabled);
-	g_TZ_hour = eeprom_read_byte(&b_TZ_hour) - 12;
-	if ((g_TZ_hour<-12) || (g_TZ_hour>12))  g_TZ_hour = 0;  // add range check
-	g_TZ_minutes = eeprom_read_byte(&b_TZ_minutes);
-#endif
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
-	g_DST_mode = eeprom_read_byte(&b_DST_mode);
-	g_DST_offset = eeprom_read_byte(&b_DST_offset);
-#endif
-#ifdef FEATURE_AUTO_DATE
-	g_region = eeprom_read_byte(&b_Region);
-	g_autodate = eeprom_read_byte(&b_AutoDate);
-#endif
-#ifdef FEATURE_AUTO_DIM
-	g_AutoDim = eeprom_read_byte(&b_AutoDim);
-	g_AutoDimHour = eeprom_read_byte(&b_AutoDimHour);
-	g_AutoDimLevel = eeprom_read_byte(&b_AutoDimLevel);
-	g_AutoBrtHour = eeprom_read_byte(&b_AutoBrtHour);
-	g_AutoBrtLevel = eeprom_read_byte(&b_AutoBrtLevel);
-#endif
 
 	PIEZO_DDR |= _BV(PIEZO_LOW_BIT);
 	PIEZO_DDR |= _BV(PIEZO_HIGH_BIT);
@@ -264,8 +175,8 @@ void initialize(void)
 	//rtc_set_time_s(16, 59, 50);
 	//rtc_set_alarm_s(17,0,0);
 
-	display_init(g_brightness);
 	menu_init();
+	display_init(g_brightness);
 
 	g_alarm_switch = get_alarm_switch();
 #ifdef FEATURE_FLW
@@ -536,10 +447,11 @@ void main(void)
 		}
 		// Left button enters menu
 		else if (menu_state == STATE_CLOCK && buttons.b2_keyup) {
-			menu_state = STATE_MENU_BRIGHTNESS;
+			menu_state = STATE_MENU;
 			if (get_digits() < 8)  // only set first time flag for 4 or 6 digit displays
 				menu_update = false;  // set first time flag
-			show_setting_int("BRIT", "BRITE", g_brightness, false);
+//			show_setting_int("BRIT", "BRITE", g_brightness, false);
+      menu(0, menu_update, false);  // show first menu item 
 			buttons.b2_keyup = 0; // clear state
 #ifdef FEATURE_AUTO_MENU
       button2_release_timer = BUTTON2_TIMEOUT;  // start button 2 timer
@@ -563,7 +475,7 @@ void main(void)
 			if (clock_mode == MODE_LAST) clock_mode = MODE_NORMAL;
 			buttons.b1_keyup = 0; // clear state
 		}
-		else if (menu_state >= STATE_MENU_BRIGHTNESS) {
+		else if (menu_state == STATE_MENU) {
 			if (buttons.none_held)
 				button_released_timer++;
 			else
@@ -581,7 +493,7 @@ void main(void)
       if (button2_release_timer > 0) {
         button2_release_timer--;
         if (button2_release_timer == 0) {
-          menu(false, true);  // show menu item value
+          menu(1, false, true);  // show or update current menu item value
           menu_update = true;
         }
       }
@@ -591,7 +503,7 @@ void main(void)
 #ifdef FEATURE_AUTO_MENU
         button2_release_timer = 0;  // cancel button 2 timer
 #endif
-				menu(menu_update, true);
+				menu(1, menu_update, true);  // update current menu item value
 				buttons.b1_keyup = false;
 				menu_update = true;  // b1 not first time now
 			}  // if (buttons.b1_keyup) 
@@ -602,23 +514,8 @@ void main(void)
 #ifdef FEATURE_AUTO_MENU
         button2_release_timer = BUTTON2_TIMEOUT;  // restart button2 timer
 #endif
-			
-				menu_state++;
 				
-				// show temperature setting only when running on a DS3231
-				if (menu_state == STATE_MENU_TEMP && !rtc_is_ds3231()) menu_state++;
-
-				// don't show dots settings for shields that have no dots
-				if (menu_state == STATE_MENU_DOTS && !g_has_dots) menu_state++;
-
-#ifdef FEATURE_FLW
-				// don't show FLW settings when there is no EEPROM with database
-				if (menu_state == STATE_MENU_FLW && !g_has_eeprom) menu_state++;
-#endif
-
-				if (menu_state == STATE_MENU_LAST) menu_state = STATE_CLOCK;  //wbp
-				
-				menu(false,false);  
+				menu(2, false,false);  // show next menu item
 				buttons.b2_keyup = 0; // clear state
 			}
 		}

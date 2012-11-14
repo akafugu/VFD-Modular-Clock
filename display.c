@@ -776,7 +776,6 @@ void show_date(tmElements_t *te_, uint8_t region)
 void show_setting_int(char* short_str, char* long_str, int value, bool show_setting)
 {
 	data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
-
 	if (get_digits() == 8) {
 		set_string(long_str);
 		print_digits(value, 6);

@@ -27,68 +27,110 @@
 #include "gps.h"
 #include "adst.h"
 
-extern uint8_t b_24h_clock;
-extern uint8_t b_show_temp;
-extern uint8_t b_show_dots;
-extern uint8_t b_brightness;
-extern uint8_t b_volume;
-#ifdef FEATURE_FLW
-extern uint8_t b_flw_enabled;
+menu_values menu_onoff[] = { {0, "off"}, {1, "on"} };
+menu_values menu_gps[] = { {0, "off"}, {48, "48"}, {96, "96"} };
+#if defined FEATURE_AUTO_DST
+menu_values menu_adst[] = { {0, "off"}, {1, "on"}, {2, "auto"} };
 #endif
-#ifdef FEATURE_WmGPS
-extern uint8_t b_gps_enabled;  // 0, 48, or 96 - default no gps
-extern uint8_t b_TZ_hour;
-extern uint8_t b_TZ_minutes;
-#endif
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
-extern uint8_t b_DST_mode;  // 0: off, 1: on, 2: Auto
-extern uint8_t b_DST_offset;
+const menu_values menu_volume[] = { {0, "lo"}, {1, "hi"} };
+menu_values menu_region[] = { {0, "ymd"}, {1, "dmy"}, {2, "mdy"} };
+
+menu_item menuBrt = {"BRIT", "BRITE", menu_num, &g_brightness, 0, 10, {NULL} };
+menu_item menu24h = {"24H", "24H", menu_list, &g_24h_clock, 0, 2, {menu_onoff}};
+menu_item menuVol = {"VOL", "VOL", menu_list, &g_volume, 0, 2, {menu_volume}};
+#ifdef FEATURE_SET_DATE						
+menu_item menuYear = {"YEAR", "YEAR", menu_num, &g_dateyear, 10, 29, {NULL}};
+menu_item menuMonth = {"MNTH", "MONTH", menu_num, &g_datemonth, 1, 12, {NULL}};
+menu_item menuDay = {"DAY", "DAY", menu_num, &g_dateday, 1, 31, {NULL}};
 #endif
 #ifdef FEATURE_AUTO_DATE
-extern uint8_t b_Region;  // default European date format Y/M/D
-extern uint8_t b_AutoDate;
+menu_item menuAdate = {"ADTE", "ADATE", menu_list, &g_autodate, 0, 2, {menu_onoff}};
+menu_item menuRegion = {"REGN", "RGION", menu_list, &g_region, 0, 3, {menu_region}};
 #endif
 #ifdef FEATURE_AUTO_DIM
-extern uint8_t b_AutoDim;
-extern uint8_t b_AutoDimHour;
-extern uint8_t b_AutoDimLevel;
-extern uint8_t b_AutoBrtHour;
-extern uint8_t b_AutoBrtLevel;
+menu_item menuAdim = {"ADIM", "ADIM", menu_list, &g_AutoDim, 0, 2, {menu_onoff}};
+menu_item menuAdimHr = {"ADMH", "ADMH", menu_num, &g_AutoDimHour, 0, 23, {NULL}};
+menu_item menuAdimLvl = {"ADML", "ADML", menu_num, &g_AutoDimLevel, 1, 10, {NULL}};
+menu_item menuAbrtHr = {"ABTH", "ABTH", menu_num, &g_AutoBrtHour, 0, 23, {NULL}};
+menu_item menuAbrtLvl = {"ABTL", "ABTL", menu_num, &g_AutoBrtLevel, 1, 10, {NULL}};
+#endif
+#if defined FEATURE_AUTO_DST
+menu_item menuDST = {"DST", "DST", menu_list, &g_DST_mode, 0, 3, {menu_adst}};
+#elif defined FEATURE_WmGPS
+menu_item menuDST = {"DST", "DST", menu_list, &g_DST_mode, 0, 2, {menu_onoff}};
+#endif
+#if defined FEATURE_WmGPS
+menu_item menuGPS = {"GPS", "GPS", menu_list, &g_gps_enabled, 0, 2, {menu_gps}};
+menu_item menuTZh = {"TZH", "TZ-H", menu_num, &g_TZ_hour, -12, 12, {NULL}};
+menu_item menuTZm = {"TZM", "TZ-M", menu_num, &g_TZ_minutes, 0, 59, {NULL}};
+#endif
+#if defined FEATURE_GPS_DEBUG
+menu_item menuGPSc = {"GPSC", "GPSC", menu_num, NULL, 0, 0, {NULL}};
+menu_item menuGPSp = {"GPSP", "GPSP", menu_num, NULL, 0, 0, {NULL}};
+menu_item menuGPSt = {"GPST", "GPST", menu_num, NULL, 0, 0, {NULL}};
+#endif
+menu_item menuTemp = {"TEMP", "TEMP", menu_list, &g_show_temp, 0, 2, {menu_onoff}};
+menu_item menuDots = {"DOTS", "DOTS", menu_list, &g_show_dots, 0, 2, {menu_onoff}};
+#if defined FEATURE_FLW
+menu_item menuFLW = {"FLW", "FLW", menu_list, &g_flw_enabled, 0, 2, {menu_onoff}};
 #endif
 
-extern uint8_t g_24h_clock;
-extern uint8_t g_show_temp;
-extern uint8_t g_show_dots;
-extern uint8_t g_brightness;
-extern uint8_t g_volume;
-#ifdef FEATURE_FLW
-extern uint8_t g_flw_enabled;
-#endif
+menu_item * menuItems[] = { 
+	&menuBrt, &menu24h, &menuVol,
 #ifdef FEATURE_SET_DATE
-extern uint8_t g_dateyear;
-extern uint8_t g_datemonth;
-extern uint8_t g_dateday;
-#endif
-#ifdef FEATURE_WmGPS 
-extern uint8_t g_gps_enabled;
-extern uint8_t g_gps_updating;  // for signalling GPS update on some displays
-#endif
-#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
-extern uint8_t g_DST_mode;  // DST off, on, auto?
-extern uint8_t g_DST_offset;  // DST offset in Hours
-extern uint8_t g_DST_updated;  // DST update flag = allow update only once per day
+	&menuYear, &menuMonth, &menuDay,
 #endif
 #ifdef FEATURE_AUTO_DATE
-extern uint8_t g_region;
-extern uint8_t g_autodate;
+	&menuAdate, &menuRegion,
 #endif
 #ifdef FEATURE_AUTO_DIM
-extern uint8_t g_AutoDim;
-extern uint8_t g_AutoDimHour;
-extern uint8_t g_AutoDimLevel;
-extern uint8_t g_AutoBrtHour;
-extern uint8_t g_AutoBrtLevel;
+	&menuAdim, &menuAdimHr, &menuAdimLvl, &menuAbrtHr, &menuAbrtLvl,
 #endif
+#if defined FEATURE_AUTO_DST || defined FEATURE_WmGPS
+	&menuDST,
+#endif
+#if defined FEATURE_WmGPS
+	&menuGPS, &menuTZh, &menuTZm,
+#endif
+	&menuTemp, &menuDots,
+#ifdef FEATURE_FLW
+	&menuFLW,
+#endif
+	NULL};
+
+uint8_t menuIdx = 0;
+menu_item * menuPtr;  // current menu item
+
+// Settings saved to eeprom
+uint8_t EEMEM b_24h_clock = true;
+uint8_t EEMEM b_show_temp = false;
+uint8_t EEMEM b_show_dots = true;
+uint8_t EEMEM b_brightness = 8;
+uint8_t EEMEM b_volume = 0;
+#ifdef FEATURE_FLW
+uint8_t EEMEM b_flw_enabled = false;
+#endif
+#ifdef FEATURE_WmGPS
+uint8_t EEMEM b_gps_enabled = 0;  // 0, 48, or 96 - default no gps
+uint8_t EEMEM b_TZ_hour = -8 + 12;
+uint8_t EEMEM b_TZ_minutes = 0;
+#endif
+#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
+uint8_t EEMEM b_DST_mode = 0;  // 0: off, 1: on, 2: Auto
+uint8_t EEMEM b_DST_offset = 0;
+#endif
+#ifdef FEATURE_AUTO_DATE
+uint8_t EEMEM b_Region = 0;  // default European date format Y/M/D
+uint8_t EEMEM b_AutoDate = false;
+#endif
+#ifdef FEATURE_AUTO_DIM
+uint8_t EEMEM b_AutoDim = false;
+uint8_t EEMEM b_AutoDimHour = 22;
+uint8_t EEMEM b_AutoDimLevel = 2;
+uint8_t EEMEM b_AutoBrtHour = 7;
+uint8_t EEMEM b_AutoBrtLevel = 8;
+#endif
+
 #if defined FEATURE_AUTO_DST
 extern DST_Rules dst_rules;   // initial values from US DST rules as of 2011
 const DST_Rules dst_rules_lo = {{1,1,1,0},{1,1,1,0},0};  // low limit
@@ -99,10 +141,47 @@ extern tmElements_t* tm_; // current local date and time as TimeElements (pointe
 
 void menu_init(void)
 {
+//	menuItems[0] = &menuBrt;
+	// read eeprom
+	g_24h_clock  = eeprom_read_byte(&b_24h_clock);
+	g_show_temp  = eeprom_read_byte(&b_show_temp);
+	g_show_dots  = eeprom_read_byte(&b_show_dots);
+	g_brightness = eeprom_read_byte(&b_brightness);
+	g_volume     = eeprom_read_byte(&b_volume);
+#ifdef FEATURE_FLW
+	g_flw_enabled = eeprom_read_byte(&b_flw_enabled);
+#endif
+#ifdef FEATURE_WmGPS
+	g_gps_enabled = eeprom_read_byte(&b_gps_enabled);
+	g_TZ_hour = eeprom_read_byte(&b_TZ_hour) - 12;
+	if ((g_TZ_hour<-12) || (g_TZ_hour>12))  g_TZ_hour = 0;  // add range check
+	g_TZ_minutes = eeprom_read_byte(&b_TZ_minutes);
+#endif
+#if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
+	g_DST_mode = eeprom_read_byte(&b_DST_mode);
+	g_DST_offset = eeprom_read_byte(&b_DST_offset);
+	g_DST_updated = false;  // allow automatic DST update
+#endif
+#ifdef FEATURE_AUTO_DATE
+	g_region = eeprom_read_byte(&b_Region);
+	g_autodate = eeprom_read_byte(&b_AutoDate);
+#endif
+#ifdef FEATURE_AUTO_DIM
+	g_AutoDim = eeprom_read_byte(&b_AutoDim);
+	g_AutoDimHour = eeprom_read_byte(&b_AutoDimHour);
+	g_AutoDimLevel = eeprom_read_byte(&b_AutoDimLevel);
+	g_AutoBrtHour = eeprom_read_byte(&b_AutoBrtHour);
+	g_AutoBrtLevel = eeprom_read_byte(&b_AutoBrtLevel);
+#endif
+#ifdef FEATURE_SET_DATE
+	g_dateyear = 12;
+	g_datemonth = 1;
+	g_dateday = 1;
+#endif
 	save_mode = clock_mode = MODE_NORMAL;
 	menu_state = STATE_CLOCK;
-	submenu_state = SUB_MENU_OFF;
 	menu_update = false;
+	menuPtr = menuItems[0];
 }
 
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
@@ -169,9 +248,58 @@ char* region_setting(uint8_t reg)
 	return reg_setting_;
 }
 #endif
+			
+////				menu_state++;
+				// show temperature setting only when running on a DS3231
+////				if (menu_state == STATE_MENU_TEMP && !rtc_is_ds3231()) menu_state++;
+				// don't show dots settings for shields that have no dots
+////				if (menu_state == STATE_MENU_DOTS && !g_has_dots) menu_state++;
+#ifdef FEATURE_FLW
+				// don't show FLW settings when there is no EEPROM with database
+////				if (menu_state == STATE_MENU_FLW && !g_has_eeprom) menu_state++;
+#endif
+////				if (menu_state == STATE_MENU_LAST) menu_state = STATE_CLOCK;  //wbp
 
-void menu(uint8_t update, uint8_t show)
+void menu(uint8_t n, uint8_t update, uint8_t show)
 {
+	switch (n) {
+		case 0:
+			menuIdx = 0;  // restart menu
+			menuPtr = menuItems[0];
+			break;
+		case 1:  // show/update current item value
+			break;
+		case 2:
+			menuIdx++;  // next menu item
+			menuPtr = menuItems[menuIdx];
+			if (menuPtr == NULL) {
+				menu_state = STATE_CLOCK;
+				return;
+			}
+			break;
+	}
+	char * valstr = "---";
+	int valnum;
+	valnum = *(menuPtr->setting);
+	const menu_values * menuValues;
+	menuValues = *menuPtr->menuList;
+	uint8_t size = sizeof(menuValues);
+	switch (menuPtr->menuType) {
+		case menu_num:
+			show_setting_int(menuPtr->shortName, menuPtr->longName, valnum, show);
+			break;
+		case menu_list:
+			for (uint8_t i=0;i<size;i++) {
+				if (menuValues[i].value == valnum)
+					valstr = (char*)menuValues[i].valName;
+			}
+			show_setting_string(menuPtr->shortName, menuPtr->longName, valstr, show);
+			break;
+		case menu_sub:  // sub menu item, just show name
+			show_setting_int(menuPtr->shortName, menuPtr->longName, 0, false);
+			break;
+	}
+#ifdef oldmenu
 	switch (menu_state) {
 		case STATE_MENU_BRIGHTNESS:
 			if (update) {	
@@ -376,4 +504,5 @@ void menu(uint8_t update, uint8_t show)
 		default:
 			break; // do nothing
 	}  // switch (menu_state)
+#endif
 }  // menu

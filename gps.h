@@ -22,7 +22,7 @@
 #define PROGRAMMING_YEAR 12
 
 int8_t g_TZ_hour;
-uint8_t g_TZ_minutes;
+int8_t g_TZ_minutes;
 unsigned long tGPSupdate;  // really time_t
 // debugging counters
 uint16_t g_gps_cks_errors;  // gps checksum error counter
