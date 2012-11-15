@@ -51,10 +51,16 @@ extern uint8_t b_AutoDimLevel;
 extern uint8_t b_AutoBrtHour;
 extern uint8_t b_AutoBrtLevel;
 #endif
-
-uint8_t g_has_dots; // can current shield show dot (decimal points)
-#ifdef FEATURE_FLW
-uint8_t g_has_eeprom; // set to true if there is a four letter word EEPROM attached
+#ifdef FEATURE_AUTO_DST
+extern uint8_t b_DST_Rule0;
+extern uint8_t b_DST_Rule1;
+extern uint8_t b_DST_Rule2;
+extern uint8_t b_DST_Rule3;
+extern uint8_t b_DST_Rule4;
+extern uint8_t b_DST_Rule5;
+extern uint8_t b_DST_Rule6;
+extern uint8_t b_DST_Rule7;
+extern uint8_t b_DST_Rule8;
 #endif
 
 int8_t g_24h_clock;
@@ -75,11 +81,19 @@ int8_t g_gps_enabled;
 int8_t g_TZ_hour;
 int8_t g_TZ_minute;
 int8_t g_gps_updating;  // for signalling GPS update on some displays
+// debugging counters 
+int8_t g_gps_cks_errors;  // gps checksum error counter
+int8_t g_gps_parse_errors;  // gps parse error counter
+int8_t g_gps_time_errors;  // gps time error counter
 #endif
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 int8_t g_DST_mode;  // DST off, on, auto?
 int8_t g_DST_offset;  // DST offset in Hours
 int8_t g_DST_updated;  // DST update flag = allow update only once per day
+#endif
+#ifdef FEATURE_AUTO_DST  // DST rules
+//DST_Rules dst_rules = {{3,1,2,2},{11,1,1,2},1};   // initial values from US DST rules as of 2011
+int8_t g_DST_Rules[9];
 #endif
 #ifdef FEATURE_AUTO_DATE
 int8_t g_Region;

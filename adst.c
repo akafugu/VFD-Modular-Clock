@@ -70,13 +70,13 @@ long DSTseconds(uint16_t year, uint8_t month, uint8_t doftw, uint8_t week, uint8
   return yearSeconds(year,month,day,hour,0,0);  // seconds til DST event this year
 }
 
-void DSTinit(tmElements_t* te, DST_Rules* rules)
+void DSTinit(tmElements_t* te, int8_t rules[9])
 {
 	uint16_t yr = 2000 + te->Year;  // Year as 20yy; te.Year is not 1970 based
   // seconds til start of DST this year
-  DSTstart = DSTseconds(yr, rules->Start.Month, rules->Start.DOTW, rules->Start.Week, rules->Start.Hour);  
+  DSTstart = DSTseconds(yr, rules[0], rules[1], rules[2], rules[3]);  
 	// seconds til end of DST this year
-  DSTend = DSTseconds(yr, rules->End.Month, rules->End.DOTW, rules->End.Week, rules->End.Hour);  
+  DSTend = DSTseconds(yr, rules[4], rules[5], rules[6], rules[7]);  
 }
 
 // DST Rules: Start(month, dotw, n, hour), End(month, dotw, n, hour), Offset
@@ -84,7 +84,7 @@ void DSTinit(tmElements_t* te, DST_Rules* rules)
 // N is which occurrence of DOTW
 // Current US Rules: March, Sunday, 2nd, 2am, November, Sunday, 1st, 2 am, 1 hour
 // 		3,1,2,2,  11,1,1,2,  1
-uint8_t getDSToffset(tmElements_t* te, DST_Rules* rules)
+uint8_t getDSToffset(tmElements_t* te, int8_t rules[9])
 {
 	uint16_t yr = 2000 + te->Year;  // Year as 20yy; te.Year is not 1970 based
 	// if current time & date is at or past the first DST rule and before the second, return 1
@@ -92,13 +92,13 @@ uint8_t getDSToffset(tmElements_t* te, DST_Rules* rules)
 	long seconds_now = yearSeconds(yr, te->Month, te->Day, te->Hour, te->Minute, te->Second);
 	if (DSTstart<DSTend) {  // northern hemisphere
 		if ((seconds_now >= DSTstart) && (seconds_now < DSTend))  // spring ahead
-			return(rules->Offset);  // return Offset 
+			return(rules[8]);  // return Offset 
 		else  // fall back
 			return(0);  // return 0
 	}
 	else {  // southern hemisphere
 		if ((seconds_now >= DSTend) && (seconds_now < DSTstart))  // fall ahead
-			return(rules->Offset);  // return Offset
+			return(rules[8]);  // return Offset
 		else  // spring back
 			return(0);  // return 0
 	}

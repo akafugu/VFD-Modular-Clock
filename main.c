@@ -112,13 +112,12 @@
 // Cached settings
 #ifdef FEATURE_AUTO_DST
 //DST_Rules dst_rules = {{10,1,1,2},{4,1,1,2},1};   // DST Rules for parts of OZ including NSW (for JG)
-DST_Rules dst_rules = {{3,1,2,2},{11,1,1,2},1};   // initial values from US DST rules as of 2011
+//DST_Rules dst_rules = {{3,1,2,2},{11,1,1,2},1};   // initial values from US DST rules as of 2011
+//uint8_t dst_rules[] = {3,1,2,2,11,1,1,2,1};   // initial values from US DST rules as of 2011
 // DST Rules: Start(month, dotw, week, hour), End(month, dotw, week, hour), Offset
 // DOTW is Day of the Week, 1=Sunday, 7=Saturday
 // N is which occurrence of DOTW
 // Current US Rules:  March, Sunday, 2nd, 2am, November, Sunday, 1st, 2 am, 1 hour
-//const DST_Rules dst_rules_lo = {{1,1,1,0},{1,1,1,0},0};  // low limit
-//const DST_Rules dst_rules_hi = {{12,7,5,23},{12,7,5,23},1};  // high limit
 #endif
 #ifdef FEATURE_AUTO_DATE
 uint16_t g_autodisp = 550;  // how long to display date
@@ -171,23 +170,25 @@ void initialize(void)
 	//rtc_set_time_s(16, 59, 50);
 	//rtc_set_alarm_s(17,0,0);
 
+	piezo_init();
+	beep(440, 1);
+
 	globals_init();
 	display_init(g_brightness);
 
 	g_alarm_switch = get_alarm_switch();
+	
 #ifdef FEATURE_FLW
 	g_has_eeprom = has_eeprom();
-
 	if (!g_has_eeprom)
 		g_flw_enabled = false;
-	
-	tm_ = rtc_get_time();	
 	if (tm_ && g_has_eeprom)
 		seed_random(tm_->Hour * 10000 + tm_->Minute + 100 + tm_->Second);
 #endif
-	rtc_get_alarm_s(&alarm_hour, &alarm_min, &alarm_sec);
 
+	beep(1320, 1);
 	menu_init();  // must come after display, flw init
+	rtc_get_alarm_s(&alarm_hour, &alarm_min, &alarm_sec);
 
 	// set up interrupt for alarm switch
 	PCICR |= (1 << PCIE2);
@@ -198,7 +199,8 @@ void initialize(void)
 	gps_init(g_gps_enabled);
 #endif
 #ifdef FEATURE_AUTO_DST
-	DSTinit(tm_, &dst_rules);  // re-compute DST start, end	
+	if (g_DST_mode)
+		DSTinit(tm_, g_DST_Rules);  // re-compute DST start, end	
 #endif
 }
 
@@ -220,6 +222,7 @@ struct BUTTON_STATE buttons;
 
 display_mode_t clock_mode = MODE_NORMAL;
 display_mode_t save_mode = MODE_NORMAL;  // for restoring mode after autodate display
+//uint8_t menu_update = false;
 
 // Alarm switch changed interrupt
 ISR( PCINT2_vect )
@@ -239,8 +242,6 @@ ISR( PCINT2_vect )
 void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 {
 	static uint16_t counter = 0;
-//	uint8_t hour = 0, min = 0, sec = 0;
-	
 #ifdef FEATURE_AUTO_DATE
 	if (mode == MODE_DATE) {
 		show_date(tm_, g_Region);  // show date from last rtc_get_time() call
@@ -278,7 +279,8 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 			setDSToffset(g_DST_mode); 
 		if ((tm_->Hour == 0) && (tm_->Minute == 0) && (tm_->Second == 0)) {  // MIDNIGHT!
 			g_DST_updated = false;
-			DSTinit(tm_, &dst_rules);  // re-compute DST start, end
+			if (g_DST_mode)
+				DSTinit(tm_, g_DST_Rules);  // re-compute DST start, end
 		}
 #endif
 #ifdef FEATURE_AUTO_DATE
@@ -290,10 +292,9 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 			}
 		else
 #endif		
-
 #ifdef FEATURE_FLW
 		if (mode == MODE_FLW) {
-			if (tm_->Second >= g_autotime - 3 && tm_->Second < g_autotime)
+			if ((tm_->Second >= g_autotime - 3) && (tm_->Second < g_autotime))
 				show_time(tm_, g_24h_clock, 0); // show time briefly each minute
 			else
 				show_flw(tm_); // otherwise show FLW
@@ -358,9 +359,9 @@ void main(void)
 			break;
 	}
 
-	piezo_init();
-	beep(440, 1);
-	beep(1320, 1);
+//	piezo_init();
+//	beep(440, 1);
+//	beep(1320, 1);
 	beep(440, 1);
 
 	_delay_ms(500);
@@ -460,13 +461,12 @@ void main(void)
 
 			show_time_setting(time_to_set / 60, time_to_set % 60, 0);
 		}
-		// Left button enters menu
-		else if (menu_state == STATE_CLOCK && buttons.b2_keyup) {
+		else if (menu_state == STATE_CLOCK && buttons.b2_keyup) {  // Left button enters menu
 			menu_state = STATE_MENU;
-			if (get_digits() < 8)  // only set first time flag for 4 or 6 digit displays
-				menu_update = false;  // set first time flag
+//			if (get_digits() < 8)  // only set first time flag for 4 or 6 digit displays
+//				menu_update = false;  // set first time flag
 //			show_setting_int("BRIT", "BRITE", g_brightness, false);
-      menu(0, menu_update, false);  // show first menu item 
+      menu(0);  // show first menu item 
 			buttons.b2_keyup = 0; // clear state
 #ifdef FEATURE_AUTO_MENU
       button2_release_timer = BUTTON2_TIMEOUT;  // start button 2 timer
@@ -508,8 +508,8 @@ void main(void)
       if (button2_release_timer > 0) {
         button2_release_timer--;
         if (button2_release_timer == 0) {
-          menu(1, false, true);  // show or update current menu item value
-          menu_update = true;
+          menu(3);  // show or update current menu item value
+//          menu_update = true;
         }
       }
 #endif
@@ -518,19 +518,19 @@ void main(void)
 #ifdef FEATURE_AUTO_MENU
         button2_release_timer = 0;  // cancel button 2 timer
 #endif
-				menu(1, menu_update, true);  // update current menu item value
+				menu(1);  // right button
 				buttons.b1_keyup = false;
-				menu_update = true;  // b1 not first time now
+//				menu_update = true;  // b1 not first time now
 			}  // if (buttons.b1_keyup) 
 
 			if (buttons.b2_keyup) {  // left button
-				if (get_digits() < 8)  // only set first time flag for 4 or 6 digit displays
-					menu_update = false;  // reset b1 first time flag
+//				if (get_digits() < 8)  // only set first time flag for 4 or 6 digit displays
+//					menu_update = false;  // reset b1 first time flag
 #ifdef FEATURE_AUTO_MENU
         button2_release_timer = BUTTON2_TIMEOUT;  // restart button2 timer
 #endif
 				
-				menu(2, false,false);  // show next menu item
+				menu(2);  // left button
 				buttons.b2_keyup = 0; // clear state
 			}
 		}

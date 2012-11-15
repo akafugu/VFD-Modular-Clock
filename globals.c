@@ -51,6 +51,19 @@ uint8_t EEMEM b_AutoDimLevel = 2;
 uint8_t EEMEM b_AutoBrtHour = 7;
 uint8_t EEMEM b_AutoBrtLevel = 8;
 #endif
+#ifdef FEATURE_AUTO_DST
+//DST_Rules dst_rules = {{3,1,2,2},{11,1,1,2},1};   // initial values from US DST rules as of 2011
+//DST_Rules dst_rules = {{10,1,1,2},{4,1,1,2},1};   // DST Rules for parts of OZ including NSW (for JG)
+uint8_t EEMEM b_DST_Rule0 = 3;  // DST start month
+uint8_t EEMEM b_DST_Rule1 = 1;  // DST start dotw
+uint8_t EEMEM b_DST_Rule2 = 2;  // DST start week
+uint8_t EEMEM b_DST_Rule3 = 2;  // DST start hour
+uint8_t EEMEM b_DST_Rule4 = 11; // DST end month
+uint8_t EEMEM b_DST_Rule5 = 1;  // DST end dotw
+uint8_t EEMEM b_DST_Rule6 = 1;  // DST end week
+uint8_t EEMEM b_DST_Rule7 = 2;  // DST end hour
+uint8_t EEMEM b_DST_Rule8 = 1;  // DST offset
+#endif
 
  void globals_init(void)
  {
@@ -90,4 +103,17 @@ uint8_t EEMEM b_AutoBrtLevel = 8;
 	g_datemonth = 1;
 	g_dateday = 1;
 #endif
+#ifdef FEATURE_AUTO_DST
+//DST_Rules dst_rules = {{3,1,2,2},{11,1,1,2},1};   // initial values from US DST rules as of 2011
+	g_DST_Rules[0] = eeprom_read_byte(&b_DST_Rule0);  // DST start month
+	g_DST_Rules[1] = eeprom_read_byte(&b_DST_Rule1);  // DST start dotw
+	g_DST_Rules[2] = eeprom_read_byte(&b_DST_Rule2);  // DST start week
+	g_DST_Rules[3] = eeprom_read_byte(&b_DST_Rule3);  // DST start hour
+	g_DST_Rules[4] = eeprom_read_byte(&b_DST_Rule4); // DST end month
+	g_DST_Rules[5] = eeprom_read_byte(&b_DST_Rule5);  // DST end dotw
+	g_DST_Rules[6] = eeprom_read_byte(&b_DST_Rule6);  // DST end week
+	g_DST_Rules[7] = eeprom_read_byte(&b_DST_Rule7);  // DST end hour
+	g_DST_Rules[8] = eeprom_read_byte(&b_DST_Rule8);  // DST offset
+#endif
+
  }

@@ -17,17 +17,13 @@
 #define GPS_H_
 
 // String buffer size:
-#define GPSBUFFERSIZE 128 
+#define GPSBUFFERSIZE 96 
 //The year the clock was programmed, used for error checking
 #define PROGRAMMING_YEAR 12
 
 //int8_t g_TZ_hour;
 //int8_t g_TZ_minutes;
 unsigned long tGPSupdate;  // really time_t
-// debugging counters
-uint16_t g_gps_cks_errors;  // gps checksum error counter
-uint16_t g_gps_parse_errors;  // gps parse error counter
-uint16_t g_gps_time_errors;  // gps time error counter
 
 // we double buffer: read into one line and leave one for the main program
 volatile char gpsBuffer1[GPSBUFFERSIZE];

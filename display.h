@@ -87,7 +87,7 @@ void show_flw(tmElements_t* te);
 // functions for showing settings
 void show_setting_string(char* short_str, char* long_str, char* value, bool show_setting);
 void show_setting_int(char* short_str, char* long_str, int value, bool show_setting);
-void show_setting_int4(char* short_str, char* long_str, int value, bool show_setting);
+//void show_setting_int4(char* short_str, char* long_str, int value, bool show_setting);
 void show_set_time(void);
 void show_set_alarm(void);
 void show_alarm_text(void);

@@ -791,6 +791,7 @@ void show_setting_int(char* short_str, char* long_str, int value, bool show_sett
 	}
 }
 
+#ifdef skip1
 void show_setting_int4(char* short_str, char* long_str, int value, bool show_setting)
 {
 	data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
@@ -812,6 +813,7 @@ void show_setting_int4(char* short_str, char* long_str, int value, bool show_set
 			set_string(short_str);
 	}
 }
+#endif
 
 void show_set_time(void)
 {
@@ -870,36 +872,6 @@ void show_alarm_off(void)
 		set_string(" off");
 	}
 }
-
-#ifdef FEATURE_SET_DATE
-void show_set_year(void)
-{
-	if (get_digits() == 8)
-		set_string("Set Year");
-	else if (get_digits() == 6)
-		set_string(" Year ");
-	else
-		set_string("Year");
-}
-void show_set_month(void)
-{
-	if (get_digits() == 8)
-		set_string("Set Mnth");
-	else if (get_digits() == 6)
-		set_string(" Month");
-	else
-		set_string("Mnth");
-}
-void show_set_day(void)
-{
-	if (get_digits() == 8)
-		set_string("Set Day ");
-	else if (get_digits() == 6)
-		set_string(" Day  ");
-	else
-		set_string("Day ");
-}
-#endif
 
 // Write 8 bits to HV5812 driver
 void write_vfd_8bit(uint8_t data)

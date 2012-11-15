@@ -17,15 +17,17 @@
 
 typedef enum {
 	menu_num = 0,  // simple numeric value
-	menu_tf = 1, // true/false
-	menu_list = 2,  // select one from a list
-	menu_sub = 3,  // sub menu
+	menu_tf, // true/false
+	menu_list,  // select one from a list
+	menu_sub,  // sub menu name
+	menu_rules,  // special case for DST rules to save data memory
 } menu_types;
 
 typedef enum {
 	menu_noflags = 0,
 	menu_disabled = 1,
-	menu_subMenu = 2,
+	menu_hasSub = 2,
+	menu_isSub = 4,
 } menu_flags;
 
 typedef struct {
@@ -35,7 +37,7 @@ typedef struct {
 
 typedef struct {
 	const uint8_t menuNum;  // menu item number
-	uint8_t menuFlags;  // flags
+	menu_flags flags;  // flags
 	char * shortName;
 	char * longName;
 	const menu_types menuType;
@@ -58,35 +60,48 @@ typedef enum {
 } menu_state_t;
 
 typedef enum {
-	MENU_BRIGHTNESS = 0,
-	MENU_24H,
-	MENU_VOL,
-//	MENU_DATE,
-	MENU_SETYEAR,
-	MENU_SETMONTH,
-	MENU_SETDAY,
+	MENU_24H = 0,
 	MENU_AUTODATE,
-	MENU_REGION,
+	MENU_AUTODATE_ENABLE,
 	MENU_AUTODIM,
+	MENU_AUTODIM_ENABLE,
 	MENU_AUTODIM_HOUR,
 	MENU_AUTODIM_LEVEL,
 	MENU_AUTOBRT_HOUR,
 	MENU_AUTOBRT_LEVEL,
-	MENU_DST,
+	MENU_BRIGHTNESS,
+	MENU_DATE,
+	MENU_DATEYEAR,
+	MENU_DATEMONTH,
+	MENU_DATEDAY,
+	MENU_DOTS,
+	MENU_FLW,
 	MENU_GPS,
+	MENU_GPS_ENABLE,
+	MENU_TZH,
+	MENU_TZM,
 	MENU_GPSC,  // GPS error counter
 	MENU_GPSP,  // GPS error counter
 	MENU_GPST,  // GPS error counter
-	MENU_TZH,
-	MENU_TZM,
+	MENU_DST,
+	MENU_DST_ENABLE,
+	MENU_REGION,
+//	MENU_DST_RULES,
+	MENU_RULE0,
+	MENU_RULE1,
+	MENU_RULE2,
+	MENU_RULE3,
+	MENU_RULE4,
+	MENU_RULE5,
+	MENU_RULE6,
+	MENU_RULE7,
+	MENU_RULE8,
 	MENU_TEMP,
-	MENU_DOTS,
-	MENU_FLW,
+	MENU_VOL,
 	MENU_LAST,
 } menu_number;
 
 menu_state_t menu_state;
-uint8_t menu_update;
 
 #define MENU_TIMEOUT 220  
 #ifdef FEATURE_AUTO_MENU
@@ -97,6 +112,6 @@ uint8_t menu_update;
 void setDSToffset(uint8_t mode);
 #endif
 void menu_init(void);
-void menu(uint8_t n, uint8_t update, uint8_t show);
+void menu(uint8_t n);
 
 #endif
