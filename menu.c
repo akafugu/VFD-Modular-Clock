@@ -136,6 +136,7 @@ menu_item * menuItems[] = {
 #endif
 
 extern tmElements_t* tm_; // current local date and time as TimeElements (pointer)
+
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 void setDSToffset(uint8_t mode) {
 	int8_t adjOffset;
