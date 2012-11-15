@@ -92,12 +92,12 @@ uint8_t getDSToffset(tmElements_t* te, int8_t rules[9])
 	long seconds_now = yearSeconds(yr, te->Month, te->Day, te->Hour, te->Minute, te->Second);
 	if (DSTstart<DSTend) {  // northern hemisphere
 		if ((seconds_now >= DSTstart) && (seconds_now < DSTend))  // spring ahead
-			return(rules[8]);  // return Offset 
+			return(rules[8]);  // return Offset
 		else  // fall back
 			return(0);  // return 0
 	}
 	else {  // southern hemisphere
-		if ((seconds_now >= DSTend) && (seconds_now < DSTstart))  // fall ahead
+		if ((seconds_now >= DSTend) || (seconds_now < DSTstart))  // fall ahead
 			return(rules[8]);  // return Offset
 		else  // spring back
 			return(0);  // return 0

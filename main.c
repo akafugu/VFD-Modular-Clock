@@ -14,6 +14,7 @@
  */
 
 /* Updates by William B Phelps
+ * 14nov12 - bug in menu when dst set to auto offset calc is wrong
  * 14nov12 table driven Menu
  * 12nov12 add Auto dim/brt feature
  * 11nov12 add local FEATURE_GPS_DEBUG to control if gps debug counters are in menu
