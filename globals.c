@@ -128,5 +128,4 @@ uint8_t EEMEM b_DST_Rule8 = 1;  // DST offset
 	g_DST_Rules[7] = eeprom_read_byte(&b_DST_Rule7);  // DST end hour
 	g_DST_Rules[8] = eeprom_read_byte(&b_DST_Rule8);  // DST offset
 #endif
-
  }

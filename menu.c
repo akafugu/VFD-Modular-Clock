@@ -35,7 +35,7 @@ menu_values menu_gps[] = { {0, "off"}, {48, "48"}, {96, "96"} };
 menu_values menu_adst[] = { {0, "off"}, {1, "on"}, {2, "auto"} };
 #endif
 menu_values menu_volume[] = { {0, "lo"}, {1, "hi"} };
-menu_values menu_region[] = { {0, "ymd"}, {1, "dmy"}, {2, "mdy"} };
+menu_values menu_region[] = { {0, "dmy"}, {1, "mdy"}, {2, "ymd"} };
 
 menu_item menu24h = {MENU_24H,menu_noflags,"24H","24H",menu_tf,&g_24h_clock,&b_24h_clock,0,2,{menu_offon}};
 menu_item menuBrt = {MENU_BRIGHTNESS, menu_noflags,"BRIT","BRITE",menu_num,&g_brightness,&b_brightness,0,10,{NULL} };
