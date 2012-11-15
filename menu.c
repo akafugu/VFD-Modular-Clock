@@ -277,6 +277,13 @@ void menu(uint8_t btn)
 	//			menuPtr = NULL;  // all done
 	//		}
 			break;
+		case 3:  // auto menu timeout
+			update = false;
+			show = true;
+			if (menuPtr->flags & menu_hasSub) {
+				menuPtr = menuItems[++menuIdx];  // show next menu item
+			}
+			break;
 	}
 	if (menuPtr == NULL) {  // check for end of menu
 		menuIdx = 0;

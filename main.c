@@ -16,6 +16,7 @@
 /* Updates by William B Phelps
  * 14nov12 - bug in menu when dst set to auto offset calc is wrong
  *  g_24h_clock is not saved over power off
+ *  todo: add tick for button push in menu
  * 14nov12 table driven Menu
  * 12nov12 add Auto dim/brt feature
  * 11nov12 add local FEATURE_GPS_DEBUG to control if gps debug counters are in menu
@@ -61,7 +62,7 @@
  *  minor typos & cleanup
  */
 
-////#define FEATURE_AUTO_MENU  // temp
+#define FEATURE_AUTO_MENU  // temp
 #define FEATURE_GPS_DEBUG  // enables GPS debugging counters & menu items
 #define FEATURE_AUTO_DIM  // temp
  
@@ -511,7 +512,6 @@ void main(void)
         button2_release_timer--;
         if (button2_release_timer == 0) {
           menu(3);  // show or update current menu item value
-//          menu_update = true;
         }
       }
 #endif
