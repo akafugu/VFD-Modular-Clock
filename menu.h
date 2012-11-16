@@ -14,6 +14,7 @@
  */
 #ifndef MENU_H_
 #define MENU_H_
+#include <avr/pgmspace.h>
 
 typedef enum {
 	menu_num = 0,  // simple numeric value
@@ -85,7 +86,7 @@ typedef enum {
 	MENU_DST,
 	MENU_DST_ENABLE,
 	MENU_REGION,
-//	MENU_DST_RULES,
+	MENU_RULES,
 	MENU_RULE0,
 	MENU_RULE1,
 	MENU_RULE2,
@@ -97,10 +98,11 @@ typedef enum {
 	MENU_RULE8,
 	MENU_TEMP,
 	MENU_VOL,
-	MENU_LAST,
+	MENU_COUNT,
 } menu_number;
 
 menu_state_t menu_state;
+//uint8_t menuDisabled[MENU_COUNT];
 
 #define MENU_TIMEOUT 220  
 #ifdef FEATURE_AUTO_MENU

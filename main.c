@@ -21,7 +21,8 @@
  * 15nov12 - fix bug when setting dst auto
  * 14nov12 table driven Menu
  * 12nov12 add Auto dim/brt feature
- * 11nov12 add local FEATURE_GPS_DEBUG to control if gps debug counters are in menu
+ * 11nov12 interrupt driven GPS read
+ *  add local FEATURE_GPS_DEBUG to control if gps debug counters are in menu
  * 10nov12 add gps error counters to menu
  * 09nov12 rewrite GPS parse
  * 08nov12 auto menu feature

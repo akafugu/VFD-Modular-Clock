@@ -40,12 +40,12 @@ menu_values menu_region[] = { {0, "dmy"}, {1, "mdy"}, {2, "ymd"} };
 menu_item menu24h = {MENU_24H,menu_noflags,"24H","24H",menu_tf,&g_24h_clock,&b_24h_clock,0,2,{menu_offon}};
 menu_item menuBrt = {MENU_BRIGHTNESS, menu_noflags,"BRIT","BRITE",menu_num,&g_brightness,&b_brightness,0,10,{NULL} };
 #ifdef FEATURE_AUTO_DATE
-menu_item menuAdate_ = {MENU_AUTODATE,menu_hasSub,"ADTE","ADATE",menu_sub,NULL,NULL,0,0,{NULL}};
+menu_item menuAdate_ = {MENU_AUTODATE,menu_hasSub,"ADT=","ADATE",menu_sub,NULL,NULL,0,0,{NULL}};
 menu_item menuAdate = {MENU_AUTODATE,menu_isSub,"ADTE","ADATE",menu_tf,&g_AutoDate,&b_AutoDate,0,2,{menu_offon}};
 menu_item menuRegion = {MENU_REGION,menu_isSub,"REGN","RGION",menu_list,&g_Region,&b_Region,0,3,{menu_region}};
 #endif
 #ifdef FEATURE_AUTO_DIM
-menu_item menuAdim_ = {MENU_AUTODIM,menu_hasSub,"ADIM","ADIM",menu_sub,NULL,NULL,0,0,{NULL}};
+menu_item menuAdim_ = {MENU_AUTODIM,menu_hasSub,"ADM=","ADIM",menu_sub,NULL,NULL,0,0,{NULL}};
 menu_item menuAdim = {MENU_AUTODIM_ENABLE,menu_isSub,"ADIM","ADIM",menu_tf,&g_AutoDim,&b_AutoDim,0,2,{menu_offon}};
 menu_item menuAdimHr = {MENU_AUTODIM_HOUR,menu_isSub,"ADMH","ADMH",menu_num,&g_AutoDimHour,&b_AutoDimHour,0,23,{NULL}};
 menu_item menuAdimLvl = {MENU_AUTODIM_LEVEL,menu_isSub,"ADML","ADML",menu_num,&g_AutoDimLevel,&b_AutoDimLevel,0,10,{NULL}};
@@ -53,20 +53,20 @@ menu_item menuAbrtHr = {MENU_AUTOBRT_HOUR,menu_isSub,"ABTH","ABTH",menu_num,&g_A
 menu_item menuAbrtLvl = {MENU_AUTOBRT_LEVEL,menu_isSub,"ABTL","ABTL",menu_num,&g_AutoBrtLevel,&b_AutoBrtLevel,1,10,{NULL}};
 #endif
 #ifdef FEATURE_SET_DATE						
-menu_item menuDate_ = {MENU_DATE,menu_hasSub,"DATE","DATE",menu_sub,NULL,NULL,0,0,{NULL}};
+menu_item menuDate_ = {MENU_DATE,menu_hasSub,"DAT=","DATE",menu_sub,NULL,NULL,0,0,{NULL}};
 menu_item menuYear = {MENU_DATEYEAR,menu_isSub,"YEAR","YEAR",menu_num,&g_dateyear,NULL,10,29,{NULL}};
 menu_item menuMonth = {MENU_DATEMONTH,menu_isSub,"MNTH","MONTH",menu_num,&g_datemonth,NULL,1,12,{NULL}};
 menu_item menuDay = {MENU_DATEDAY,menu_isSub,"DAY","DAY",menu_num,&g_dateday,NULL,1,31,{NULL}};
 #endif
 menu_item menuDots = {MENU_DOTS,menu_disabled,"DOTS","DOTS",menu_tf,&g_show_dots,&b_show_dots,0,1,{menu_offon}};
 #ifdef FEATURE_AUTO_DST
-menu_item menuDST_ = {MENU_DST,menu_hasSub,"DST","DST",menu_sub,NULL,NULL,0,0,{NULL}};
+menu_item menuDST_ = {MENU_DST,menu_hasSub,"DST=","DST",menu_sub,NULL,NULL,0,0,{NULL}};
 menu_item menuDST = {MENU_DST_ENABLE,menu_isSub,"DST","DST",menu_list,&g_DST_mode,&b_DST_mode,0,3,{menu_adst}};
 #elif defined FEATURE_WmGPS
 menu_item menuDST = {MENU_DST_ENABLE,menu_noflags,"DST","DST",menu_tf,&g_DST_mode,&b_DST_mode,0,2,{menu_offon}};
 #endif
 #ifdef FEATURE_AUTO_DST
-//menu_item menuRules = {MENU_DST_RULES,menu_isSub,"RUL0","RULE0",menu_rules,&g_DST_Rules[0],&b_DST_Rule0,1,12,{NULL}};
+//menu_item menuRules = {MENU_RULES,menu_hasSub + menu_isSub,"RUL=","RULES",menu_sub,NULL,NULL,0,0,{NULL}};
 menu_item menuRule0 = {MENU_RULE0,menu_isSub,"RUL0","RULE0",menu_num,&g_DST_Rules[0],&b_DST_Rule0,1,7,{NULL}};
 menu_item menuRule1 = {MENU_RULE1,menu_isSub,"RUL1","RULE1",menu_num,&g_DST_Rules[1],&b_DST_Rule1,1,7,{NULL}};
 menu_item menuRule2 = {MENU_RULE2,menu_isSub,"RUL2","RULE2",menu_num,&g_DST_Rules[2],&b_DST_Rule2,1,5,{NULL}};
@@ -78,7 +78,7 @@ menu_item menuRule7 = {MENU_RULE7,menu_isSub,"RUL7","RULE7",menu_num,&g_DST_Rule
 menu_item menuRule8 = {MENU_RULE8,menu_isSub,"RUL8","RULE8",menu_num,&g_DST_Rules[8],&b_DST_Rule8,1,1,{NULL}};  // offset can't be changed
 #endif
 #if defined FEATURE_WmGPS
-menu_item menuGPS_ = {MENU_GPS,menu_hasSub,"GPS","GPS",menu_sub,NULL,NULL,0,0,{NULL}};
+menu_item menuGPS_ = {MENU_GPS,menu_hasSub,"GPS=","GPS",menu_sub,NULL,NULL,0,0,{NULL}};
 menu_item menuGPS = {MENU_GPS_ENABLE,menu_isSub,"GPS","GPS",menu_list,&g_gps_enabled,&b_gps_enabled,0,3,{menu_gps}};
 menu_item menuTZh = {MENU_TZH,menu_isSub,"TZH","TZ-H",menu_num,&g_TZ_hour,&b_TZ_hour,-12,12,{NULL}};
 menu_item menuTZm = {MENU_TZM,menu_isSub,"TZM","TZ-M",menu_num,&g_TZ_minute,&b_TZ_minute,0,59,{NULL}};
@@ -113,7 +113,7 @@ menu_item * menuItems[] = {
 	&menuDST,
 #endif
 #ifdef FEATURE_AUTO_DST
-//	&menuRules,
+//	&menuRules,	
 	&menuRule0, &menuRule1, &menuRule2, &menuRule3, &menuRule4, &menuRule5, &menuRule6, &menuRule7, &menuRule8,
 #endif
 #ifdef FEATURE_FLW
@@ -221,14 +221,13 @@ void menu_action(menu_item * menuPtr)
 }
 
 volatile uint8_t menuIdx = 0;
-uint8_t ruleIdx = 0;  // DST rule #
-uint8_t update = false;
-uint8_t show = false;
+uint8_t update = false;  // right button updates value?
+uint8_t show = false;  // show value?
 
 void menu_enable(menu_number num, uint8_t enable)
 {
-	volatile uint8_t idx = 0;
-	volatile menu_item * mPtr = menuItems[0];  // start with first menu item
+	uint8_t idx = 0;
+	menu_item * mPtr = menuItems[0];  // start with first menu item
 	while(mPtr != NULL) {
 		if (mPtr->menuNum == num) {
 //			beep(1920,1);  // debug
@@ -242,12 +241,30 @@ void menu_enable(menu_number num, uint8_t enable)
 	}
 }
 
+menu_item * nextItem(uint8_t skipSub)  // next menu item
+{
+	menu_item * menuPtr = menuItems[menuIdx];  // current menu item
+	uint8_t inSub = menuPtr->flags & menu_isSub;  // are we in a sub menu now?
+	menuPtr = menuItems[++menuIdx];  // next menu item
+	if (!inSub) {  // if not in a sub menu, skip disabled or sub menu items
+		while ((menuPtr != NULL) && ((menuPtr->flags & menu_disabled) || (skipSub && (menuPtr->flags & menu_isSub))) ) { 
+			menuPtr = menuItems[++menuIdx];  // next menu item
+		}
+	}
+	else {  // skip disabled items
+		while ((menuPtr != NULL) && (menuPtr->flags & menu_disabled)) { 
+			menuPtr = menuItems[++menuIdx];  // next menu item
+		}
+	}
+	return menuPtr;
+}
+
 void menu(uint8_t btn)
 {
 	menu_item * menuPtr = menuItems[menuIdx];  // current menu item
-	uint8_t inSub = menuPtr->flags & menu_isSub;
 	char * valstr = "---";
 	int valnum;
+	uint8_t digits = get_digits();
 	switch (btn) {
 		case 0:  // start at top of menu
 			menuIdx = 0;  // restart menu
@@ -257,32 +274,29 @@ void menu(uint8_t btn)
 			break;
 		case 1:  // right button - show/update current item value
 			if (menuPtr->flags & menu_hasSub) {
+				menuPtr = nextItem(false);  // show first submenu item
 				update = false;
-				menuPtr = menuItems[++menuIdx];  // next menu item
 			}
 			else {
-				if (get_digits()>6)
+				show = true;  // show value
+				if (digits>6)
 					update = true;
 			}
 			break;
 		case 2:  // left button - show next menu item
-			menuPtr = menuItems[++menuIdx];  // next menu item
+			menuPtr = nextItem(true);  // next menu items (skip subs)
 			update = false;
-			while ((menuPtr != NULL) && (menuPtr->flags & menu_isSub) && !inSub) {
-				menuPtr = menuItems[++menuIdx];  // next menu item
-			}
-			while ((menuPtr != NULL) && (menuPtr->flags & menu_disabled)) {
-				menuPtr = menuItems[++menuIdx];  // next menu item
-			}
-	//		if (inSub && !(menuPtr->flags & menu_isSub)) {  // did we just exit the sub menu?
-	//			menuPtr = NULL;  // all done
-	//		}
+			show = false;
 			break;
 		case 3:  // auto menu timeout
-			update = false;
-			show = true;
+			if (digits == 4)  return;  // too confusing in IV-17?
 			if (menuPtr->flags & menu_hasSub) {
-				menuPtr = menuItems[++menuIdx];  // show next menu item
+				return;  // just show the item as before
+			}
+			else {
+				show = true;  // show value
+				if (digits>6)
+					update = true;
 			}
 			break;
 	}
@@ -312,8 +326,10 @@ void menu(uint8_t btn)
 				menu_action(menuPtr);
 			}
 			show_setting_int((char *)menuPtr->shortName, (char *)menuPtr->longName, valnum, show);
-			show = true;
-			update = true;
+			if (show)
+				update = true;
+			else
+				show = true;
 			break;
 		case menu_tf:  // true/false (or really, false/true)
 			if (update) {
@@ -328,8 +344,10 @@ void menu(uint8_t btn)
 			else
 				valstr = (char*)menuValues[0].valName;  // false
 			show_setting_string((char *)menuPtr->shortName, (char *)menuPtr->longName, valstr, show);
-			show = true;
-			update = true;
+			if (show)
+				update = true;
+			else
+				show = true;
 			break;
 		case menu_list:
 			for (uint8_t i=0;i<menuPtr->hiLimit;i++) {
@@ -350,8 +368,10 @@ void menu(uint8_t btn)
 				menu_action(menuPtr);
 			}
 			show_setting_string((char *)menuPtr->shortName, (char *)menuPtr->longName, valstr, show);
-			show = true;
-			update = true;
+			if (show)
+				update = true;
+			else
+				show = true;
 			break;
 		case menu_sub:  // sub menu item, just show name, right button will select
 			valstr = " - ";
