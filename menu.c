@@ -58,7 +58,7 @@ menu_item menuYear = {MENU_DATEYEAR,menu_isSub,"YEAR","YEAR",menu_num,&g_dateyea
 menu_item menuMonth = {MENU_DATEMONTH,menu_isSub,"MNTH","MONTH",menu_num,&g_datemonth,NULL,1,12,{NULL}};
 menu_item menuDay = {MENU_DATEDAY,menu_isSub,"DAY","DAY",menu_num,&g_dateday,NULL,1,31,{NULL}};
 #endif
-menu_item menuDots = {MENU_DOTS,menu_disabled,"DOTS","DOTS",menu_tf,&g_show_dots,&b_show_dots,0,2,{menu_offon}};
+menu_item menuDots = {MENU_DOTS,menu_disabled,"DOTS","DOTS",menu_tf,&g_show_dots,&b_show_dots,0,1,{menu_offon}};
 #ifdef FEATURE_AUTO_DST
 menu_item menuDST_ = {MENU_DST,menu_hasSub,"DST","DST",menu_sub,NULL,NULL,0,0,{NULL}};
 menu_item menuDST = {MENU_DST_ENABLE,menu_isSub,"DST","DST",menu_list,&g_DST_mode,&b_DST_mode,0,3,{menu_adst}};
@@ -210,6 +210,7 @@ void menu_action(menu_item * menuPtr)
 		case MENU_RULE8:
 		case MENU_DST_ENABLE:
 			g_DST_updated = false;  // allow automatic DST adjustment again
+			DSTinit(tm_, g_DST_Rules);  // re-compute DST start, end for new data
 			setDSToffset(g_DST_mode);
 			break;
 		case MENU_TZH:
@@ -310,25 +311,7 @@ void menu(uint8_t btn)
 					}
 				menu_action(menuPtr);
 			}
-			show_setting_int(menuPtr->shortName, menuPtr->longName, valnum, show);
-			show = true;
-			update = true;
-			break;
-		case menu_rules:  // special case for DST Rules
-			if (update) {
-				valnum++;
-				if (valnum > menuPtr->hiLimit)
-					valnum = menuPtr->loLimit;
-				*menuPtr->setting = valnum;
-				if (menuPtr->eeAddress != NULL) {
-					if (menuPtr->menuNum == MENU_TZH)
-						eeprom_update_byte(menuPtr->eeAddress, valnum+12);
-					else
-						eeprom_update_byte(menuPtr->eeAddress, valnum);
-					}
-				menu_action(menuPtr);
-			}
-			show_setting_int(menuPtr->shortName, menuPtr->longName, valnum, show);
+			show_setting_int((char *)menuPtr->shortName, (char *)menuPtr->longName, valnum, show);
 			show = true;
 			update = true;
 			break;
@@ -344,7 +327,7 @@ void menu(uint8_t btn)
 				valstr = (char*)menuValues[1].valName;  // true
 			else
 				valstr = (char*)menuValues[0].valName;  // false
-			show_setting_string(menuPtr->shortName, menuPtr->longName, valstr, show);
+			show_setting_string((char *)menuPtr->shortName, (char *)menuPtr->longName, valstr, show);
 			show = true;
 			update = true;
 			break;
@@ -366,13 +349,13 @@ void menu(uint8_t btn)
 					eeprom_update_byte(menuPtr->eeAddress, valnum);
 				menu_action(menuPtr);
 			}
-			show_setting_string(menuPtr->shortName, menuPtr->longName, valstr, show);
+			show_setting_string((char *)menuPtr->shortName, (char *)menuPtr->longName, valstr, show);
 			show = true;
 			update = true;
 			break;
 		case menu_sub:  // sub menu item, just show name, right button will select
 			valstr = " - ";
-			show_setting_string(menuPtr->shortName, menuPtr->longName, valstr, false);
+			show_setting_string((char *)menuPtr->shortName, (char *)menuPtr->longName, valstr, false);
 			break;
 	}
 }  // menu

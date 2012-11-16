@@ -20,7 +20,6 @@ typedef enum {
 	menu_tf, // true/false
 	menu_list,  // select one from a list
 	menu_sub,  // sub menu name
-	menu_rules,  // special case for DST rules to save data memory
 } menu_types;
 
 typedef enum {
@@ -38,8 +37,8 @@ typedef struct {
 typedef struct {
 	const uint8_t menuNum;  // menu item number
 	menu_flags flags;  // flags
-	char * shortName;
-	char * longName;
+	const char * shortName;
+	const char * longName;
 	const menu_types menuType;
 	int8_t * setting;
 	uint8_t * eeAddress;

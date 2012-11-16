@@ -14,9 +14,11 @@
  */
 
 /* Updates by William B Phelps
- * 14nov12 - bug in menu when dst set to auto offset calc is wrong
- *  g_24h_clock is not saved over power off
+*todo:
  *  todo: add tick for button push in menu
+ *  g_24h_clock is not saved over power off
+ *
+ * 15nov12 - fix bug when setting dst auto
  * 14nov12 table driven Menu
  * 12nov12 add Auto dim/brt feature
  * 11nov12 add local FEATURE_GPS_DEBUG to control if gps debug counters are in menu

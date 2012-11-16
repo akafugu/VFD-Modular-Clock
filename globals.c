@@ -23,6 +23,7 @@
 #include "globals.h"
 
 // Settings saved to eeprom
+uint8_t EEMEM b_dummy = 0;  // dummy item to test for bug
 uint8_t EEMEM b_24h_clock = 1;
 uint8_t EEMEM b_show_temp = 0;
 uint8_t EEMEM b_show_dots = 1;
