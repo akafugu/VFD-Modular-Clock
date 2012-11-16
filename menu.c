@@ -129,12 +129,6 @@ menu_item * menuItems[] = {
 	&menuVol,
 	NULL};  // end of list marker must be here
 
-#if defined FEATURE_AUTO_DST
-//extern uint8_t dst_rules[];   // initial values from US DST rules as of 2011
-//const DST_Rules dst_rules_lo = {{1,1,1,0},{1,1,1,0},0};  // low limit
-//const DST_Rules dst_rules_hi = {{12,7,5,23},{12,7,5,23},1};  // high limit
-#endif
-
 extern tmElements_t* tm_; // current local date and time as TimeElements (pointer)
 
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
