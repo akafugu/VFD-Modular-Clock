@@ -16,8 +16,8 @@
 /* Updates by William B Phelps
 *todo:
  * test with 6 & 8 digit displays
- * right-align numbers for 4 digit display
  *
+ * 17nov12 right-align string displays for 4 digit display
  * 16nov12 - reduced ram 
  *  sub sub menu (for DST Rules)
  *  add tick for button push in menu
