@@ -29,70 +29,70 @@
 #include "gps.h"
 #include "adst.h"
 
-menu_values menu_offon[] = { {false, "off"}, {true, "on"} };
-menu_values menu_gps[] = { {0, "off"}, {48, "48"}, {96, "96"} };
+menu_value menu_offon[2] = { {false, "off"}, {true, "on"} };
+menu_value menu_gps[3] = { {0, "off"}, {48, "48"}, {96, "96"} };
 #if defined FEATURE_AUTO_DST
-menu_values menu_adst[] = { {0, "off"}, {1, "on"}, {2, "auto"} };
+menu_value menu_adst[3] = { {0, "off"}, {1, "on"}, {2, "auto"} };
 #endif
-menu_values menu_volume[] = { {0, "lo"}, {1, "hi"} };
-menu_values menu_region[] = { {0, "dmy"}, {1, "mdy"}, {2, "ymd"} };
+menu_value menu_volume[2] = { {0, "lo"}, {1, "hi"} };
+menu_value menu_region[3] = { {0, "dmy"}, {1, "mdy"}, {2, "ymd"} };
 
-menu_item menu24h = {MENU_24H,menu_noflags,"24H","24H",menu_tf,&g_24h_clock,&b_24h_clock,0,2,{menu_offon}};
-menu_item menuBrt = {MENU_BRIGHTNESS, menu_noflags,"BRIT","BRITE",menu_num,&g_brightness,&b_brightness,0,10,{NULL} };
+menu_item menu24h = {MENU_24H,menu_tf,"24H","24H",&g_24h_clock,&b_24h_clock,0,2,{menu_offon}};
+menu_item menuBrt = {MENU_BRIGHTNESS,menu_num,"BRIT","BRITE",&g_brightness,&b_brightness,0,10,{NULL} };
 #ifdef FEATURE_AUTO_DATE
-menu_item menuAdate_ = {MENU_AUTODATE,menu_hasSub,"ADT=","ADATE",menu_sub,NULL,NULL,0,0,{NULL}};
-menu_item menuAdate = {MENU_AUTODATE,menu_isSub,"ADTE","ADATE",menu_tf,&g_AutoDate,&b_AutoDate,0,2,{menu_offon}};
-menu_item menuRegion = {MENU_REGION,menu_isSub,"REGN","RGION",menu_list,&g_Region,&b_Region,0,3,{menu_region}};
+menu_item menuAdate_ = {MENU_AUTODATE,menu_hasSub,"ADT=","ADATE",NULL,NULL,0,0,{NULL}};
+menu_item menuAdate = {MENU_AUTODATE,menu_tf+menu_isSub,"ADTE","ADATE",&g_AutoDate,&b_AutoDate,0,2,{menu_offon}};
+menu_item menuRegion = {MENU_REGION,menu_list+menu_isSub,"REGN","RGION",&g_Region,&b_Region,0,3,{menu_region}};
 #endif
 #ifdef FEATURE_AUTO_DIM
-menu_item menuAdim_ = {MENU_AUTODIM,menu_hasSub,"ADM=","ADIM",menu_sub,NULL,NULL,0,0,{NULL}};
-menu_item menuAdim = {MENU_AUTODIM_ENABLE,menu_isSub,"ADIM","ADIM",menu_tf,&g_AutoDim,&b_AutoDim,0,2,{menu_offon}};
-menu_item menuAdimHr = {MENU_AUTODIM_HOUR,menu_isSub,"ADMH","ADMH",menu_num,&g_AutoDimHour,&b_AutoDimHour,0,23,{NULL}};
-menu_item menuAdimLvl = {MENU_AUTODIM_LEVEL,menu_isSub,"ADML","ADML",menu_num,&g_AutoDimLevel,&b_AutoDimLevel,0,10,{NULL}};
-menu_item menuAbrtHr = {MENU_AUTOBRT_HOUR,menu_isSub,"ABTH","ABTH",menu_num,&g_AutoBrtHour,&b_AutoBrtHour,0,23,{NULL}};
-menu_item menuAbrtLvl = {MENU_AUTOBRT_LEVEL,menu_isSub,"ABTL","ABTL",menu_num,&g_AutoBrtLevel,&b_AutoBrtLevel,1,10,{NULL}};
+menu_item menuAdim_ = {MENU_AUTODIM,menu_hasSub,"ADM=","ADIM",NULL,NULL,0,0,{NULL}};
+menu_item menuAdim = {MENU_AUTODIM_ENABLE,menu_tf+menu_isSub,"ADIM","ADIM",&g_AutoDim,&b_AutoDim,0,2,{menu_offon}};
+menu_item menuAdimHr = {MENU_AUTODIM_HOUR,menu_num+menu_isSub,"ADMH","ADMH",&g_AutoDimHour,&b_AutoDimHour,0,23,{NULL}};
+menu_item menuAdimLvl = {MENU_AUTODIM_LEVEL,menu_num+menu_isSub,"ADML","ADML",&g_AutoDimLevel,&b_AutoDimLevel,0,10,{NULL}};
+menu_item menuAbrtHr = {MENU_AUTOBRT_HOUR,menu_num+menu_isSub,"ABTH","ABTH",&g_AutoBrtHour,&b_AutoBrtHour,0,23,{NULL}};
+menu_item menuAbrtLvl = {MENU_AUTOBRT_LEVEL,menu_num+menu_isSub,"ABTL","ABTL",&g_AutoBrtLevel,&b_AutoBrtLevel,1,10,{NULL}};
 #endif
 #ifdef FEATURE_SET_DATE						
-menu_item menuDate_ = {MENU_DATE,menu_hasSub,"DAT=","DATE",menu_sub,NULL,NULL,0,0,{NULL}};
-menu_item menuYear = {MENU_DATEYEAR,menu_isSub,"YEAR","YEAR",menu_num,&g_dateyear,NULL,10,29,{NULL}};
-menu_item menuMonth = {MENU_DATEMONTH,menu_isSub,"MNTH","MONTH",menu_num,&g_datemonth,NULL,1,12,{NULL}};
-menu_item menuDay = {MENU_DATEDAY,menu_isSub,"DAY","DAY",menu_num,&g_dateday,NULL,1,31,{NULL}};
+menu_item menuDate_ = {MENU_DATE,menu_hasSub,"DAT=","DATE",NULL,NULL,0,0,{NULL}};
+menu_item menuYear = {MENU_DATEYEAR,menu_num+menu_isSub,"YEAR","YEAR",&g_dateyear,NULL,10,29,{NULL}};
+menu_item menuMonth = {MENU_DATEMONTH,menu_num+menu_isSub,"MNTH","MONTH",&g_datemonth,NULL,1,12,{NULL}};
+menu_item menuDay = {MENU_DATEDAY,menu_num+menu_isSub,"DAY","DAY",&g_dateday,NULL,1,31,{NULL}};
 #endif
-menu_item menuDots = {MENU_DOTS,menu_disabled,"DOTS","DOTS",menu_tf,&g_show_dots,&b_show_dots,0,1,{menu_offon}};
+menu_item menuDots = {MENU_DOTS,menu_tf+menu_disabled,"DOTS","DOTS",&g_show_dots,&b_show_dots,0,1,{menu_offon}};
 #ifdef FEATURE_AUTO_DST
-menu_item menuDST_ = {MENU_DST,menu_hasSub,"DST=","DST",menu_sub,NULL,NULL,0,0,{NULL}};
-menu_item menuDST = {MENU_DST_ENABLE,menu_isSub,"DST","DST",menu_list,&g_DST_mode,&b_DST_mode,0,3,{menu_adst}};
+menu_item menuDST_ = {MENU_DST,menu_hasSub,"DST=","DST",NULL,NULL,0,0,{NULL}};
+menu_item menuDST = {MENU_DST_ENABLE,menu_list+menu_isSub,"DST","DST",&g_DST_mode,&b_DST_mode,0,3,{menu_adst}};
 #elif defined FEATURE_WmGPS
-menu_item menuDST = {MENU_DST_ENABLE,menu_noflags,"DST","DST",menu_tf,&g_DST_mode,&b_DST_mode,0,2,{menu_offon}};
+menu_item menuDST = {MENU_DST_ENABLE,menu_tf,"DST","DST",&g_DST_mode,&b_DST_mode,0,2,{menu_offon}};
 #endif
 #ifdef FEATURE_AUTO_DST
-//menu_item menuRules = {MENU_RULES,menu_hasSub + menu_isSub,"RUL=","RULES",menu_sub,NULL,NULL,0,0,{NULL}};
-menu_item menuRule0 = {MENU_RULE0,menu_isSub,"RUL0","RULE0",menu_num,&g_DST_Rules[0],&b_DST_Rule0,1,7,{NULL}};
-menu_item menuRule1 = {MENU_RULE1,menu_isSub,"RUL1","RULE1",menu_num,&g_DST_Rules[1],&b_DST_Rule1,1,7,{NULL}};
-menu_item menuRule2 = {MENU_RULE2,menu_isSub,"RUL2","RULE2",menu_num,&g_DST_Rules[2],&b_DST_Rule2,1,5,{NULL}};
-menu_item menuRule3 = {MENU_RULE3,menu_isSub,"RUL3","RULE3",menu_num,&g_DST_Rules[3],&b_DST_Rule3,0,23,{NULL}};
-menu_item menuRule4 = {MENU_RULE4,menu_isSub,"RUL4","RULE4",menu_num,&g_DST_Rules[4],&b_DST_Rule4,1,12,{NULL}};
-menu_item menuRule5 = {MENU_RULE5,menu_isSub,"RUL5","RULE5",menu_num,&g_DST_Rules[5],&b_DST_Rule5,1,7,{NULL}};
-menu_item menuRule6 = {MENU_RULE6,menu_isSub,"RUL6","RULE6",menu_num,&g_DST_Rules[6],&b_DST_Rule6,1,5,{NULL}};
-menu_item menuRule7 = {MENU_RULE7,menu_isSub,"RUL7","RULE7",menu_num,&g_DST_Rules[7],&b_DST_Rule7,0,23,{NULL}};
-menu_item menuRule8 = {MENU_RULE8,menu_isSub,"RUL8","RULE8",menu_num,&g_DST_Rules[8],&b_DST_Rule8,1,1,{NULL}};  // offset can't be changed
+menu_item menuRules = {MENU_RULES,menu_hasSub+menu_isSub,"RUL=","RULES",NULL,NULL,0,0,{NULL}};
+menu_item menuRule0 = {MENU_RULE0,menu_num+menu_isSub,"RUL0","RULE0",&g_DST_Rules[0],&b_DST_Rule0,1,7,{NULL}};
+menu_item menuRule1 = {MENU_RULE1,menu_num+menu_isSub,"RUL1","RULE1",&g_DST_Rules[1],&b_DST_Rule1,1,7,{NULL}};
+menu_item menuRule2 = {MENU_RULE2,menu_num+menu_isSub,"RUL2","RULE2",&g_DST_Rules[2],&b_DST_Rule2,1,5,{NULL}};
+menu_item menuRule3 = {MENU_RULE3,menu_num+menu_isSub,"RUL3","RULE3",&g_DST_Rules[3],&b_DST_Rule3,0,23,{NULL}};
+menu_item menuRule4 = {MENU_RULE4,menu_num+menu_isSub,"RUL4","RULE4",&g_DST_Rules[4],&b_DST_Rule4,1,12,{NULL}};
+menu_item menuRule5 = {MENU_RULE5,menu_num+menu_isSub,"RUL5","RULE5",&g_DST_Rules[5],&b_DST_Rule5,1,7,{NULL}};
+menu_item menuRule6 = {MENU_RULE6,menu_num+menu_isSub,"RUL6","RULE6",&g_DST_Rules[6],&b_DST_Rule6,1,5,{NULL}};
+menu_item menuRule7 = {MENU_RULE7,menu_num+menu_isSub,"RUL7","RULE7",&g_DST_Rules[7],&b_DST_Rule7,0,23,{NULL}};
+menu_item menuRule8 = {MENU_RULE8,menu_num+menu_isSub,"RUL8","RULE8",&g_DST_Rules[8],&b_DST_Rule8,1,1,{NULL}};  // offset can't be changed
 #endif
 #if defined FEATURE_WmGPS
-menu_item menuGPS_ = {MENU_GPS,menu_hasSub,"GPS=","GPS",menu_sub,NULL,NULL,0,0,{NULL}};
-menu_item menuGPS = {MENU_GPS_ENABLE,menu_isSub,"GPS","GPS",menu_list,&g_gps_enabled,&b_gps_enabled,0,3,{menu_gps}};
-menu_item menuTZh = {MENU_TZH,menu_isSub,"TZH","TZ-H",menu_num,&g_TZ_hour,&b_TZ_hour,-12,12,{NULL}};
-menu_item menuTZm = {MENU_TZM,menu_isSub,"TZM","TZ-M",menu_num,&g_TZ_minute,&b_TZ_minute,0,59,{NULL}};
+menu_item menuGPS_ = {MENU_GPS,menu_hasSub,"GPS=","GPS",NULL,NULL,0,0,{NULL}};
+menu_item menuGPS = {MENU_GPS_ENABLE,menu_list+menu_isSub,"GPS","GPS",&g_gps_enabled,&b_gps_enabled,0,3,{menu_gps}};
+menu_item menuTZh = {MENU_TZH,menu_num+menu_isSub,"TZH","TZ-H",&g_TZ_hour,&b_TZ_hour,-12,12,{NULL}};
+menu_item menuTZm = {MENU_TZM,menu_num+menu_isSub,"TZM","TZ-M",&g_TZ_minute,&b_TZ_minute,0,59,{NULL}};
 #endif
 #if defined FEATURE_GPS_DEBUG
-menu_item menuGPSc = {MENU_GPSC,menu_isSub,"GPSC","GPSC",menu_num,&g_gps_cks_errors,NULL,0,0,{NULL}};
-menu_item menuGPSp = {MENU_GPSP,menu_isSub,"GPSP","GPSP",menu_num,&g_gps_parse_errors,NULL,0,0,{NULL}};
-menu_item menuGPSt = {MENU_GPST,menu_isSub,"GPST","GPST",menu_num,&g_gps_time_errors,NULL,0,0,{NULL}};
+menu_item menuGPSc = {MENU_GPSC,menu_num+menu_isSub,"GPSC","GPSC",&g_gps_cks_errors,NULL,0,0,{NULL}};
+menu_item menuGPSp = {MENU_GPSP,menu_num+menu_isSub,"GPSP","GPSP",&g_gps_parse_errors,NULL,0,0,{NULL}};
+menu_item menuGPSt = {MENU_GPST,menu_num+menu_isSub,"GPST","GPST",&g_gps_time_errors,NULL,0,0,{NULL}};
 #endif
-menu_item menuTemp = {MENU_TEMP,menu_disabled,"TEMP","TEMP",menu_tf,&g_show_temp,&b_show_temp,0,2,{menu_offon}};
+menu_item menuTemp = {MENU_TEMP,menu_tf+menu_disabled,"TEMP","TEMP",&g_show_temp,&b_show_temp,0,2,{menu_offon}};
 #if defined FEATURE_FLW
-menu_item menuFLW = {MENU_FLW,menu_disabled,"FLW","FLW",menu_tf,&g_flw_enabled,&b_flw_enabled,0,2,{menu_offon}};
+menu_item menuFLW = {MENU_FLW,menu_tf+menu_disabled,"FLW","FLW",&g_flw_enabled,&b_flw_enabled,0,2,{menu_offon}};
 #endif
-menu_item menuVol = {MENU_VOL,menu_noflags,"VOL","VOL",menu_list,&g_volume,&b_volume,0,2,{menu_volume}};
+menu_item menuVol = {MENU_VOL,menu_list,"VOL","VOL",&g_volume,&b_volume,0,2,{menu_volume}};
 
 menu_item * menuItems[] = { 
 	&menu24h, 
@@ -113,7 +113,7 @@ menu_item * menuItems[] = {
 	&menuDST,
 #endif
 #ifdef FEATURE_AUTO_DST
-//	&menuRules,	
+	&menuRules,	
 	&menuRule0, &menuRule1, &menuRule2, &menuRule3, &menuRule4, &menuRule5, &menuRule6, &menuRule7, &menuRule8,
 #endif
 #ifdef FEATURE_FLW
@@ -238,17 +238,10 @@ void menu_enable(menu_number num, uint8_t enable)
 menu_item * nextItem(uint8_t skipSub)  // next menu item
 {
 	menu_item * menuPtr = menuItems[menuIdx];  // current menu item
-	uint8_t inSub = menuPtr->flags & menu_isSub;  // are we in a sub menu now?
+	uint8_t inSub = (menuPtr->flags & menu_isSub) && !(menuPtr->flags & menu_hasSub);  // are we in a sub menu now?
 	menuPtr = menuItems[++menuIdx];  // next menu item
-	if (!inSub) {  // if not in a sub menu, skip disabled or sub menu items
-		while ((menuPtr != NULL) && ((menuPtr->flags & menu_disabled) || (skipSub && (menuPtr->flags & menu_isSub))) ) { 
-			menuPtr = menuItems[++menuIdx];  // next menu item
-		}
-	}
-	else {  // skip disabled items
-		while ((menuPtr != NULL) && (menuPtr->flags & menu_disabled)) { 
-			menuPtr = menuItems[++menuIdx];  // next menu item
-		}
+	while ((menuPtr != NULL) && ((menuPtr->flags & menu_disabled) || (skipSub && (menuPtr->flags & menu_isSub) && !inSub)) ) { 
+		menuPtr = menuItems[++menuIdx];  // next menu item
 	}
 	return menuPtr;
 }
@@ -259,6 +252,7 @@ void menu(uint8_t btn)
 	char * valstr = "---";
 	int valnum;
 	uint8_t digits = get_digits();
+	tick();
 	switch (btn) {
 		case 0:  // start at top of menu
 			menuIdx = 0;  // restart menu
@@ -301,11 +295,9 @@ void menu(uint8_t btn)
 		return;
 	}
 	valnum = *(menuPtr->setting);
-	const menu_values * menuValues;
-	menuValues = *menuPtr->menuList;
+	const menu_value * menuValues = *menuPtr->menuList;  //copy menu values
 	uint8_t idx = 0;
-	switch (menuPtr->menuType) {
-		case menu_num:
+	if (menuPtr->flags & menu_num) {
 			if (update) {
 				valnum++;
 				if (valnum > menuPtr->hiLimit)
@@ -324,8 +316,9 @@ void menu(uint8_t btn)
 				update = true;
 			else
 				show = true;
-			break;
-		case menu_tf:  // true/false (or really, false/true)
+//			break;
+		}
+	else if (menuPtr->flags & menu_tf) {
 			if (update) {
 				valnum = !valnum;
 				*menuPtr->setting = valnum;
@@ -342,8 +335,9 @@ void menu(uint8_t btn)
 				update = true;
 			else
 				show = true;
-			break;
-		case menu_list:
+//			break;
+		}
+		else if (menuPtr->flags & menu_list) {
 			for (uint8_t i=0;i<menuPtr->hiLimit;i++) {
 				if (menuValues[i].value == valnum) {
 					idx = i;
@@ -366,12 +360,13 @@ void menu(uint8_t btn)
 				update = true;
 			else
 				show = true;
-			break;
-		case menu_sub:  // sub menu item, just show name, right button will select
+//			break;
+		}
+		else if (menuPtr->flags & menu_hasSub) {
 			valstr = " - ";
 			show_setting_string((char *)menuPtr->shortName, (char *)menuPtr->longName, valstr, false);
-			break;
-	}
+//			break;
+		}
 }  // menu
 
 void menu_init(void)

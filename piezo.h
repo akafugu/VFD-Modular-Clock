@@ -27,5 +27,6 @@
 void piezo_init(void);
 void alarm(void);
 void beep(uint16_t freq, uint8_t times);
+void tick(void);
 
 #endif // _PIEZO_H_

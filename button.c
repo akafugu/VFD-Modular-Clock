@@ -60,6 +60,7 @@ void button_timer(void)
 	}
 }
 
+#ifdef notused1
 void get_button_state_old(struct BUTTON_STATE_OLD* button1, struct BUTTON_STATE_OLD* button2)
 {
 	button1->pressed = keydown_keys&_BV(BUTTON1_BIT);
@@ -88,6 +89,7 @@ void get_button_state_old(struct BUTTON_STATE_OLD* button1, struct BUTTON_STATE_
 		keyboard_counter[1] = 0;
 	}
 }
+#endif
 
 void get_button_state(struct BUTTON_STATE* buttons)
 {

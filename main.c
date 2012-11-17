@@ -15,9 +15,11 @@
 
 /* Updates by William B Phelps
 *todo:
- *  todo: add tick for button push in menu
- *  g_24h_clock is not saved over power off
+ * test with 6 & 8 digit displays
  *
+ * 16nov12 - reduced ram 
+ *  sub sub menu (for DST Rules)
+ *  add tick for button push in menu
  * 15nov12 - fix bug when setting dst auto
  * 14nov12 table driven Menu
  * 12nov12 add Auto dim/brt feature
@@ -65,7 +67,7 @@
  *  minor typos & cleanup
  */
 
-#define FEATURE_AUTO_MENU  // temp
+//#define FEATURE_AUTO_MENU  // temp
 #define FEATURE_GPS_DEBUG  // enables GPS debugging counters & menu items
 #define FEATURE_AUTO_DIM  // temp
  
@@ -73,6 +75,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 //#include <avr/eeprom.h>
+#include <avr/wdt.h>     // Watchdog timer to repair lockups
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -178,7 +181,6 @@ void initialize(void)
 
 	piezo_init();
 	beep(440, 1);
-
 	globals_init();
 	display_init(g_brightness);
 
@@ -375,7 +377,6 @@ void main(void)
 
 	while (1) {  // <<< ===================== MAIN LOOP ===================== >>>
 		get_button_state(&buttons);
-		
 		// When alarming:
 		// any button press cancels alarm
 		if (g_alarming) {
