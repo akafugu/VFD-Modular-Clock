@@ -45,7 +45,7 @@ menu_item menuAdate = {MENU_AUTODATE,menu_tf+menu_isSub,"ADTE","ADATE",&g_AutoDa
 menu_item menuRegion = {MENU_REGION,menu_list+menu_isSub,"REGN","RGION",&g_Region,&b_Region,0,3,{menu_region}};
 #endif
 #ifdef FEATURE_AUTO_DIM
-menu_item menuAdim_ = {MENU_AUTODIM,menu_hasSub,"ADM=","ADIM",NULL,NULL,0,0,{NULL}};
+menu_item menuAdim_ = {MENU_AUTODIM,menu_hasSub,"ADM=","ADIM ",NULL,NULL,0,0,{NULL}};
 menu_item menuAdim = {MENU_AUTODIM_ENABLE,menu_tf+menu_isSub,"ADIM","ADIM",&g_AutoDim,&b_AutoDim,0,2,{menu_offon}};
 menu_item menuAdimHr = {MENU_AUTODIM_HOUR,menu_num+menu_isSub,"ADMH","ADMH",&g_AutoDimHour,&b_AutoDimHour,0,23,{NULL}};
 menu_item menuAdimLvl = {MENU_AUTODIM_LEVEL,menu_num+menu_isSub,"ADML","ADML",&g_AutoDimLevel,&b_AutoDimLevel,0,10,{NULL}};
@@ -53,14 +53,14 @@ menu_item menuAbrtHr = {MENU_AUTOBRT_HOUR,menu_num+menu_isSub,"ABTH","ABTH",&g_A
 menu_item menuAbrtLvl = {MENU_AUTOBRT_LEVEL,menu_num+menu_isSub,"ABTL","ABTL",&g_AutoBrtLevel,&b_AutoBrtLevel,1,10,{NULL}};
 #endif
 #ifdef FEATURE_SET_DATE						
-menu_item menuDate_ = {MENU_DATE,menu_hasSub,"DAT=","DATE",NULL,NULL,0,0,{NULL}};
+menu_item menuDate_ = {MENU_DATE,menu_hasSub,"DAT=","DATE ",NULL,NULL,0,0,{NULL}};
 menu_item menuYear = {MENU_DATEYEAR,menu_num+menu_isSub,"YEAR","YEAR",&g_dateyear,NULL,10,29,{NULL}};
 menu_item menuMonth = {MENU_DATEMONTH,menu_num+menu_isSub,"MNTH","MONTH",&g_datemonth,NULL,1,12,{NULL}};
 menu_item menuDay = {MENU_DATEDAY,menu_num+menu_isSub,"DAY","DAY",&g_dateday,NULL,1,31,{NULL}};
 #endif
 menu_item menuDots = {MENU_DOTS,menu_tf+menu_disabled,"DOTS","DOTS",&g_show_dots,&b_show_dots,0,1,{menu_offon}};
 #ifdef FEATURE_AUTO_DST
-menu_item menuDST_ = {MENU_DST,menu_hasSub,"DST=","DST",NULL,NULL,0,0,{NULL}};
+menu_item menuDST_ = {MENU_DST,menu_hasSub,"DST=","DST  ",NULL,NULL,0,0,{NULL}};
 menu_item menuDST = {MENU_DST_ENABLE,menu_list+menu_isSub,"DST","DST",&g_DST_mode,&b_DST_mode,0,3,{menu_adst}};
 #elif defined FEATURE_WmGPS
 menu_item menuDST = {MENU_DST_ENABLE,menu_tf,"DST","DST",&g_DST_mode,&b_DST_mode,0,2,{menu_offon}};
@@ -78,7 +78,7 @@ menu_item menuRule7 = {MENU_RULE7,menu_num+menu_isSub,"RUL7","RULE7",&g_DST_Rule
 menu_item menuRule8 = {MENU_RULE8,menu_num+menu_isSub,"RUL8","RULE8",&g_DST_Rules[8],&b_DST_Rule8,1,1,{NULL}};  // offset can't be changed
 #endif
 #if defined FEATURE_WmGPS
-menu_item menuGPS_ = {MENU_GPS,menu_hasSub,"GPS=","GPS",NULL,NULL,0,0,{NULL}};
+menu_item menuGPS_ = {MENU_GPS,menu_hasSub,"GPS=","GPS  ",NULL,NULL,0,0,{NULL}};
 menu_item menuGPS = {MENU_GPS_ENABLE,menu_list+menu_isSub,"GPS","GPS",&g_gps_enabled,&b_gps_enabled,0,3,{menu_gps}};
 menu_item menuTZh = {MENU_TZH,menu_num+menu_isSub,"TZH","TZ-H",&g_TZ_hour,&b_TZ_hour,-12,12,{NULL}};
 menu_item menuTZm = {MENU_TZM,menu_num+menu_isSub,"TZM","TZ-M",&g_TZ_minute,&b_TZ_minute,0,59,{NULL}};
@@ -249,8 +249,6 @@ menu_item * nextItem(uint8_t skipSub)  // next menu item
 void menu(uint8_t btn)
 {
 	menu_item * menuPtr = menuItems[menuIdx];  // current menu item
-	char * valstr = "---";
-	int valnum;
 	uint8_t digits = get_digits();
 	tick();
 	switch (btn) {
@@ -294,9 +292,17 @@ void menu(uint8_t btn)
 		menu_state = STATE_CLOCK;
 		return;
 	}
-	valnum = *(menuPtr->setting);
+	char * valstr = "";
+//	char * shortName = (char *)menuPtr->shortName;
+//	char * longName = (char *)menuPtr->longName;
+	char shortName[5];
+	char longName[7];
+	strcpy(shortName,menuPtr->shortName);
+	strcpy(longName,menuPtr->longName);
+	int valnum = *(menuPtr->setting);
 	const menu_value * menuValues = *menuPtr->menuList;  //copy menu values
 	uint8_t idx = 0;
+// numeric menu item
 	if (menuPtr->flags & menu_num) {
 			if (update) {
 				valnum++;
@@ -311,13 +317,13 @@ void menu(uint8_t btn)
 					}
 				menu_action(menuPtr);
 			}
-			show_setting_int((char *)menuPtr->shortName, (char *)menuPtr->longName, valnum, show);
+			show_setting_int(shortName, longName, valnum, show);
 			if (show)
 				update = true;
 			else
 				show = true;
-//			break;
 		}
+// true/false menu item
 	else if (menuPtr->flags & menu_tf) {
 			if (update) {
 				valnum = !valnum;
@@ -330,13 +336,13 @@ void menu(uint8_t btn)
 				valstr = (char*)menuValues[1].valName;  // true
 			else
 				valstr = (char*)menuValues[0].valName;  // false
-			show_setting_string((char *)menuPtr->shortName, (char *)menuPtr->longName, valstr, show);
+			show_setting_string(shortName, longName, valstr, show);
 			if (show)
 				update = true;
 			else
 				show = true;
-//			break;
 		}
+// list menu item
 		else if (menuPtr->flags & menu_list) {
 			for (uint8_t i=0;i<menuPtr->hiLimit;i++) {
 				if (menuValues[i].value == valnum) {
@@ -355,17 +361,17 @@ void menu(uint8_t btn)
 					eeprom_update_byte(menuPtr->eeAddress, valnum);
 				menu_action(menuPtr);
 			}
-			show_setting_string((char *)menuPtr->shortName, (char *)menuPtr->longName, valstr, show);
+			show_setting_string(shortName, longName, valstr, show);
 			if (show)
 				update = true;
 			else
 				show = true;
-//			break;
 		}
+// top of sub menu item
 		else if (menuPtr->flags & menu_hasSub) {
-			valstr = " - ";
-			show_setting_string((char *)menuPtr->shortName, (char *)menuPtr->longName, valstr, false);
-//			break;
+			valstr = "";
+			strcat(longName, "-");  // indicate top of sub
+			show_setting_string(shortName, longName, valstr, false);
 		}
 }  // menu
 

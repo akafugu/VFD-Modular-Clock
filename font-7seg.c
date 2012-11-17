@@ -182,6 +182,9 @@ uint8_t calculate_segments_7(uint8_t character)
 		case '-':
 			segments = (1<<G);
 			break;
+		case '=':
+			segments = (1<<G)|(1<<D);
+			break;
 		case '"':
 			segments = (1<<B)|(1<<F);
 			break;
