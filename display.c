@@ -45,7 +45,7 @@ uint8_t calculate_segments_7(uint8_t character);
 enum shield_t shield = SHIELD_NONE;
 uint8_t digits = 6;
 uint8_t mpx_count = 8;  // wm
-volatile char data[12]; // Digit data (with a little extra room)
+volatile char data[10]; // Digit data (with a little extra room)
 uint8_t us_counter = 0; // microsecond counter
 uint8_t multiplex_counter = 0;
 #ifdef FEATURE_WmGPS
@@ -426,8 +426,8 @@ uint8_t print_strn(char* str, uint8_t offset, uint8_t n)
 
 //	while (n-- >= 0) {
 	while (n-- > 0) {
-		data[offset++] = str[i++];
 		if (str[i] == '\0') break;
+		data[offset++] = str[i++];
 	}
 
 	return offset;
@@ -682,14 +682,9 @@ void set_string(char* str)
 void show_setting_string(char* short_str, char* long_str, char* value, bool show_setting)
 {
 	data[0] = data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = ' ';
-	uint8_t offset = 5;
-	uint8_t i=0;
-	while (--offset > 0) {
-		if (value[i++] == '\0') break;
-	}
 	if (get_digits() == 8) {
 		set_string(short_str);
-		print_strn(value, 5, 4);
+		print_strn(value, 4, 4);
 	}
 	else if (get_digits() == 6) {
 		if (show_setting)
@@ -699,7 +694,7 @@ void show_setting_string(char* short_str, char* long_str, char* value, bool show
 	}
 	else {
 		if (show_setting)
-			print_strn(value, offset, 4);
+			print_strn(value, 0, 4);
 		else
 			set_string(short_str);
 	}

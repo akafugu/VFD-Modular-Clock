@@ -29,23 +29,23 @@
 #include "gps.h"
 #include "adst.h"
 
-menu_value menu_offon[2] = { {false, "off"}, {true, "on"} };
-menu_value menu_gps[3] = { {0, "off"}, {48, "48"}, {96, "96"} };
+menu_value menu_offon[2] = { {false, " off"}, {true, "  on"} };
+menu_value menu_gps[3] = { {0, " off"}, {48, "  48"}, {96, "  96"} };
 #if defined FEATURE_AUTO_DST
-menu_value menu_adst[3] = { {0, "off"}, {1, "on"}, {2, "auto"} };
+menu_value menu_adst[3] = { {0, " off"}, {1, "  on"}, {2, "auto"} };
 #endif
-menu_value menu_volume[2] = { {0, "lo"}, {1, "hi"} };
-menu_value menu_region[3] = { {0, "dmy"}, {1, "mdy"}, {2, "ymd"} };
+menu_value menu_volume[2] = { {0, "  lo"}, {1, "  hi"} };
+menu_value menu_region[3] = { {0, " dmy"}, {1, " mdy"}, {2, " ymd"} };
 
 menu_item menu24h = {MENU_24H,menu_tf,"24H","24H",&g_24h_clock,&b_24h_clock,0,2,{menu_offon}};
 menu_item menuBrt = {MENU_BRIGHTNESS,menu_num,"BRIT","BRITE",&g_brightness,&b_brightness,0,10,{NULL} };
 #ifdef FEATURE_AUTO_DATE
-menu_item menuAdate_ = {MENU_AUTODATE,menu_hasSub,"ADT=","ADATE",NULL,NULL,0,0,{NULL}};
+menu_item menuAdate_ = {MENU_AUTODATE,menu_hasSub,"ADT","ADATE",NULL,NULL,0,0,{NULL}};
 menu_item menuAdate = {MENU_AUTODATE,menu_tf+menu_isSub,"ADTE","ADATE",&g_AutoDate,&b_AutoDate,0,2,{menu_offon}};
 menu_item menuRegion = {MENU_REGION,menu_list+menu_isSub,"REGN","RGION",&g_Region,&b_Region,0,3,{menu_region}};
 #endif
 #ifdef FEATURE_AUTO_DIM
-menu_item menuAdim_ = {MENU_AUTODIM,menu_hasSub,"ADM=","ADIM ",NULL,NULL,0,0,{NULL}};
+menu_item menuAdim_ = {MENU_AUTODIM,menu_hasSub,"ADM","ADIM ",NULL,NULL,0,0,{NULL}};
 menu_item menuAdim = {MENU_AUTODIM_ENABLE,menu_tf+menu_isSub,"ADIM","ADIM",&g_AutoDim,&b_AutoDim,0,2,{menu_offon}};
 menu_item menuAdimHr = {MENU_AUTODIM_HOUR,menu_num+menu_isSub,"ADMH","ADMH",&g_AutoDimHour,&b_AutoDimHour,0,23,{NULL}};
 menu_item menuAdimLvl = {MENU_AUTODIM_LEVEL,menu_num+menu_isSub,"ADML","ADML",&g_AutoDimLevel,&b_AutoDimLevel,0,10,{NULL}};
@@ -53,20 +53,20 @@ menu_item menuAbrtHr = {MENU_AUTOBRT_HOUR,menu_num+menu_isSub,"ABTH","ABTH",&g_A
 menu_item menuAbrtLvl = {MENU_AUTOBRT_LEVEL,menu_num+menu_isSub,"ABTL","ABTL",&g_AutoBrtLevel,&b_AutoBrtLevel,1,10,{NULL}};
 #endif
 #ifdef FEATURE_SET_DATE						
-menu_item menuDate_ = {MENU_DATE,menu_hasSub,"DAT=","DATE ",NULL,NULL,0,0,{NULL}};
+menu_item menuDate_ = {MENU_DATE,menu_hasSub,"DAT","DATE ",NULL,NULL,0,0,{NULL}};
 menu_item menuYear = {MENU_DATEYEAR,menu_num+menu_isSub,"YEAR","YEAR",&g_dateyear,NULL,10,29,{NULL}};
 menu_item menuMonth = {MENU_DATEMONTH,menu_num+menu_isSub,"MNTH","MONTH",&g_datemonth,NULL,1,12,{NULL}};
 menu_item menuDay = {MENU_DATEDAY,menu_num+menu_isSub,"DAY","DAY",&g_dateday,NULL,1,31,{NULL}};
 #endif
-menu_item menuDots = {MENU_DOTS,menu_tf+menu_disabled,"DOTS","DOTS",&g_show_dots,&b_show_dots,0,1,{menu_offon}};
+menu_item menuDots = {MENU_DOTS,menu_tf+menu_disabled,"DOTS","DOTS ",&g_show_dots,&b_show_dots,0,1,{menu_offon}};
 #ifdef FEATURE_AUTO_DST
-menu_item menuDST_ = {MENU_DST,menu_hasSub,"DST=","DST  ",NULL,NULL,0,0,{NULL}};
+menu_item menuDST_ = {MENU_DST,menu_hasSub,"DST","DST  ",NULL,NULL,0,0,{NULL}};
 menu_item menuDST = {MENU_DST_ENABLE,menu_list+menu_isSub,"DST","DST",&g_DST_mode,&b_DST_mode,0,3,{menu_adst}};
 #elif defined FEATURE_WmGPS
 menu_item menuDST = {MENU_DST_ENABLE,menu_tf,"DST","DST",&g_DST_mode,&b_DST_mode,0,2,{menu_offon}};
 #endif
 #ifdef FEATURE_AUTO_DST
-menu_item menuRules = {MENU_RULES,menu_hasSub+menu_isSub,"RUL=","RULES",NULL,NULL,0,0,{NULL}};
+menu_item menuRules = {MENU_RULES,menu_hasSub+menu_isSub,"RUL","RULES",NULL,NULL,0,0,{NULL}};
 menu_item menuRule0 = {MENU_RULE0,menu_num+menu_isSub,"RUL0","RULE0",&g_DST_Rules[0],&b_DST_Rule0,1,7,{NULL}};
 menu_item menuRule1 = {MENU_RULE1,menu_num+menu_isSub,"RUL1","RULE1",&g_DST_Rules[1],&b_DST_Rule1,1,7,{NULL}};
 menu_item menuRule2 = {MENU_RULE2,menu_num+menu_isSub,"RUL2","RULE2",&g_DST_Rules[2],&b_DST_Rule2,1,5,{NULL}};
@@ -78,7 +78,7 @@ menu_item menuRule7 = {MENU_RULE7,menu_num+menu_isSub,"RUL7","RULE7",&g_DST_Rule
 menu_item menuRule8 = {MENU_RULE8,menu_num+menu_isSub,"RUL8","RULE8",&g_DST_Rules[8],&b_DST_Rule8,1,1,{NULL}};  // offset can't be changed
 #endif
 #if defined FEATURE_WmGPS
-menu_item menuGPS_ = {MENU_GPS,menu_hasSub,"GPS=","GPS  ",NULL,NULL,0,0,{NULL}};
+menu_item menuGPS_ = {MENU_GPS,menu_hasSub,"GPS","GPS  ",NULL,NULL,0,0,{NULL}};
 menu_item menuGPS = {MENU_GPS_ENABLE,menu_list+menu_isSub,"GPS","GPS",&g_gps_enabled,&b_gps_enabled,0,3,{menu_gps}};
 menu_item menuTZh = {MENU_TZH,menu_num+menu_isSub,"TZH","TZ-H",&g_TZ_hour,&b_TZ_hour,-12,12,{NULL}};
 menu_item menuTZm = {MENU_TZM,menu_num+menu_isSub,"TZM","TZ-M",&g_TZ_minute,&b_TZ_minute,0,59,{NULL}};
@@ -295,7 +295,7 @@ void menu(uint8_t btn)
 	char * valstr = "";
 //	char * shortName = (char *)menuPtr->shortName;
 //	char * longName = (char *)menuPtr->longName;
-	char shortName[5];
+	char shortName[7];
 	char longName[7];
 	strcpy(shortName,menuPtr->shortName);
 	strcpy(longName,menuPtr->longName);
@@ -370,7 +370,18 @@ void menu(uint8_t btn)
 // top of sub menu item
 		else if (menuPtr->flags & menu_hasSub) {
 			valstr = "";
-			strcat(longName, "-");  // indicate top of sub
+			switch (digits) {
+				case 4:
+					strcat(shortName, "=");  // indicate top of sub
+					break;
+				case 6:
+					strcat(longName, "-");  // indicate top of sub
+					break;
+				case 8:
+					strcpy(shortName, longName);
+					strcat(shortName, " -");
+					break;
+			}
 			show_setting_string(shortName, longName, valstr, false);
 		}
 }  // menu
