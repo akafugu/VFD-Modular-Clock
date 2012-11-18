@@ -77,6 +77,9 @@ menu_item menuRule6 = {MENU_RULE6,menu_num+menu_isSub,"RUL6","RULE6",&g_DST_Rule
 menu_item menuRule7 = {MENU_RULE7,menu_num+menu_isSub,"RUL7","RULE7",&g_DST_Rules[7],&b_DST_Rule7,0,23,{NULL}};
 menu_item menuRule8 = {MENU_RULE8,menu_num+menu_isSub,"RUL8","RULE8",&g_DST_Rules[8],&b_DST_Rule8,1,1,{NULL}};  // offset can't be changed
 #endif
+#if defined FEATURE_FLW
+menu_item menuFLW = {MENU_FLW,menu_tf+menu_disabled,"FLW","FLW",&g_flw_enabled,&b_flw_enabled,0,2,{menu_offon}};
+#endif
 #if defined FEATURE_WmGPS
 menu_item menuGPS_ = {MENU_GPS,menu_hasSub,"GPS","GPS  ",NULL,NULL,0,0,{NULL}};
 menu_item menuGPS = {MENU_GPS_ENABLE,menu_list+menu_isSub,"GPS","GPS",&g_gps_enabled,&b_gps_enabled,0,3,{menu_gps}};
@@ -89,9 +92,6 @@ menu_item menuGPSp = {MENU_GPSP,menu_num+menu_isSub,"GPSP","GPSP",&g_gps_parse_e
 menu_item menuGPSt = {MENU_GPST,menu_num+menu_isSub,"GPST","GPST",&g_gps_time_errors,NULL,0,0,{NULL}};
 #endif
 menu_item menuTemp = {MENU_TEMP,menu_tf+menu_disabled,"TEMP","TEMP",&g_show_temp,&b_show_temp,0,2,{menu_offon}};
-#if defined FEATURE_FLW
-menu_item menuFLW = {MENU_FLW,menu_tf+menu_disabled,"FLW","FLW",&g_flw_enabled,&b_flw_enabled,0,2,{menu_offon}};
-#endif
 menu_item menuVol = {MENU_VOL,menu_list,"VOL","VOL",&g_volume,&b_volume,0,2,{menu_volume}};
 
 menu_item * menuItems[] = { 
