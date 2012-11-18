@@ -17,6 +17,7 @@
 *todo:
  * ?
  *
+ * 18nov12 move FEATURE_ADIM to Makefile, cleanup FEATURE ifdefs
  * 17nov12 right-align string displays for 4 digit display
  *  tested wtih all 3 displays
  * 16nov12 - reduced ram 
@@ -71,7 +72,7 @@
 
 //#define FEATURE_AUTO_MENU  // temp
 #define FEATURE_GPS_DEBUG  // enables GPS debugging counters & menu items
-#define FEATURE_AUTO_DIM  // temp
+//#define FEATURE_AUTO_DIM  // moved to Makefile
  
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -577,13 +578,15 @@ void main(void)
 		// fixme: alarm will be missed if time goes by Second=0 while in menu
 		if (g_alarm_switch && rtc_check_alarm_cached(tm_, alarm_hour, alarm_min, alarm_sec))
 			g_alarming = true;
-			
+
+#ifdef FEATURE_ADIM			
 		if ((g_AutoDim) && (tm_->Minute == 0) && (tm_->Second == 0))  {  // Auto Dim enabled?
 			if (tm_->Hour == g_AutoDimHour)
 				set_brightness(g_AutoDimLevel);
 			else if (tm_->Hour == g_AutoBrtHour)
 				set_brightness(g_AutoBrtLevel);
 		}
+#endif
 
 #ifdef FEATURE_WmGPS
 		if (g_gps_enabled) {

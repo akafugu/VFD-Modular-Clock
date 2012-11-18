@@ -13,9 +13,9 @@
  *
  */
 
-#define FEATURE_AUTO_MENU  // temp
+//#define FEATURE_AUTO_MENU  // temp
 #define FEATURE_GPS_DEBUG  // enables GPS debugging counters & menu items
-#define FEATURE_AUTO_DIM  // temp
+//#define FEATURE_AUTO_DIM  // moved to Makefile
 
 #include <util/delay.h>
 #include <avr/eeprom.h>
@@ -274,6 +274,7 @@ void menu(uint8_t btn)
 			update = false;
 			show = false;
 			break;
+#ifdef FEATURE_AUTO_MENU
 		case 3:  // auto menu timeout
 			if (digits == 4)  return;  // too confusing in IV-17?
 			if (menuPtr->flags & menu_hasSub) {
@@ -285,6 +286,7 @@ void menu(uint8_t btn)
 					update = true;
 			}
 			break;
+#endif
 	}
 	if (menuPtr == NULL) {  // check for end of menu
 		menuIdx = 0;

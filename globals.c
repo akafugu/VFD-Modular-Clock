@@ -13,7 +13,7 @@
  * PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  *
  */
-#define FEATURE_AUTO_DIM  // temp
+//#define FEATURE_AUTO_DIM  // moved to Makefile
 
 #include <util/delay.h>
 #include <avr/eeprom.h>
