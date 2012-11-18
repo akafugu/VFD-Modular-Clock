@@ -84,6 +84,7 @@ typedef enum {
 	MENU_GPS_ENABLE,
 	MENU_TZH,
 	MENU_TZM,
+	MENU_GPSDEBUG,  // GPS DEBUG
 	MENU_GPSC,  // GPS error counter
 	MENU_GPSP,  // GPS error counter
 	MENU_GPST,  // GPS error counter

@@ -21,6 +21,7 @@
 #include <avr/eeprom.h>
 #include <avr/pgmspace.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "globals.h"
 #include "menu.h"
@@ -87,6 +88,7 @@ menu_item menuTZh = {MENU_TZH,menu_num+menu_isSub,"TZH","TZ-H",&g_TZ_hour,&b_TZ_
 menu_item menuTZm = {MENU_TZM,menu_num+menu_isSub,"TZM","TZ-M",&g_TZ_minute,&b_TZ_minute,0,59,{NULL}};
 #endif
 #if defined FEATURE_GPS_DEBUG
+menu_item menuGPSD_ = {MENU_GPSDEBUG,menu_hasSub,"GPD","GPSD ",NULL,NULL,0,0,{NULL}};
 menu_item menuGPSc = {MENU_GPSC,menu_num+menu_isSub,"GPSC","GPSC",&g_gps_cks_errors,NULL,0,0,{NULL}};
 menu_item menuGPSp = {MENU_GPSP,menu_num+menu_isSub,"GPSP","GPSP",&g_gps_parse_errors,NULL,0,0,{NULL}};
 menu_item menuGPSt = {MENU_GPST,menu_num+menu_isSub,"GPST","GPST",&g_gps_time_errors,NULL,0,0,{NULL}};
@@ -123,6 +125,7 @@ menu_item * menuItems[] = {
 	&menuGPS_, &menuGPS, &menuTZh, &menuTZm,
 #endif
 #if defined FEATURE_GPS_DEBUG
+	&menuGPSD_,
 	&menuGPSc, &menuGPSp, &menuGPSt,
 #endif
 	&menuTemp,
@@ -294,32 +297,35 @@ void menu(uint8_t btn)
 		menu_state = STATE_CLOCK;
 		return;
 	}
-	char * valstr = "";
-//	char * shortName = (char *)menuPtr->shortName;
-//	char * longName = (char *)menuPtr->longName;
+
+//  itoa (i,buffer,10);	
+
+	char valStr[8];
 	char shortName[7];
 	char longName[7];
 	strcpy(shortName,menuPtr->shortName);
 	strcpy(longName,menuPtr->longName);
-	int valnum = *(menuPtr->setting);
+	int valNum = *(menuPtr->setting);
 	const menu_value * menuValues = *menuPtr->menuList;  //copy menu values
 	uint8_t idx = 0;
 // numeric menu item
 	if (menuPtr->flags & menu_num) {
 			if (update) {
-				valnum++;
-				if (valnum > menuPtr->hiLimit)
-					valnum = menuPtr->loLimit;
-				*menuPtr->setting = valnum;
+				valNum++;
+				if (valNum > menuPtr->hiLimit)
+					valNum = menuPtr->loLimit;
+				*menuPtr->setting = valNum;
 				if (menuPtr->eeAddress != NULL) {
 					if (menuPtr->menuNum == MENU_TZH)
-						eeprom_update_byte(menuPtr->eeAddress, valnum+12);
+						eeprom_update_byte(menuPtr->eeAddress, valNum+12);
 					else
-						eeprom_update_byte(menuPtr->eeAddress, valnum);
+						eeprom_update_byte(menuPtr->eeAddress, valNum);
 					}
 				menu_action(menuPtr);
 			}
-			show_setting_int(shortName, longName, valnum, show);
+//			show_setting_int(shortName, longName, valNum, show);
+			itoa(valNum, valStr,10);
+			show_setting_string(shortName, longName, valStr, show);
 			if (show)
 				update = true;
 			else
@@ -328,17 +334,19 @@ void menu(uint8_t btn)
 // true/false menu item
 	else if (menuPtr->flags & menu_tf) {
 			if (update) {
-				valnum = !valnum;
-				*menuPtr->setting = valnum;
+				valNum = !valNum;
+				*menuPtr->setting = valNum;
 				if (menuPtr->eeAddress != NULL) 
-					eeprom_update_byte(menuPtr->eeAddress, valnum);
+					eeprom_update_byte(menuPtr->eeAddress, valNum);
 				menu_action(menuPtr);
 			}
-			if (valnum)
-				valstr = (char*)menuValues[1].valName;  // true
+			if (valNum)
+//				valStr = (char*)menuValues[1].valName;  // true
+				strncpy(valStr,menuValues[1].valName, 4);  // true
 			else
-				valstr = (char*)menuValues[0].valName;  // false
-			show_setting_string(shortName, longName, valstr, show);
+//				valStr = (char*)menuValues[0].valName;  // false
+				strncpy(valStr,menuValues[0].valName, 4);  // false
+			show_setting_string(shortName, longName, valStr, show);
 			if (show)
 				update = true;
 			else
@@ -347,23 +355,25 @@ void menu(uint8_t btn)
 // list menu item
 		else if (menuPtr->flags & menu_list) {
 			for (uint8_t i=0;i<menuPtr->hiLimit;i++) {
-				if (menuValues[i].value == valnum) {
+				if (menuValues[i].value == valNum) {
 					idx = i;
 					}
 			}
-			valstr = (char*)menuValues[idx].valName;
+//			valStr = (char*)menuValues[idx].valName;
+			strncpy(valStr,menuValues[idx].valName, 4);  // copy item name
 			if (update) {
 				idx++;
 				if (idx >= menuPtr->hiLimit)  // for lists, hilimit is the # of elements!
 					idx = 0;
-				valnum = menuValues[idx].value;
-				valstr = (char*)menuValues[idx].valName;
-				*menuPtr->setting = valnum;
+				valNum = menuValues[idx].value;
+//				valStr = (char*)menuValues[idx].valName;
+				strncpy(valStr,menuValues[idx].valName,4);  // copy item name
+				*menuPtr->setting = valNum;
 				if (menuPtr->eeAddress != NULL) 
-					eeprom_update_byte(menuPtr->eeAddress, valnum);
+					eeprom_update_byte(menuPtr->eeAddress, valNum);
 				menu_action(menuPtr);
 			}
-			show_setting_string(shortName, longName, valstr, show);
+			show_setting_string(shortName, longName, valStr, show);
 			if (show)
 				update = true;
 			else
@@ -371,7 +381,8 @@ void menu(uint8_t btn)
 		}
 // top of sub menu item
 		else if (menuPtr->flags & menu_hasSub) {
-			valstr = "";
+//			valStr = "";
+			strcpy(valStr," ");  // clear item name
 			switch (digits) {
 				case 4:
 					strcat(shortName, "=");  // indicate top of sub
@@ -384,7 +395,7 @@ void menu(uint8_t btn)
 					strcat(shortName, " -");
 					break;
 			}
-			show_setting_string(shortName, longName, valstr, false);
+			show_setting_string(shortName, longName, valStr, false);
 		}
 }  // menu
 
