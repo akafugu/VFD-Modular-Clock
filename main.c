@@ -579,7 +579,7 @@ void main(void)
 		if (g_alarm_switch && rtc_check_alarm_cached(tm_, alarm_hour, alarm_min, alarm_sec))
 			g_alarming = true;
 
-#ifdef FEATURE_ADIM			
+#ifdef FEATURE_AUTO_DIM			
 		if ((g_AutoDim) && (tm_->Minute == 0) && (tm_->Second == 0))  {  // Auto Dim enabled?
 			if (tm_->Hour == g_AutoDimHour)
 				set_brightness(g_AutoDimLevel);
