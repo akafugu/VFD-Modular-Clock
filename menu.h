@@ -108,11 +108,6 @@ typedef enum {
 menu_state_t menu_state;
 //uint8_t menuDisabled[MENU_COUNT];
 
-#define MENU_TIMEOUT 220  
-#ifdef FEATURE_AUTO_MENU
-#define BUTTON2_TIMEOUT 100
-#endif
-
 #if defined FEATURE_WmGPS || defined FEATURE_AUTO_DST
 void setDSToffset(uint8_t mode);
 #endif

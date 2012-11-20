@@ -71,7 +71,6 @@
 
 //struct tm;
 uint8_t interrupt_counter;
-uint8_t scroll_ctr;
 
 void display_init(uint8_t brightness);
 int get_digits(void);
@@ -81,7 +80,7 @@ void detect_shield(void);
 void show_time(tmElements_t* te, bool _24h_clock, uint8_t mode);
 void show_time_setting(uint8_t hour, uint8_t min, uint8_t sec);
 void show_temp(int8_t t, uint8_t f);
-void show_date(tmElements_t* te, uint8_t region);
+void show_date(tmElements_t* te, uint8_t region, uint8_t scroll);
 void show_flw(tmElements_t* te);
 
 // functions for showing settings

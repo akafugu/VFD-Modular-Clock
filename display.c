@@ -701,10 +701,11 @@ void show_setting_string(char* short_str, char* long_str, char* value, bool show
 }
 
 #ifdef FEATURE_AUTO_DATE
-// scroll the date - needs work for other displays...
-void show_date(tmElements_t *te_, uint8_t region)
+// scroll the date - called every 100 ms
+void show_date(tmElements_t *te_, uint8_t region, uint8_t scroll)
 {
 	dots = 0;
+//	uint8_t di;
 	char sl;
 	char d[18];
 	d[0] = d[1] = ' ';
@@ -749,24 +750,22 @@ void show_date(tmElements_t *te_, uint8_t region)
 		}
 	d[12] = d[13] = ' ';
 	d[14] = d[15] = d[16] = d[17] = ' ';
+//	di = (scroll_ctr++) * 10 / 38;
 	switch (digits) {
 	case 8:
 		for (uint8_t i = 0; i < 8; i++) {
-			data[i] = d[(scroll_ctr/2+i)%18];
+			data[i] = d[(scroll+i)%18];
 		}
-		scroll_ctr++;  // increment scroll counter
 		break;
 	case 6:
 		for (uint8_t i = 0; i < 6; i++) {
-			data[i] = d[(scroll_ctr/2+i)%16];
+			data[i] = d[(scroll+i)%16];
 		}
-		scroll_ctr++;  // increment scroll counter
 		break;
 	case 4:
 		for (uint8_t i = 0; i < 4; i++) {
-			data[i] = d[(scroll_ctr/2+i)%14];
+			data[i] = d[(scroll+i)%14];
 		}
-		scroll_ctr++;  // increment scroll counter
 		break;
 	}
 }

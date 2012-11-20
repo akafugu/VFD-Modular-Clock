@@ -17,6 +17,7 @@
 *todo:
  * ?
  *
+ * 19nov12 redo main loop timing now that GPS read is interrupt driven
  * 18nov12 move FEATURE_ADIM to Makefile, cleanup FEATURE ifdefs
  * 17nov12 right-align string displays for 4 digit display
  *  tested wtih all 3 displays
@@ -131,8 +132,14 @@
 // N is which occurrence of DOTW
 // Current US Rules:  March, Sunday, 2nd, 2am, November, Sunday, 1st, 2 am, 1 hour
 #endif
+
+#define MENU_TIMEOUT 20  // 2.0 seconds
+#ifdef FEATURE_AUTO_MENU
+#define BUTTON2_TIMEOUT 100
+#endif
+
 #ifdef FEATURE_AUTO_DATE
-uint16_t g_autodisp = 550;  // how long to display date
+uint16_t g_autodisp = 50;  // how long to display date 5.0 seconds
 #endif
 uint8_t g_autotime = 54;  // controls when to display date and when to display time in FLW mode
 
@@ -243,19 +250,20 @@ ISR( PCINT2_vect )
 	else {
 		g_alarm_switch = true;
 		}
-	g_show_special_cnt = 100;  // show alarm text for 1 second
+	g_show_special_cnt = 10;  // show alarm text for 1 second
 	if (get_digits() == 8)
 		clock_mode = MODE_ALARM_TIME;
 	else
 		clock_mode = MODE_ALARM_TEXT;
 }
 
-void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
+uint8_t scroll_ctr;
+void display_time(display_mode_t mode)  // (wm)  runs approx every 100 ms
 {
 	static uint16_t counter = 0;
 #ifdef FEATURE_AUTO_DATE
 	if (mode == MODE_DATE) {
-		show_date(tm_, g_Region);  // show date from last rtc_get_time() call
+		show_date(tm_, g_Region, (scroll_ctr++) * 10 / 38);  // show date from last rtc_get_time() call
 	}
 	else
 #endif	
@@ -271,7 +279,8 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 			show_alarm_off();
 		}
 	}
-	else if (g_show_temp && rtc_is_ds3231() && counter > 125) {
+// alternate temp and time every 2.5 seconds
+	else if (g_show_temp && rtc_is_ds3231() && counter > 250) {
 		int8_t t;
 		uint8_t f;
 		ds3231_get_temp_int(&t, &f);
@@ -286,7 +295,7 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 		g_dateday = tm_->Day;  // save day for Menu
 #endif
 #ifdef FEATURE_AUTO_DST
-		if (tm_->Second%10 == 0)  // check DST Offset every 10 seconds
+		if (tm_->Second%10 == 0)  // check DST Offset every 10 seconds (60?)
 			setDSToffset(g_DST_mode); 
 		if ((tm_->Hour == 0) && (tm_->Minute == 0) && (tm_->Second == 0)) {  // MIDNIGHT!
 			g_DST_updated = false;
@@ -315,7 +324,7 @@ void display_time(display_mode_t mode)  // (wm)  runs approx every 200 ms
 			show_time(tm_, g_24h_clock, mode);
 	}
 	counter++;
-	if (counter == 250) counter = 0;
+	if (counter == 500) counter = 0;
 }
 
 void main(void) __attribute__ ((noreturn));
@@ -546,11 +555,11 @@ void main(void)
 		else {
 			if (g_show_special_cnt>0) {
 				g_show_special_cnt--;
-				if (g_show_special_cnt == 0)
+				if (g_show_special_cnt == 0) {
 					switch (clock_mode) {
 						case MODE_ALARM_TEXT:
 							clock_mode = MODE_ALARM_TIME;
-							g_show_special_cnt = 100;
+							g_show_special_cnt = 10;
 							break;
 						case MODE_ALARM_TIME:
 							clock_mode = MODE_NORMAL;
@@ -563,14 +572,11 @@ void main(void)
 						default:
 							clock_mode = MODE_NORMAL;
 					}
+				}
 			}
 
-			// read RTC & update display approx every 200ms  (wm)
-			static uint16_t cnt = 0;
-			if (cnt++ > 19) {
-				display_time(clock_mode);  // read RTC and display time
-				cnt = 0;
-				}
+			// read RTC & update display approx every 100ms  (wm)
+			display_time(clock_mode);  // read RTC and display time
 
 		}
 		
@@ -592,16 +598,11 @@ void main(void)
 		if (g_gps_enabled) {
 			if (gpsDataReady()) {
 				parseGPSdata(gpsNMEA());  // get the GPS serial stream and possibly update the clock 
-//				_delay_ms(5);
 				}
-			else
-				_delay_ms(7);
 			}
-		else
-			_delay_ms(7);  // do something that takes about the same amount of time
-#else
-		_delay_ms(7);  // roughly 10 ms per loop
 #endif
 
-	}  // while (1)
+		_delay_ms(74);  // tuned so loop runs 10 times a second
+
+		}  // while (1)
 }  // main()
