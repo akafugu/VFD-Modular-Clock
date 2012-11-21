@@ -599,7 +599,11 @@ void main(void)
 			if (gpsDataReady()) {
 				parseGPSdata(gpsNMEA());  // get the GPS serial stream and possibly update the clock 
 				}
+			else
+				_delay_ms(2);
 			}
+		else
+			_delay_ms(2);
 #endif
 
 		_delay_ms(74);  // tuned so loop runs 10 times a second
