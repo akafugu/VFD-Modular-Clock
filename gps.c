@@ -29,7 +29,7 @@ extern enum shield_t shield;
 
 //volatile uint8_t gpsEnabled = 0;
 #define gpsTimeoutLimit 5  // 5 seconds until we display the "no gps" message
-uint16_t gpsTimeout = 0;  // how long since we received valid GPS data?
+uint16_t gpsTimeout;  // how long since we received valid GPS data?
 
 void GPSread(void) 
 {
@@ -78,7 +78,7 @@ uint32_t parsedecimal(char *str) {
   }
   return d;
 }
-char hex[17] = "0123456789ABCDEF";
+const char hex[17] = "0123456789ABCDEF";
 uint8_t atoh(char x) {
   return (strchr(hex, x) - hex);
 }

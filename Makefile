@@ -12,6 +12,9 @@
 
 # Define your programmer in this file: ~/user.mk
 -include ~/user.mk
+ifeq ($(AVRDUDE_PROGRAMMER), )
+AVRDUDE_PROGRAMMER = usbtiny
+endif
 
 SILENT ?= @
 CROSS ?= avr-
@@ -96,7 +99,7 @@ CFLAGS += -g -O$(OPT) \
 -Wa,-adhlns=$(<:.c=.lst) -std=gnu99 -mmcu=$(MCU) 
 
 
-LDFLAGS = -Wl-Map=$(TARGET).map,--cref
+#LDFLAGS = -Wl-Map=$(TARGET).map,--cref
 
 all: $(TARGET).elf size
 

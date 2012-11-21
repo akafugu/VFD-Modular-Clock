@@ -23,8 +23,13 @@ extern uint8_t g_DST_mode;  // DST off, on, auto?
 extern uint8_t g_DST_offset;  // DST offset in hours
 extern uint8_t g_DST_update;  // DST update flag
 
-uint8_t mDays[]={31,28,31,30,31,30,31,31,30,31,30,31};
-uint16_t tmDays[]={0,31,59,90,120,151,181,212,243,273,304,334}; // Number days at beginning of month if not leap year
+#ifdef __FLASH
+const __flash uint8_t monthDays[]={31,28,31,30,31,30,31,31,30,31,30,31};
+const __flash uint16_t tmDays[]={0,31,59,90,120,151,181,212,243,273,304,334}; // Number days at beginning of month if not leap year
+#else
+const uint8_t monthDays[]={31,28,31,30,31,30,31,31,30,31,30,31};
+const uint16_t tmDays[]={0,31,59,90,120,151,181,212,243,273,304,334}; // Number days at beginning of month if not leap year
+#endif
 
 long DSTstart, DSTend;  // start and end of DST for this year, in Year Seconds
 
@@ -54,7 +59,7 @@ long yearSeconds(uint16_t yr, uint8_t mo, uint8_t da, uint8_t h, uint8_t m, uint
 
 long DSTseconds(uint16_t year, uint8_t month, uint8_t doftw, uint8_t week, uint8_t hour)
 {
-	uint8_t dom = mDays[month-1];
+	uint8_t dom = monthDays[month-1];
 	if ( (month == 2) && (year%4 == 0) )
 		dom ++;  // february has 29 days this year
 	uint8_t dow = dotw(year, month, 1);  // DOW for 1st day of month for DST event

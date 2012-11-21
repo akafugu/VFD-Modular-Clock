@@ -34,22 +34,20 @@ typedef enum {
 } menu_flags;
 
 typedef struct {
-	const int8_t value;  // list of possible values in order
+	const uint8_t value;  // list of possible values in order
 	const char valName[4];  // list of value names for display
 } menu_value;
 
 typedef struct {
 	const uint8_t menuNum;  // menu item number
-//	const menu_types menuType;
 	menu_flags flags;  // flags
-//	uint8_t flags;  // flags
 	const char shortName[4];
 	const char longName[5];
 	int8_t * setting;
 	uint8_t * eeAddress;
 	const int8_t loLimit;  // low limit for num
 	const int8_t hiLimit;  // high limit for num, # of values for list
-	const menu_value * menuList[];  // list of menu choices
+	const menu_value* menuList[];  // list of menu choices
 } menu_item;
 
 // menu states

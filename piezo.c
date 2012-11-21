@@ -14,8 +14,6 @@
  */
 
 #include "piezo.h"
-
-#include <avr/pgmspace.h>
 #include <util/delay.h>
 
 extern uint8_t g_volume;

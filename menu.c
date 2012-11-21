@@ -29,16 +29,18 @@
 #include "gps.h"
 #include "adst.h"
 
-menu_value menu_offon[2] = { {false, " off"}, {true, "  on"} };
-menu_value menu_gps[3] = { {0, " off"}, {48, "  48"}, {96, "  96"} };
+#define P_STR(txt) ((const __flash char[]) { txt })
+
+const menu_value menu_offon[2] = { {0, " off"}, {1, "  on"} };
+const menu_value menu_gps[3] = { {0, " off"}, {48, "  48"}, {96, "  96"} };
 #if defined FEATURE_AUTO_DST
-menu_value menu_adst[3] = { {0, " off"}, {1, "  on"}, {2, "auto"} };
+const menu_value menu_adst[3] = { {0, " off"}, {1, "  on"}, {2, "auto"} };
 #endif
-menu_value menu_volume[2] = { {0, "  lo"}, {1, "  hi"} };
-menu_value menu_region[3] = { {0, " dmy"}, {1, " mdy"}, {2, " ymd"} };
+const menu_value menu_volume[2] = { {0, "  lo"}, {1, "  hi"} };
+const menu_value menu_region[3] = { {0, " dmy"}, {1, " mdy"}, {2, " ymd"} };
 
 menu_item menu24h = {MENU_24H,menu_tf,"24H","24H",&g_24h_clock,&b_24h_clock,0,2,{menu_offon}};
-menu_item menuBrt = {MENU_BRIGHTNESS,menu_num,"BRIT","BRITE",&g_brightness,&b_brightness,0,10,{NULL} };
+menu_item menuBrt = {MENU_BRIGHTNESS,menu_num,"BRIT","BRITE",&g_brightness,&b_brightness,0,10,{NULL}};
 #ifdef FEATURE_AUTO_DATE
 menu_item menuAdate_ = {MENU_AUTODATE,menu_hasSub,"ADT","ADATE",NULL,NULL,0,0,{NULL}};
 menu_item menuAdate = {MENU_AUTODATE,menu_tf+menu_isSub,"ADTE","ADATE",&g_AutoDate,&b_AutoDate,0,2,{menu_offon}};
@@ -94,7 +96,11 @@ menu_item menuGPSt = {MENU_GPST,menu_num+menu_isSub,"GPST","GPST",&g_gps_time_er
 menu_item menuTemp = {MENU_TEMP,menu_tf+menu_disabled,"TEMP","TEMP",&g_show_temp,&b_show_temp,0,2,{menu_offon}};
 menu_item menuVol = {MENU_VOL,menu_list,"VOL","VOL",&g_volume,&b_volume,0,2,{menu_volume}};
 
-menu_item * menuItems[] = { 
+//#ifdef __FLASH
+//const __flash menu_item* menuItems[] = { 
+//#else
+const menu_item* PROGMEM const menuItems[] = { 
+//#endif
 	&menu24h, 
 #ifdef FEATURE_AUTO_DATE
 	&menuAdate_, &menuAdate, &menuRegion,
@@ -221,7 +227,7 @@ uint8_t show = false;  // show value?
 void menu_enable(menu_number num, uint8_t enable)
 {
 	uint8_t idx = 0;
-	menu_item * mPtr = menuItems[0];  // start with first menu item
+	menu_item * mPtr = (menu_item*) pgm_read_word(&menuItems[0]);  // start with first menu item
 	while(mPtr != NULL) {
 		if (mPtr->menuNum == num) {
 //			beep(1920,1);  // debug
@@ -231,30 +237,30 @@ void menu_enable(menu_number num, uint8_t enable)
 				mPtr->flags |= menu_disabled;  // turn on disabled flag
 			return;
 		}
-		mPtr = menuItems[++idx];
+		mPtr = (menu_item*)pgm_read_word(&menuItems[++idx]);
 	}
 }
 
 menu_item * nextItem(uint8_t skipSub)  // next menu item
 {
-	menu_item * menuPtr = menuItems[menuIdx];  // current menu item
+	menu_item * menuPtr = (menu_item*)pgm_read_word(&menuItems[menuIdx]);  // current menu item
 	uint8_t inSub = (menuPtr->flags & menu_isSub) && !(menuPtr->flags & menu_hasSub);  // are we in a sub menu now?
-	menuPtr = menuItems[++menuIdx];  // next menu item
+	menuPtr = (menu_item*)pgm_read_word(&menuItems[++menuIdx]);  // next menu item
 	while ((menuPtr != NULL) && ((menuPtr->flags & menu_disabled) || (skipSub && (menuPtr->flags & menu_isSub) && !inSub)) ) { 
-		menuPtr = menuItems[++menuIdx];  // next menu item
+		menuPtr = (menu_item*)pgm_read_word(&menuItems[++menuIdx]);  // next menu item
 	}
 	return menuPtr;
 }
 
 void menu(uint8_t btn)
 {
-	menu_item * menuPtr = menuItems[menuIdx];  // current menu item
+	menu_item * menuPtr = (menu_item*)pgm_read_word(&menuItems[menuIdx]);  // current menu item
 	uint8_t digits = get_digits();
 	tick();
 	switch (btn) {
 		case 0:  // start at top of menu
 			menuIdx = 0;  // restart menu
-			menuPtr = menuItems[menuIdx];
+			menuPtr = (menu_item*)pgm_read_word(&menuItems[menuIdx]);
 			update = false;
 			show = false;
 			break;
@@ -297,10 +303,12 @@ void menu(uint8_t btn)
 	char * valstr = "";
 //	char * shortName = (char *)menuPtr->shortName;
 //	char * longName = (char *)menuPtr->longName;
-	char shortName[7];
+	char shortName[5];
 	char longName[7];
-	strcpy(shortName,menuPtr->shortName);
-	strcpy(longName,menuPtr->longName);
+	strncpy(shortName,menuPtr->shortName,4);
+	shortName[4] = '\0';
+	strncpy(longName,menuPtr->longName,5);
+	longName[5] = '\0';
 	int valnum = *(menuPtr->setting);
 	const menu_value * menuValues = *menuPtr->menuList;  //copy menu values
 	uint8_t idx = 0;
