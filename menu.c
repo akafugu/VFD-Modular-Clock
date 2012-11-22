@@ -96,11 +96,7 @@ menu_item menuGPSt = {MENU_GPST,menu_num+menu_isSub,"GPST","GPST",&g_gps_time_er
 menu_item menuTemp = {MENU_TEMP,menu_tf+menu_disabled,"TEMP","TEMP",&g_show_temp,&b_show_temp,0,2,{menu_offon}};
 menu_item menuVol = {MENU_VOL,menu_list,"VOL","VOL",&g_volume,&b_volume,0,2,{menu_volume}};
 
-//#ifdef __FLASH
-//const __flash menu_item* menuItems[] = { 
-//#else
 const menu_item* PROGMEM const menuItems[] = { 
-//#endif
 	&menu24h, 
 #ifdef FEATURE_AUTO_DATE
 	&menuAdate_, &menuAdate, &menuRegion,
