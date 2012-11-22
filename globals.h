@@ -16,6 +16,12 @@
  #ifndef GLOBALS_H_
 #define GLOBALS_H_
 
+#ifdef __FLASH
+#define FLASH __flash
+#else
+#define FLASH
+#endif
+
 extern uint8_t b_24h_clock;
 extern uint8_t b_show_temp;
 extern uint8_t b_show_dots;

@@ -17,6 +17,7 @@
 *todo:
  * ?
  *
+ * 21nov12 reduce RAM usage, in general and for avr-gcc 4.7.2
  * 19nov12 redo main loop timing now that GPS read is interrupt driven
  * 18nov12 move FEATURE_ADIM to Makefile, cleanup FEATURE ifdefs
  * 17nov12 right-align string displays for 4 digit display

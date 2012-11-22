@@ -17,19 +17,10 @@
 #include <string.h>
 #include "Time.h"
 #include "adst.h"
+#include "globals.h"
 
-// globals from main.c
-extern uint8_t g_DST_mode;  // DST off, on, auto?
-extern uint8_t g_DST_offset;  // DST offset in hours
-extern uint8_t g_DST_update;  // DST update flag
-
-#ifdef __FLASH
-const __flash uint8_t monthDays[]={31,28,31,30,31,30,31,31,30,31,30,31};
-const __flash uint16_t tmDays[]={0,31,59,90,120,151,181,212,243,273,304,334}; // Number days at beginning of month if not leap year
-#else
-const uint8_t monthDays[]={31,28,31,30,31,30,31,31,30,31,30,31};
-const uint16_t tmDays[]={0,31,59,90,120,151,181,212,243,273,304,334}; // Number days at beginning of month if not leap year
-#endif
+const FLASH uint8_t monthDays[]={31,28,31,30,31,30,31,31,30,31,30,31};
+const FLASH uint16_t tmDays[]={0,31,59,90,120,151,181,212,243,273,304,334}; // Number days at beginning of month if not leap year
 
 long DSTstart, DSTend;  // start and end of DST for this year, in Year Seconds
 

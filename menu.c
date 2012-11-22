@@ -29,15 +29,13 @@
 #include "gps.h"
 #include "adst.h"
 
-#define P_STR(txt) ((const __flash char[]) { txt })
-
-const menu_value menu_offon[2] = { {0, " off"}, {1, "  on"} };
-const menu_value menu_gps[3] = { {0, " off"}, {48, "  48"}, {96, "  96"} };
+const FLASH menu_value menu_offon[2] = { {0, " off"}, {1, "  on"} };
+const FLASH menu_value menu_gps[3] = { {0, " off"}, {48, "  48"}, {96, "  96"} };
 #if defined FEATURE_AUTO_DST
-const menu_value menu_adst[3] = { {0, " off"}, {1, "  on"}, {2, "auto"} };
+const FLASH menu_value menu_adst[3] = { {0, " off"}, {1, "  on"}, {2, "auto"} };
 #endif
-const menu_value menu_volume[2] = { {0, "  lo"}, {1, "  hi"} };
-const menu_value menu_region[3] = { {0, " dmy"}, {1, " mdy"}, {2, " ymd"} };
+const FLASH menu_value menu_volume[2] = { {0, "  lo"}, {1, "  hi"} };
+const FLASH menu_value menu_region[3] = { {0, " dmy"}, {1, " mdy"}, {2, " ymd"} };
 
 menu_item menu24h = {MENU_24H,menu_tf,"24H","24H",&g_24h_clock,&b_24h_clock,0,2,{menu_offon}};
 menu_item menuBrt = {MENU_BRIGHTNESS,menu_num,"BRIT","BRITE",&g_brightness,&b_brightness,0,10,{NULL}};

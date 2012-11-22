@@ -23,6 +23,12 @@
 //	menu_sub,  // sub menu name
 //} menu_types;
 
+#ifdef __FLASH
+#define FLASH __flash
+#else
+#define FLASH
+#endif
+
 typedef enum {
 	menu_noflags = 0x00,
 	menu_num = 0x01,
@@ -47,7 +53,7 @@ typedef struct {
 	uint8_t * eeAddress;
 	const int8_t loLimit;  // low limit for num
 	const int8_t hiLimit;  // high limit for num, # of values for list
-	const menu_value* menuList[];  // list of menu choices
+	const FLASH menu_value* menuList[];  // list of menu choices
 } menu_item;
 
 // menu states

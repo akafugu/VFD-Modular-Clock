@@ -16,6 +16,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "button.h"
+#include "globals.h"
 
 bool get_alarm_switch(void)
 {
@@ -30,7 +31,7 @@ uint8_t keyup_keys = 0x00;
 uint8_t keyrepeat_keys = 0x00;
 
 uint16_t keyboard_counter[2] = {0, 0};
-uint8_t button_bit[2] = { _BV(BUTTON1_BIT), _BV(BUTTON2_BIT) };
+const FLASH uint8_t button_bit[2] = { _BV(BUTTON1_BIT), _BV(BUTTON2_BIT) };
 
 //#define REPEAT_SPEED	2000
 #define REPEAT_SPEED	20
