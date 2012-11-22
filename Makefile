@@ -12,6 +12,8 @@
 
 # Define your programmer in this file: ~/user.mk
 -include ~/user.mk
+
+#MHV AVR doesn't look for ~/user.mk ???
 ifeq ($(AVRDUDE_PROGRAMMER), )
 AVRDUDE_PROGRAMMER = usbtiny
 endif
@@ -100,6 +102,7 @@ CFLAGS += -g -O$(OPT) \
 
 
 #LDFLAGS = -Wl-Map=$(TARGET).map,--cref
+LDFLAGS = -Wl,-Map,$(TARGET).map
 
 all: $(TARGET).elf size
 
