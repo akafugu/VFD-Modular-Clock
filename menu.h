@@ -32,7 +32,7 @@
 typedef enum {
 	menu_noflags = 0x00,
 	menu_num = 0x01,
-	menu_tf = 0x02,
+	menu_tf = 0x02,  // off/on
 	menu_list = 0x04,
 	menu_hasSub = 0x10,
 	menu_isSub = 0x20,
@@ -53,7 +53,8 @@ typedef struct {
 	uint8_t * eeAddress;
 	const int8_t loLimit;  // low limit for num
 	const int8_t hiLimit;  // high limit for num, # of values for list
-	const FLASH menu_value* menuList[];  // list of menu choices
+//	const FLASH menu_value* menuList[];  // list of menu choices
+	const menu_value* menuList[];  // list of menu choices
 } menu_item;
 
 // menu states

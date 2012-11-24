@@ -29,13 +29,13 @@
 #include "gps.h"
 #include "adst.h"
 
-const FLASH menu_value menu_offon[2] = { {0, " off"}, {1, "  on"} };
-const FLASH menu_value menu_gps[3] = { {0, " off"}, {48, "  48"}, {96, "  96"} };
+const menu_value menu_offon[] = { {0, " off"}, {1, "  on"} };
+const menu_value menu_gps[] = { {0, " off"}, {48, "  48"}, {96, "  96"} };
 #if defined FEATURE_AUTO_DST
-const FLASH menu_value menu_adst[3] = { {0, " off"}, {1, "  on"}, {2, "auto"} };
+const menu_value menu_adst[] = { {0, " off"}, {1, "  on"}, {2, "auto"} };
 #endif
-const FLASH menu_value menu_volume[2] = { {0, "  lo"}, {1, "  hi"} };
-const FLASH menu_value menu_region[3] = { {0, " dmy"}, {1, " mdy"}, {2, " ymd"} };
+const menu_value menu_volume[] = { {0, "  lo"}, {1, "  hi"} };
+const menu_value menu_region[] = { {0, " dmy"}, {1, " mdy"}, {2, " ymd"} };
 
 menu_item menu24h = {MENU_24H,menu_tf,"24H","24H",&g_24h_clock,&b_24h_clock,0,2,{menu_offon}};
 menu_item menuBrt = {MENU_BRIGHTNESS,menu_num,"BRIT","BRITE",&g_brightness,&b_brightness,0,10,{NULL}};
@@ -294,18 +294,16 @@ void menu(uint8_t btn)
 		menu_state = STATE_CLOCK;
 		return;
 	}
-	char * valstr = "";
-//	char * shortName = (char *)menuPtr->shortName;
-//	char * longName = (char *)menuPtr->longName;
+	char valStr[5] = "";  // item value name for display ("off", "on", etc)
 	char shortName[5];
-	char longName[7];
+	char longName[8];
 	strncpy(shortName,menuPtr->shortName,4);
-	shortName[4] = '\0';
+	shortName[4] = '\0';  // null terminate string
 	strncpy(longName,menuPtr->longName,5);
-	longName[5] = '\0';
+	longName[5] = '\0';  // null terminate string
 	int valnum = *(menuPtr->setting);
-	const menu_value * menuValues = *menuPtr->menuList;  //copy menu values
-	uint8_t idx = 0;
+	const menu_value * menuValues = (const menu_value*)*menuPtr->menuList;  //copy menu values
+	volatile uint8_t idx = 0;
 // numeric menu item
 	if (menuPtr->flags & menu_num) {
 			if (update) {
@@ -337,10 +335,11 @@ void menu(uint8_t btn)
 				menu_action(menuPtr);
 			}
 			if (valnum)
-				valstr = (char*)menuValues[1].valName;  // true
+					strncpy(valStr,menuValues[1].valName,4);  // true
 			else
-				valstr = (char*)menuValues[0].valName;  // false
-			show_setting_string(shortName, longName, valstr, show);
+					strncpy(valStr,menuValues[0].valName,4);  // false
+			valStr[4] = '\0';  // null terminate string
+			show_setting_string(shortName, longName, valStr, show);
 			if (show)
 				update = true;
 			else
@@ -348,24 +347,28 @@ void menu(uint8_t btn)
 		}
 // list menu item
 		else if (menuPtr->flags & menu_list) {
-			for (uint8_t i=0;i<menuPtr->hiLimit;i++) {
+			idx = 0;
+			for (uint8_t i=0;i<menuPtr->hiLimit;i++) {  // search for the current item's value in the list
 				if (menuValues[i].value == valnum) {
+//				if (menuPtr->menuList[i]->value == valnum) {
 					idx = i;
 					}
 			}
-			valstr = (char*)menuValues[idx].valName;
+			strncpy(valStr,menuValues[idx].valName,4);  // item name
+			valStr[4] = '\0';  // null terminate string
 			if (update) {
-				idx++;
-				if (idx >= menuPtr->hiLimit)  // for lists, hilimit is the # of elements!
-					idx = 0;
+				idx++;  // next item in list
+				if (idx >= menuPtr->hiLimit)  // for lists, hilimit is the # of elements! 
+					idx = 0;  // wrap
 				valnum = menuValues[idx].value;
-				valstr = (char*)menuValues[idx].valName;
+				strncpy(valStr,menuValues[idx].valName,4);  // item name
+				valStr[4] = '\0';  // null terminate string
 				*menuPtr->setting = valnum;
 				if (menuPtr->eeAddress != NULL) 
 					eeprom_update_byte(menuPtr->eeAddress, valnum);
 				menu_action(menuPtr);
 			}
-			show_setting_string(shortName, longName, valstr, show);
+			show_setting_string(shortName, longName, valStr, show);
 			if (show)
 				update = true;
 			else
@@ -373,20 +376,20 @@ void menu(uint8_t btn)
 		}
 // top of sub menu item
 		else if (menuPtr->flags & menu_hasSub) {
-			valstr = "";
 			switch (digits) {
 				case 4:
 					strcat(shortName, "=");  // indicate top of sub
+					show_setting_string(shortName, longName, valStr, false);
 					break;
 				case 6:
 					strcat(longName, "-");  // indicate top of sub
+					show_setting_string(shortName, longName, valStr, false);
 					break;
-				case 8:
-					strcpy(shortName, longName);
-					strcat(shortName, " -");
+				case 8:  // use longName instead of shortName for top menu item
+					strcat(longName, " -");
+					show_setting_string(longName, longName, valStr, false);
 					break;
 			}
-			show_setting_string(shortName, longName, valstr, false);
 		}
 }  // menu
 
