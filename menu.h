@@ -16,13 +16,6 @@
 #define MENU_H_
 #include <avr/pgmspace.h>
 
-//typedef enum {
-//	menu_num = 0,  // simple numeric value
-//	menu_tf, // true/false
-//	menu_list,  // select one from a list
-//	menu_sub,  // sub menu name
-//} menu_types;
-
 #ifdef __FLASH
 #define FLASH __flash
 #else
@@ -30,13 +23,13 @@
 #endif
 
 typedef enum {
-	menu_Noflags = 0x00,
-	menu_Num = 0x01,
-	menu_OffOn = 0x02,  
-	menu_List = 0x04,
-	menu_HasSub = 0x10,
-	menu_IsSub = 0x20,
-	menu_Disabled = 0x80,
+	menu_noflags = 0x00,
+	menu_num = 0x01,
+	menu_offOn = 0x02,  
+	menu_list = 0x04,
+	menu_hasSub = 0x10,
+	menu_isSub = 0x20,
+	menu_disabled = 0x80,
 } menu_flags;
 
 typedef struct {
@@ -49,11 +42,10 @@ typedef struct {
 	menu_flags flags;  // flags
 	const char shortName[4];
 	const char longName[5];
-	int8_t * setting;
-	uint8_t * eeAddress;
+	int8_t* setting;
+	uint8_t* eeAddress;
 	const int8_t loLimit;  // low limit for num
 	const int8_t hiLimit;  // high limit for num, # of values for list
-//	const FLASH menu_value* menuList[];  // list of menu choices
 	const menu_value* menuList[];  // list of menu choices
 } menu_item;
 
