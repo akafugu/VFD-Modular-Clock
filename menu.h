@@ -30,13 +30,13 @@
 #endif
 
 typedef enum {
-	menu_noflags = 0x00,
-	menu_num = 0x01,
-	menu_tf = 0x02,  // off/on
-	menu_list = 0x04,
-	menu_hasSub = 0x10,
-	menu_isSub = 0x20,
-	menu_disabled = 0x80,
+	menu_Noflags = 0x00,
+	menu_Num = 0x01,
+	menu_OffOn = 0x02,  
+	menu_List = 0x04,
+	menu_HasSub = 0x10,
+	menu_IsSub = 0x20,
+	menu_Disabled = 0x80,
 } menu_flags;
 
 typedef struct {
