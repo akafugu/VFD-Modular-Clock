@@ -29,7 +29,7 @@ typedef enum {
 	menu_list = 0x04,
 	menu_hasSub = 0x10,
 	menu_isSub = 0x20,
-	menu_disabled = 0x80,
+//	menu_disabled = 0x80,
 } menu_flags;
 
 typedef struct {
@@ -48,6 +48,18 @@ typedef struct {
 	const int8_t hiLimit;  // high limit for num, # of values for list
 	const menu_value* menuList[];  // list of menu choices
 } menu_item;
+
+typedef struct {
+	uint8_t menuNum;  // menu item number
+	menu_flags flags;  // flags
+	char shortName[4];
+	char longName[5];
+	int8_t* setting;
+	uint8_t* eeAddress;
+	int8_t loLimit;  // low limit for num
+	int8_t hiLimit;  // high limit for num, # of values for list
+	menu_value* menuList[];  // list of menu choices
+} menu_item_rw;
 
 // menu states
 typedef enum {
