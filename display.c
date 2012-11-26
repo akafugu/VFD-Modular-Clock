@@ -27,6 +27,8 @@
 #endif
 
 void write_vfd_iv6(uint8_t digit, uint8_t segments);
+void write_vfd_iv11(uint8_t digit, uint8_t segments);
+void write_vfd_iv1(uint8_t digit, uint8_t dash);
 void write_vfd_iv17(uint8_t digit, uint16_t segments);
 void write_vfd_iv18(uint8_t digit, uint8_t segments);
 void write_vfd_iv22(uint8_t digit, uint8_t segments);
@@ -98,6 +100,12 @@ void detect_shield(void)
 		case(2):  // IV-6 shield
 			shield = SHIELD_IV6;
 			digits = 6;
+			break;
+		case(3): // IV-11 shield
+			shield = SHIELD_IV11;
+			digits = 6;
+			mpx_count = 8;
+			g_has_dots = true;
 			break;
 		case(6):  // IV-22 shield
 			shield = SHIELD_IV22;
@@ -233,6 +241,40 @@ void display_multiplex_iv6(void)
 }
 
 // display multiplexing routine for IV6 shield: run once every 2ms
+void display_multiplex_iv11(void)
+{
+	clear_display();
+	switch (multiplex_counter) {
+		case 0:
+			write_vfd_iv11(0, calculate_segments_7(display_on ? data[0] : ' '));
+			break;
+		case 1:
+			write_vfd_iv11(1, calculate_segments_7(display_on ? data[1] : ' '));
+			break;
+		case 2:
+			write_vfd_iv11(2, calculate_segments_7(display_on ? data[2] : ' '));
+			break;
+		case 3:
+			write_vfd_iv11(3, calculate_segments_7(display_on ? data[3] : ' '));
+			break;
+		case 4:
+			write_vfd_iv11(4, calculate_segments_7(display_on ? data[4] : ' '));
+			break;
+		case 5:
+			write_vfd_iv11(5, calculate_segments_7(display_on ? data[5] : ' '));
+			break;
+		case 6:
+			write_vfd_iv1(6, false);
+			break;
+		case 7:
+			write_vfd_iv1(7, g_alarm_switch);
+			break;
+	}
+	multiplex_counter++;
+	if (multiplex_counter == 8) multiplex_counter = 0;
+}
+
+// display multiplexing routine for IV6 shield: run once every 2ms
 void display_multiplex_iv18(void)
 {
 	uint8_t seg = 0;
@@ -304,6 +346,9 @@ void display_multiplex(void)
 	switch (shield) {
 		case SHIELD_IV6:
 			display_multiplex_iv6();
+			break;
+		case SHIELD_IV11:
+			display_multiplex_iv11();
 			break;
 		case SHIELD_IV17:
 			display_multiplex_iv17();
@@ -888,6 +933,47 @@ void write_vfd_8bit(uint8_t data)
 		CLOCK_HIGH;
 		CLOCK_LOW;
   }
+}
+
+// Writes to the HV5812 driver for IV-11
+// HV1~6:   Digit grids, 6 bits
+// HV7~8:   Digit grids for IV-1 decimal points
+// HV9~16:  VFD segments, 8 bits
+// HV17:    IV-1 dash
+// HV18/    IV-1 dot
+// HV19~20: NC
+void write_vfd_iv11(uint8_t digit, uint8_t segments)
+{
+	uint32_t val = (1 << digit) | ((uint32_t)segments << 8);
+
+	write_vfd_8bit(0); // unused upper byte: for HV518P only
+	write_vfd_8bit(val >> 16);
+	write_vfd_8bit(val >> 8);
+	write_vfd_8bit(val);
+	
+	LATCH_DISABLE;
+	LATCH_ENABLE;	
+}
+
+// Writes to IV-1 decimal dots for IV-11 shield: See above
+void write_vfd_iv1(uint8_t digit, uint8_t dash)
+{
+	uint8_t dot = false;
+
+	if (digit == 6 && (dots & (1<<1))) // map dot for 2nd digit to left IV-1
+		dot = true;
+	else if (digit == 7 && (dots & (1<<3))) // map dot for 4th digit to right IV-1
+		dot = true;
+
+	uint32_t val = (1 << digit) | ((uint32_t)dash << 16) | ((uint32_t)dot << 17);
+
+	write_vfd_8bit(0); // unused upper byte: for HV518P only
+	write_vfd_8bit(val >> 16);
+	write_vfd_8bit(val >> 8);
+	write_vfd_8bit(val);
+	
+	LATCH_DISABLE;
+	LATCH_ENABLE;
 }
 
 // Writes to the HV5812 driver for IV-6
