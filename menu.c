@@ -13,7 +13,6 @@
  *
  */
 
-//#define FEATURE_AUTO_MENU  // temp
 #define FEATURE_GPS_DEBUG  // enables GPS debugging counters & menu items
 //#define FEATURE_AUTO_DIM  // moved to Makefile
 
@@ -274,19 +273,6 @@ void menu(uint8_t btn)
 			update = false;
 			show = false;
 			break;
-#ifdef FEATURE_AUTO_MENU
-		case 3:  // auto menu timeout
-			if (digits == 4)  return;  // too confusing in IV-17?
-			if (menuPtr->flags & menu_hasSub) {
-				return;  // just show the item as before
-			}
-			else {
-				show = true;  // show value
-				if (digits>6)
-					update = true;
-			}
-			break;
-#endif
 	}
 	if (menuPtr == NULL) {  // check for end of menu
 		menuIdx = 0;

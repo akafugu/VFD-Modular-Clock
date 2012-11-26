@@ -17,6 +17,9 @@
 *todo:
  * ?
  *
+ * 25nov12 fix time/alarm set repeat interval
+ *  put menu_values in PROGMEM
+ *  remove FEATURE_AUTO_MENU
  * 21nov12 reduce RAM usage, in general and for avr-gcc 4.7.2
  * 19nov12 redo main loop timing now that GPS read is interrupt driven
  * 18nov12 move FEATURE_ADIM to Makefile, cleanup FEATURE ifdefs
@@ -73,9 +76,7 @@
  *  minor typos & cleanup
  */
 
-//#define FEATURE_AUTO_MENU  // temp
 #define FEATURE_GPS_DEBUG  // enables GPS debugging counters & menu items
-//#define FEATURE_AUTO_DIM  // moved to Makefile
  
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -136,9 +137,6 @@
 #endif
 
 #define MENU_TIMEOUT 20  // 2.0 seconds
-#ifdef FEATURE_AUTO_MENU
-#define BUTTON2_TIMEOUT 100
-#endif
 
 #ifdef FEATURE_AUTO_DATE
 uint16_t g_autodisp = 50;  // how long to display date 5.0 seconds
@@ -359,10 +357,7 @@ void main(void)
 	// Counters used when setting time
 	int16_t time_to_set = 0;
 	uint16_t button_released_timer = 0;
-#ifdef FEATURE_AUTO_MENU
-  uint16_t button2_release_timer = 0;
-#endif
-	uint16_t button_speed = 25;
+	uint16_t button_speed = 2;
 	
 	switch (shield) {
 		case(SHIELD_IV6):
@@ -472,9 +467,9 @@ void main(void)
 			}
 			
 			// Increase / Decrease time counter
-			if (buttons.b1_repeat) time_to_set+=(button_speed/100);
+			if (buttons.b1_repeat) time_to_set+=(button_speed/10);
 			if (buttons.b1_keyup)  time_to_set++;
-			if (buttons.b2_repeat) time_to_set-=(button_speed/100);
+			if (buttons.b2_repeat) time_to_set-=(button_speed/10);
 			if (buttons.b2_keyup)  time_to_set--;
 
 			if (time_to_set  >= 1440) time_to_set = 0;
@@ -489,9 +484,6 @@ void main(void)
 //			show_setting_int("BRIT", "BRITE", g_brightness, false);
       menu(0);  // show first menu item 
 			buttons.b2_keyup = 0; // clear state
-#ifdef FEATURE_AUTO_MENU
-      button2_release_timer = BUTTON2_TIMEOUT;  // start button 2 timer
-#endif      
 		}
 		// Right button toggles display mode
 		else if (menu_state == STATE_CLOCK && buttons.b1_keyup) {
@@ -516,40 +508,18 @@ void main(void)
 				button_released_timer++;
 			else
 				button_released_timer = 0;
-//			if (button_released_timer >= 80) {
 			if (button_released_timer >= MENU_TIMEOUT) {  
 				button_released_timer = 0;
-#ifdef FEATURE_AUTO_MENU
-        button2_release_timer = 0;
-#endif
 				menu_state = STATE_CLOCK;
 			}
 
-#ifdef FEATURE_AUTO_MENU
-      if (button2_release_timer > 0) {
-        button2_release_timer--;
-        if (button2_release_timer == 0) {
-          menu(3);  // show or update current menu item value
-        }
-      }
-#endif
-			
 			if (buttons.b1_keyup) {  // right button
-#ifdef FEATURE_AUTO_MENU
-        button2_release_timer = 0;  // cancel button 2 timer
-#endif
 				menu(1);  // right button
 				buttons.b1_keyup = false;
-//				menu_update = true;  // b1 not first time now
 			}  // if (buttons.b1_keyup) 
 
 			if (buttons.b2_keyup) {  // left button
-//				if (get_digits() < 8)  // only set first time flag for 4 or 6 digit displays
-//					menu_update = false;  // reset b1 first time flag
-#ifdef FEATURE_AUTO_MENU
-        button2_release_timer = BUTTON2_TIMEOUT;  // restart button2 timer
-#endif
-				
+			
 				menu(2);  // left button
 				buttons.b2_keyup = 0; // clear state
 			}
