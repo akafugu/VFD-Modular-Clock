@@ -22,6 +22,7 @@
  * 18nov12 move FEATURE_ADIM to Makefile, cleanup FEATURE ifdefs
  * 17nov12 right-align string displays for 4 digit display
  *  tested wtih all 3 displays
+ * 16nov12 fix auto dim for iv-17 display
  * 16nov12 - reduced ram 
  *  sub sub menu (for DST Rules)
  *  add tick for button push in menu

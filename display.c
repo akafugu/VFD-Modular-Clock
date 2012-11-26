@@ -147,6 +147,7 @@ void display_init(uint8_t brightness)
 
 // brightness value: 1 (low) - 10 (high)
 void set_brightness(uint8_t brightness) {
+	g_brightness = brightness;  // update global so it stays consistent 16nov12/wbp
 	// workaround: IV17 shield not compatible with PWM dimming method
 	// using simple software dimming instead
 	if (shield == SHIELD_IV17) {
