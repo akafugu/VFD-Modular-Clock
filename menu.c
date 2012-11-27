@@ -128,7 +128,7 @@ const PROGMEM menu_item* PROGMEM const menuItems[] = {
 	&menuVol,
 	NULL};  // end of list marker must be here
 
-uint8_t menu_disabled[MENU_END];
+static uint8_t menu_disabled[MENU_END];
 
 extern tmElements_t* tm_; // current local date and time as TimeElements (pointer)
 
