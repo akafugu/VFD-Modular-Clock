@@ -386,7 +386,7 @@ void menu(uint8_t btn)
 		else if (menuPtr->flags & menu_hasSub) {
 			switch (digits) {
 				case 4:
-					strcat(shortName, "=");  // indicate top of sub
+					strcat(shortName, "*");  // indicate top of sub
 					show_setting_string(shortName, longName, valStr, false);
 					break;
 				case 6:
