@@ -17,6 +17,7 @@
 *todo:
  * ?
  *
+ * 26nov12 put menu_items in PROGMEM!
  * 25nov12 fix time/alarm set repeat interval
  *  put menu_values in PROGMEM
  *  remove FEATURE_AUTO_MENU
@@ -198,6 +199,7 @@ void initialize(void)
 	
 #ifdef FEATURE_FLW
 	g_has_eeprom = has_eeprom();
+//	if (!g_has_eeprom)  beep(440,2);  // debug
 	if (!g_has_eeprom)
 		g_flw_enabled = false;
 	if (tm_ && g_has_eeprom)

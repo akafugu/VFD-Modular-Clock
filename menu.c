@@ -220,11 +220,11 @@ uint8_t update = false;  // right button updates value?
 uint8_t show = false;  // show value?
 
 static menu_item_rw current_item;
-menu_item * getItem(uint8_t idx)
+menu_item* getItem(uint8_t idx)
 {
-	menu_item * mPtr = (menu_item*)pgm_read_word(&menuItems[idx]);  // address of current menu item
+	menu_item* mPtr = (menu_item*)pgm_read_word(&menuItems[idx]);  // address of current menu item
 	if (mPtr == NULL)  return(NULL);
-//	memcpy_P(&current_item, &mPtr, sizeof(menu_item));
+//	memcpy_P(&current_item, &mPtr, sizeof(current_item));
 	current_item.menuNum = pgm_read_byte(&mPtr->menuNum);
 	current_item.flags = pgm_read_byte(&mPtr->flags);
 	strncpy_P(current_item.shortName,(char *)&mPtr->shortName,4); 
@@ -244,16 +244,10 @@ void menu_enable(menu_number num, uint8_t enable)
 	menu_item * mPtr = getItem(0);  // current menu item
 	while(mPtr != NULL) {
 		if (mPtr->menuNum == num) {
-//			beep(1920,1);  // debug
-			if (enable)
-//				mPtr->flags &= (255-menu_disabled);  // turn off disabled flag
-				menu_disabled[idx] = false;
-			else
-//				mPtr->flags |= menu_disabled;  // turn on disabled flag
-				menu_disabled[idx] = true;
-			return;
+			menu_disabled[idx] = !enable;  // default is enabled
+			return;  // there should only be one item that matches
 		}
-		mPtr = getItem(++idx);
+		mPtr = getItem(++idx);  // fetch next menu item
 	}
 }
 
@@ -414,7 +408,5 @@ void menu_init(void)
 	menu_enable(MENU_DOTS, g_has_dots);  // don't show dots settings for shields that have no dots
 #ifdef FEATURE_FLW
 	menu_enable(MENU_FLW, g_has_eeprom);  // don't show FLW settings when there is no EEPROM with database
-#else
-	menu_enable(MENU_FLW, false);
 #endif
 }

@@ -72,7 +72,7 @@ typedef enum {
 	STATE_MENU_LAST,
 } menu_state_t;
 
-typedef enum {
+typedef enum {  // no ifdefs, no harm in defining unused items
 	MENU_24H = 0,
 	MENU_AUTODATE,
 	MENU_AUTODATE_ENABLE,
