@@ -219,11 +219,12 @@ volatile uint8_t menuIdx = 0;
 uint8_t update = false;  // right button updates value?
 uint8_t show = false;  // show value?
 
-menu_item_rw current_item;
+static menu_item_rw current_item;
 menu_item * getItem(uint8_t idx)
 {
 	menu_item * mPtr = (menu_item*)pgm_read_word(&menuItems[idx]);  // address of current menu item
 	if (mPtr == NULL)  return(NULL);
+//	memcpy_P(&current_item, &mPtr, sizeof(menu_item));
 	current_item.menuNum = pgm_read_byte(&mPtr->menuNum);
 	current_item.flags = pgm_read_byte(&mPtr->flags);
 	strncpy_P(current_item.shortName,(char *)&mPtr->shortName,4); 
