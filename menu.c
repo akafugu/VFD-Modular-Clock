@@ -66,7 +66,7 @@ const PROGMEM menu_item menuDST = {MENU_DST_ENABLE,menu_offOn,"DST","DST",&g_DST
 #endif
 #ifdef FEATURE_AUTO_DST
 const PROGMEM menu_item menuRules = {MENU_RULES,menu_hasSub+menu_isSub,"RUL","RULES",NULL,NULL,0,0,{NULL}};
-const PROGMEM menu_item menuRule0 = {MENU_RULE0,menu_num+menu_isSub,"RUL0","RULE0",&g_DST_Rules[0],&b_DST_Rule0,1,7,{NULL}};
+const PROGMEM menu_item menuRule0 = {MENU_RULE0,menu_num+menu_isSub,"RUL0","RULE0",&g_DST_Rules[0],&b_DST_Rule0,1,12,{NULL}};
 const PROGMEM menu_item menuRule1 = {MENU_RULE1,menu_num+menu_isSub,"RUL1","RULE1",&g_DST_Rules[1],&b_DST_Rule1,1,7,{NULL}};
 const PROGMEM menu_item menuRule2 = {MENU_RULE2,menu_num+menu_isSub,"RUL2","RULE2",&g_DST_Rules[2],&b_DST_Rule2,1,5,{NULL}};
 const PROGMEM menu_item menuRule3 = {MENU_RULE3,menu_num+menu_isSub,"RUL3","RULE3",&g_DST_Rules[3],&b_DST_Rule3,0,23,{NULL}};
