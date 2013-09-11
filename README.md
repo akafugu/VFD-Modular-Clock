@@ -1,6 +1,13 @@
 Modular VFD Clock Firmware
 --------------------------
 
+PS: This firmware is for version 1 of the VFD Modular Clock.
+
+If you have version 2 of the base board (marked with mk2), please use
+the VFDDeluxe firmware instead:
+
+[https://github.com/akafugu/VFDDeluxe](https://github.com/akafugu/VFDDeluxe)
+
 ![Akafugu Modular VFD Clock](/akafugu/VFD-Modular-Clock/raw/master/vfd.jpg)
 
 Firmware for the [Akafugu Modular VFD Clock](http://www.akafugu.jp/posts/products/vfd-modular-clock/)
